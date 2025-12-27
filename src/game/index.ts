@@ -1,3 +1,4 @@
+import { k } from "../kaplayCtx";
 import { TurnManager } from "./systems/TurnManager";
 import { InputController } from "./systems/InputController";
 import {
@@ -18,6 +19,14 @@ let isAnimating = false;
 export async function initGame(): Promise<void> {
   await loadAssets();
 
+  k.onMousePress(() => {
+    console.log("Global mouse press at:", k.mousePos());
+  });
+
+  k.onTouchStart(() => {
+    console.log("Touch start detected");
+  });
+
   turnManager = new TurnManager(render);
   inputController = new InputController(turnManager);
   inputController.setOnPushRequested(() => {
@@ -30,24 +39,41 @@ export async function initGame(): Promise<void> {
 }
 
 function handlePlotClick(plot: Parameters<typeof turnManager.selectPlot>[0]): void {
-  if (isAnimating) return;
+  console.log("Plot clicked:", plot);
+  if (isAnimating) {
+    console.log("Ignored - animating");
+    return;
+  }
   turnManager.selectPlot(plot);
 }
 
 function handleTileClick(): void {
-  if (isAnimating) return;
+  console.log("Tile clicked");
+  if (isAnimating) {
+    console.log("Ignored - animating");
+    return;
+  }
   turnManager.rotateTile();
 }
 
 function handleRowColClick(): void {
-  if (isAnimating) return;
+  console.log("Row/Col clicked");
+  if (isAnimating) {
+    console.log("Ignored - animating");
+    return;
+  }
   if (turnManager.canPush()) {
+    console.log("Executing push");
     executePushWithAnimation();
   }
 }
 
 function handleBackgroundClick(): void {
-  if (isAnimating) return;
+  console.log("Background clicked");
+  if (isAnimating) {
+    console.log("Ignored - animating");
+    return;
+  }
   turnManager.cancelPlacement();
 }
 
