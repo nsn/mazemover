@@ -1,6 +1,6 @@
 import { k } from "../../kaplayCtx";
 import { TileType, Direction, TurnPhase, type TileInstance, type PlotPosition } from "../types";
-import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_COLS, GRID_ROWS } from "../config";
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_COLS, GRID_ROWS, PREVIEW_X, PREVIEW_Y, COLORS } from "../config";
 import { TileFrames } from "../assets";
 
 function getTileFrame(type: TileType): number {
@@ -123,6 +123,112 @@ export function clearAllTiles(): void {
   k.destroyAll("gridTile");
   k.destroyAll("plot");
   k.destroyAll("currentTile");
+  k.destroyAll("previewTile");
+  k.destroyAll("previewLabel");
+  k.destroyAll("overlay");
+  k.destroyAll("highlightArea");
+}
+
+export function drawPreviewTile(
+  tile: TileInstance,
+  onClick: () => void
+): ReturnType<typeof k.add> {
+  k.add([
+    k.text("Next Tile", { size: 12 }),
+    k.pos(PREVIEW_X, PREVIEW_Y - 40),
+    k.anchor("center"),
+    k.color(200, 200, 200),
+    "previewLabel",
+  ]);
+
+  const frame = getTileFrame(tile.type);
+  const angle = orientationToAngle(tile.orientation);
+
+  const tileObj = k.add([
+    k.sprite("tiles", { frame }),
+    k.pos(PREVIEW_X, PREVIEW_Y),
+    k.anchor("center"),
+    k.rotate(angle),
+    k.scale(1.5),
+    k.area(),
+    "previewTile",
+  ]);
+
+  tileObj.onClick(onClick);
+  return tileObj;
+}
+
+export function drawGridWithOverlay(
+  grid: TileInstance[][],
+  selectedPlot: PlotPosition | null,
+  onRowColClick: () => void,
+  onBackgroundClick: () => void
+): void {
+  const gridWidth = GRID_COLS * TILE_SIZE;
+  const gridHeight = GRID_ROWS * TILE_SIZE;
+
+  if (selectedPlot) {
+    const isHorizontal = selectedPlot.col === -1 || selectedPlot.col === GRID_COLS;
+    const highlightRow = isHorizontal ? selectedPlot.row : -1;
+    const highlightCol = isHorizontal ? -1 : selectedPlot.col;
+
+    k.add([
+      k.rect(768, 432),
+      k.pos(0, 0),
+      k.color(...COLORS.overlay),
+      k.opacity(0.6),
+      k.area(),
+      "overlay",
+    ]).onClick(onBackgroundClick);
+
+    for (let r = 0; r < grid.length; r++) {
+      for (let c = 0; c < grid[r].length; c++) {
+        const tile = grid[r][c];
+        if (tile) {
+          const x = GRID_OFFSET_X + c * TILE_SIZE + TILE_SIZE / 2;
+          const y = GRID_OFFSET_Y + r * TILE_SIZE + TILE_SIZE / 2;
+          const isDarkened = (highlightRow !== -1 && r !== highlightRow) ||
+                            (highlightCol !== -1 && c !== highlightCol);
+          
+          const tileObj = drawTile(tile, x, y, "gridTile");
+          if (isDarkened) {
+            (tileObj as any).opacity = 0.3;
+          }
+        }
+      }
+    }
+
+    if (highlightRow !== -1) {
+      k.add([
+        k.rect(gridWidth, TILE_SIZE),
+        k.pos(GRID_OFFSET_X, GRID_OFFSET_Y + highlightRow * TILE_SIZE),
+        k.color(255, 255, 255),
+        k.opacity(0),
+        k.area(),
+        "highlightArea",
+      ]).onClick(onRowColClick);
+    } else if (highlightCol !== -1) {
+      k.add([
+        k.rect(TILE_SIZE, gridHeight),
+        k.pos(GRID_OFFSET_X + highlightCol * TILE_SIZE, GRID_OFFSET_Y),
+        k.color(255, 255, 255),
+        k.opacity(0),
+        k.area(),
+        "highlightArea",
+      ]).onClick(onRowColClick);
+    }
+  } else {
+    for (let r = 0; r < grid.length; r++) {
+      for (let c = 0; c < grid[r].length; c++) {
+        const tile = grid[r][c];
+        if (tile) {
+          const x = GRID_OFFSET_X + c * TILE_SIZE + TILE_SIZE / 2;
+          const y = GRID_OFFSET_Y + r * TILE_SIZE + TILE_SIZE / 2;
+          drawTile(tile, x, y, "gridTile");
+        }
+      }
+    }
+  }
 }
 
 export function drawCurrentTile(

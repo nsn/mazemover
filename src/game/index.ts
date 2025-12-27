@@ -1,7 +1,15 @@
 import { TurnManager } from "./systems/TurnManager";
 import { InputController } from "./systems/InputController";
-import { drawGrid, drawPlots, clearAllTiles, drawCurrentTile, animatePush } from "./render/GridRenderer";
+import {
+  drawPlots,
+  clearAllTiles,
+  drawCurrentTile,
+  animatePush,
+  drawPreviewTile,
+  drawGridWithOverlay,
+} from "./render/GridRenderer";
 import { loadAssets } from "./assets";
+import { TurnPhase } from "./types";
 
 let turnManager: TurnManager;
 let inputController: InputController;
@@ -13,7 +21,7 @@ export async function initGame(): Promise<void> {
   turnManager = new TurnManager(render);
   inputController = new InputController(turnManager);
   inputController.setOnPushRequested(() => {
-    if (!isAnimating) {
+    if (!isAnimating && turnManager.canPush()) {
       executePushWithAnimation();
     }
   });
@@ -23,17 +31,24 @@ export async function initGame(): Promise<void> {
 
 function handlePlotClick(plot: Parameters<typeof turnManager.selectPlot>[0]): void {
   if (isAnimating) return;
-
-  if (turnManager.isPushPhase() && turnManager.isSelectedPlot(plot)) {
-    executePushWithAnimation();
-  } else {
-    turnManager.selectPlot(plot);
-  }
+  turnManager.selectPlot(plot);
 }
 
 function handleTileClick(): void {
   if (isAnimating) return;
   turnManager.rotateTile();
+}
+
+function handleRowColClick(): void {
+  if (isAnimating) return;
+  if (turnManager.canPush()) {
+    executePushWithAnimation();
+  }
+}
+
+function handleBackgroundClick(): void {
+  if (isAnimating) return;
+  turnManager.cancelPlacement();
 }
 
 async function executePushWithAnimation(): Promise<void> {
@@ -61,17 +76,23 @@ function render(): void {
 
   const state = turnManager.getState();
 
-  drawGrid(state.grid);
-
-  const plots = turnManager.getPlots();
-  drawPlots(plots, state.selectedPlot, state.turnPhase, handlePlotClick);
-
-  if (state.currentTile && state.selectedPlot) {
-    drawCurrentTile(
-      state.currentTile,
+  if (state.turnPhase === TurnPhase.Place && state.currentTile) {
+    drawGridWithOverlay(state.grid, null, () => {}, () => {});
+    drawPreviewTile(state.currentTile, handleTileClick);
+    const plots = turnManager.getPlots();
+    drawPlots(plots, null, state.turnPhase, handlePlotClick);
+  } else if (state.turnPhase === TurnPhase.Push && state.currentTile && state.selectedPlot) {
+    drawGridWithOverlay(
+      state.grid,
       state.selectedPlot,
-      handleTileClick
+      handleRowColClick,
+      handleBackgroundClick
     );
+    drawCurrentTile(state.currentTile, state.selectedPlot, handleTileClick);
+    const plots = turnManager.getPlots();
+    drawPlots(plots, state.selectedPlot, state.turnPhase, handlePlotClick);
+  } else {
+    drawGridWithOverlay(state.grid, null, () => {}, () => {});
   }
 }
 

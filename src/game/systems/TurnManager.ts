@@ -96,4 +96,12 @@ export class TurnManager {
   isPushPhase(): boolean {
     return this.state.turnPhase === TurnPhase.Push;
   }
+
+  cancelPlacement(): void {
+    if (this.state.turnPhase === TurnPhase.Push) {
+      this.state.selectedPlot = null;
+      this.state.turnPhase = TurnPhase.Place;
+      this.onStateChange();
+    }
+  }
 }
