@@ -13,6 +13,8 @@ export async function loadAssets(): Promise<void> {
       plot: 5,
     },
   });
+
+  await k.loadFont("blocky", "/Everyday_Slight_Blocky.ttf");
 }
 
 export const TileFrames = {
