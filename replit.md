@@ -32,7 +32,15 @@ A turn-based 2D maze game using Kaplay.js and TypeScript. Single player vs AI (A
 - Plots positioned beside odd-indexed grid tiles (1, 3, 5...)
 - Turn phases: Draw -> Place -> Push
 
+## Controls
+- **Click plot** - Place tile on that plot (Place phase) or push tile into grid (Push phase)
+- **Click tile** - Rotate tile 90 degrees clockwise
+- **R key** - Rotate current tile
+- **Space key** - Execute push (when tile is placed)
+
 ## Recent Changes
+- 2025-12-27: Implemented Phase 3 (Input & Turn Management) with animation
+- 2025-12-27: Added red/green visual indicators for plot states
 - 2025-12-27: Implemented Phase 1 (Core data structures) and Phase 2 (Rendering)
-- 2025-12-27: Fixed plot positions to align with even-indexed tiles
+- 2025-12-27: Fixed plot positions to align with odd-indexed tiles
 - 2025-12-27: Added WebGL support check with fallback message
