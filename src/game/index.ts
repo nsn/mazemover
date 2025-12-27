@@ -118,9 +118,9 @@ function render(): void {
     drawPlots(plots, null, state.turnPhase);
   } else if (state.turnPhase === TurnPhase.Push && state.currentTile && state.selectedPlot) {
     drawGridWithOverlay(state.grid, state.selectedPlot);
-    drawCurrentTile(state.currentTile, state.selectedPlot);
     const plots = turnManager.getPlots();
     drawPlots(plots, state.selectedPlot, state.turnPhase);
+    drawCurrentTile(state.currentTile, state.selectedPlot);
   } else {
     drawGridWithOverlay(state.grid, null);
   }
