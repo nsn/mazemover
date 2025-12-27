@@ -18,11 +18,16 @@ A turn-based 2D maze game written in TypeScript using the Kaplay.js library. Sin
 | T | 3 | T-junction |
 | Cross | 4 | Intersection |
 
+## Setup Steps
+1. Delete everything in `src/` folder (clean slate)
+2. Create new file structure as outlined below
+
 ## File Structure
 
 ```
 src/
-├── main.ts                    # Bootstrap - initializes Kaplay and loads game
+├── main.ts                    # Entry point - imports kaplayCtx and starts game
+├── kaplayCtx.ts               # Initializes Kaplay and exports context as `k`
 ├── game/
 │   ├── index.ts               # GameApp entry point, scene setup
 │   ├── config.ts              # Grid dimensions, tile size (32px), door size (8px), constants
@@ -36,6 +41,17 @@ src/
 │   └── systems/
 │       ├── InputController.ts # Click handling for rotation, placement, pushing
 │       └── TurnManager.ts     # Turn state machine (draw → place → push)
+```
+
+### kaplayCtx.ts
+```typescript
+import kaplay from "kaplay";
+
+export const k = kaplay({
+  width: 800,
+  height: 600,
+  background: [0, 0, 0],
+});
 ```
 
 ## Core Types (types.ts)
