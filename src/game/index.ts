@@ -1,91 +1,80 @@
-import { TurnPhase, type PlotPosition, type GameState } from "./types";
-import { createGrid, getPlotPositions, pushTileIntoGrid } from "./core/Grid";
-import { drawRandomTile } from "./core/TileDeck";
-import { rotateTile } from "./core/Tile";
-import { drawGrid, drawPlots, clearAllTiles, drawCurrentTile } from "./render/GridRenderer";
-import { GRID_COLS, GRID_ROWS } from "./config";
+import { TurnManager } from "./systems/TurnManager";
+import { InputController } from "./systems/InputController";
+import { drawGrid, drawPlots, clearAllTiles, drawCurrentTile, animatePush } from "./render/GridRenderer";
 import { loadAssets } from "./assets";
 
-let gameState: GameState;
+let turnManager: TurnManager;
+let inputController: InputController;
+let isAnimating = false;
 
 export async function initGame(): Promise<void> {
   await loadAssets();
 
-  gameState = {
-    grid: createGrid(GRID_ROWS, GRID_COLS),
-    currentTile: null,
-    selectedPlot: null,
-    turnPhase: TurnPhase.Draw,
-  };
-
-  startNewTurn();
-  render();
-}
-
-function startNewTurn(): void {
-  gameState.currentTile = drawRandomTile();
-  gameState.selectedPlot = null;
-  gameState.turnPhase = TurnPhase.Place;
-}
-
-function handlePlotClick(plot: PlotPosition): void {
-  if (gameState.turnPhase === TurnPhase.Place) {
-    gameState.selectedPlot = plot;
-    gameState.turnPhase = TurnPhase.Push;
-    render();
-  } else if (gameState.turnPhase === TurnPhase.Push) {
-    if (gameState.selectedPlot &&
-        gameState.selectedPlot.row === plot.row &&
-        gameState.selectedPlot.col === plot.col) {
-      executePush();
-    } else {
-      gameState.selectedPlot = plot;
-      render();
+  turnManager = new TurnManager(render);
+  inputController = new InputController(turnManager);
+  inputController.setOnPushRequested(() => {
+    if (!isAnimating) {
+      executePushWithAnimation();
     }
+  });
+
+  turnManager.startNewTurn();
+}
+
+function handlePlotClick(plot: Parameters<typeof turnManager.selectPlot>[0]): void {
+  if (isAnimating) return;
+
+  if (turnManager.isPushPhase() && turnManager.isSelectedPlot(plot)) {
+    executePushWithAnimation();
+  } else {
+    turnManager.selectPlot(plot);
   }
 }
 
-function handleTileRotate(): void {
-  if (gameState.currentTile && gameState.turnPhase === TurnPhase.Push) {
-    gameState.currentTile = {
-      ...gameState.currentTile,
-      orientation: rotateTile(gameState.currentTile.orientation),
-    };
-    render();
-  }
+function handleTileClick(): void {
+  if (isAnimating) return;
+  turnManager.rotateTile();
 }
 
-function executePush(): void {
-  if (!gameState.currentTile || !gameState.selectedPlot) return;
+async function executePushWithAnimation(): Promise<void> {
+  const state = turnManager.getState();
+  if (!state.currentTile || !state.selectedPlot) return;
 
-  const { newGrid } = pushTileIntoGrid(
-    gameState.grid,
-    gameState.selectedPlot,
-    gameState.currentTile
+  isAnimating = true;
+  clearAllTiles();
+
+  await animatePush(
+    state.grid,
+    state.selectedPlot,
+    state.currentTile,
+    () => {
+      isAnimating = false;
+      turnManager.executePush();
+    }
   );
-
-  gameState.grid = newGrid;
-  startNewTurn();
-  render();
 }
 
 function render(): void {
+  if (isAnimating) return;
+
   clearAllTiles();
 
-  drawGrid(gameState.grid);
+  const state = turnManager.getState();
 
-  const plots = getPlotPositions(GRID_ROWS, GRID_COLS);
-  drawPlots(plots, gameState.selectedPlot, handlePlotClick);
+  drawGrid(state.grid);
 
-  if (gameState.currentTile && gameState.selectedPlot) {
+  const plots = turnManager.getPlots();
+  drawPlots(plots, state.selectedPlot, state.turnPhase, handlePlotClick);
+
+  if (state.currentTile && state.selectedPlot) {
     drawCurrentTile(
-      gameState.currentTile,
-      gameState.selectedPlot,
-      handleTileRotate
+      state.currentTile,
+      state.selectedPlot,
+      handleTileClick
     );
   }
 }
 
-export function getGameState(): GameState {
-  return gameState;
+export function getGameState() {
+  return turnManager.getState();
 }
