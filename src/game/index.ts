@@ -75,10 +75,37 @@ function handleClick(): void {
   }
 }
 
+function handleRightClick(): void {
+  if (isAnimating) return;
+
+  const pos = k.mousePos();
+
+  // Check current tile
+  const currentTiles = k.get("currentTile");
+  for (const tile of currentTiles) {
+    if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
+      console.log("Current tile right-click - rotating CCW");
+      turnManager.rotateTileCounterClockwise();
+      return;
+    }
+  }
+
+  // Check preview tile
+  const previewTiles = k.get("previewTile");
+  for (const tile of previewTiles) {
+    if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
+      console.log("Preview tile right-click - rotating CCW");
+      turnManager.rotateTileCounterClockwise();
+      return;
+    }
+  }
+}
+
 export async function initGame(): Promise<void> {
   await loadAssets();
 
   k.onMousePress(handleClick);
+  k.onMousePress("right", handleRightClick);
 
   turnManager = new TurnManager(render);
   inputController = new InputController(turnManager);

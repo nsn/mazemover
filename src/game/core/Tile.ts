@@ -33,6 +33,10 @@ export function rotateTile(orientation: Orientation): Orientation {
   return ((orientation + 1) % 4) as Orientation;
 }
 
+export function rotateTileCounterClockwise(orientation: Orientation): Orientation {
+  return ((orientation + 3) % 4) as Orientation;
+}
+
 export function getRandomTileType(): TileType {
   const types = Object.values(TileType);
   return types[Math.floor(Math.random() * types.length)];

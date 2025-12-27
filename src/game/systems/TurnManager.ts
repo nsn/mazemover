@@ -1,7 +1,7 @@
 import { TurnPhase, type PlotPosition, type GameState } from "../types";
 import { createGrid, getPlotPositions, pushTileIntoGrid } from "../core/Grid";
 import { drawRandomTile } from "../core/TileDeck";
-import { rotateTile } from "../core/Tile";
+import { rotateTile, rotateTileCounterClockwise } from "../core/Tile";
 import { GRID_COLS, GRID_ROWS } from "../config";
 
 export type TurnManagerCallback = () => void;
@@ -51,10 +51,20 @@ export class TurnManager {
   }
 
   rotateTile(): void {
-    if (this.state.currentTile && this.state.turnPhase === TurnPhase.Push) {
+    if (this.state.currentTile) {
       this.state.currentTile = {
         ...this.state.currentTile,
         orientation: rotateTile(this.state.currentTile.orientation),
+      };
+      this.onStateChange();
+    }
+  }
+
+  rotateTileCounterClockwise(): void {
+    if (this.state.currentTile) {
+      this.state.currentTile = {
+        ...this.state.currentTile,
+        orientation: rotateTileCounterClockwise(this.state.currentTile.orientation),
       };
       this.onStateChange();
     }
