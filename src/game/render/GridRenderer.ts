@@ -1,5 +1,5 @@
 import { k } from "../../kaplayCtx";
-import { Direction, type TileInstance, type PlotPosition } from "../types";
+import type { TileInstance, PlotPosition } from "../types";
 import { getTileEdges } from "../core/Tile";
 import { TILE_SIZE, DOOR_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, COLORS, GRID_COLS, GRID_ROWS } from "../config";
 
@@ -92,7 +92,7 @@ export function drawPlot(
   const plotObj = k.add([
     k.pos(x, y),
     k.rect(TILE_SIZE - 4, TILE_SIZE - 4),
-    k.color(...COLORS.plotBg),
+    k.color(...(isActive ? COLORS.arrowGreen : COLORS.plotBg)),
     k.anchor("center"),
     k.area(),
     "plot",
@@ -100,18 +100,10 @@ export function drawPlot(
 
   plotObj.onClick(onClick);
 
-  const arrowColor = isActive ? COLORS.arrowGreen : COLORS.arrowRed;
-  const arrowRotation = getArrowRotation(plot.direction);
-
   plotObj.add([
-    k.polygon([
-      k.vec2(0, -6),
-      k.vec2(6, 6),
-      k.vec2(-6, 6),
-    ]),
-    k.color(...arrowColor),
+    k.rect(TILE_SIZE - 12, TILE_SIZE - 12),
+    k.color(40, 40, 40),
     k.anchor("center"),
-    k.rotate(arrowRotation),
   ]);
 
   return plotObj;
@@ -136,15 +128,6 @@ function getPlotScreenPos(plot: PlotPosition): { x: number; y: number } {
   }
 
   return { x, y };
-}
-
-function getArrowRotation(direction: Direction): number {
-  switch (direction) {
-    case Direction.South: return 180;
-    case Direction.North: return 0;
-    case Direction.East: return 90;
-    case Direction.West: return 270;
-  }
 }
 
 export function drawPlots(
