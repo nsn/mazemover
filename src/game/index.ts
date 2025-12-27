@@ -104,7 +104,7 @@ function handleRightClick(): void {
 export async function initGame(): Promise<void> {
   await loadAssets();
 
-  k.onMousePress(handleClick);
+  k.onMousePress("left", handleClick);
   k.onMousePress("right", handleRightClick);
 
   turnManager = new TurnManager(render);
