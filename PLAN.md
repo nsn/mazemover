@@ -48,9 +48,11 @@ src/
 import kaplay from "kaplay";
 
 export const k = kaplay({
-  width: 800,
-  height: 600,
+  width: 768,
+  height: 432,
   background: [0, 0, 0],
+  global: false,
+  letterbox: true,
 });
 ```
 
