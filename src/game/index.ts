@@ -4,10 +4,13 @@ import { drawRandomTile } from "./core/TileDeck";
 import { rotateTile } from "./core/Tile";
 import { drawGrid, drawPlots, clearAllTiles, drawCurrentTile } from "./render/GridRenderer";
 import { GRID_COLS, GRID_ROWS } from "./config";
+import { loadAssets } from "./assets";
 
 let gameState: GameState;
 
-export function initGame(): void {
+export async function initGame(): Promise<void> {
+  await loadAssets();
+
   gameState = {
     grid: createGrid(GRID_ROWS, GRID_COLS),
     currentTile: null,

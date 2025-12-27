@@ -1,7 +1,21 @@
 import { k } from "../../kaplayCtx";
-import type { TileInstance, PlotPosition } from "../types";
-import { getTileEdges } from "../core/Tile";
-import { TILE_SIZE, DOOR_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, COLORS, GRID_COLS, GRID_ROWS } from "../config";
+import { TileType, type TileInstance, type PlotPosition } from "../types";
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_COLS, GRID_ROWS } from "../config";
+import { TileFrames } from "../assets";
+
+function getTileFrame(type: TileType): number {
+  switch (type) {
+    case TileType.CulDeSac: return TileFrames.CulDeSac;
+    case TileType.Straight: return TileFrames.Straight;
+    case TileType.L: return TileFrames.L;
+    case TileType.T: return TileFrames.T;
+    case TileType.Cross: return TileFrames.Cross;
+  }
+}
+
+function orientationToAngle(orientation: number): number {
+  return orientation * 90;
+}
 
 export function drawTile(
   tile: TileInstance,
@@ -9,62 +23,16 @@ export function drawTile(
   y: number,
   tag?: string
 ): ReturnType<typeof k.add> {
-  const edges = getTileEdges(tile.type, tile.orientation);
-  const halfTile = TILE_SIZE / 2;
+  const frame = getTileFrame(tile.type);
+  const angle = orientationToAngle(tile.orientation);
 
   const tileObj = k.add([
+    k.sprite("tiles", { frame }),
     k.pos(x, y),
     k.anchor("center"),
+    k.rotate(angle),
     tag ? tag : "tile",
   ]);
-
-  tileObj.add([
-    k.rect(TILE_SIZE, TILE_SIZE),
-    k.color(...COLORS.wall),
-    k.anchor("center"),
-  ]);
-
-  tileObj.add([
-    k.rect(TILE_SIZE - 8, TILE_SIZE - 8),
-    k.color(...COLORS.floor),
-    k.anchor("center"),
-  ]);
-
-  if (edges.north) {
-    tileObj.add([
-      k.rect(DOOR_SIZE, 8),
-      k.color(...COLORS.floor),
-      k.anchor("center"),
-      k.pos(0, -halfTile + 4),
-    ]);
-  }
-
-  if (edges.south) {
-    tileObj.add([
-      k.rect(DOOR_SIZE, 8),
-      k.color(...COLORS.floor),
-      k.anchor("center"),
-      k.pos(0, halfTile - 4),
-    ]);
-  }
-
-  if (edges.east) {
-    tileObj.add([
-      k.rect(8, DOOR_SIZE),
-      k.color(...COLORS.floor),
-      k.anchor("center"),
-      k.pos(halfTile - 4, 0),
-    ]);
-  }
-
-  if (edges.west) {
-    tileObj.add([
-      k.rect(8, DOOR_SIZE),
-      k.color(...COLORS.floor),
-      k.anchor("center"),
-      k.pos(-halfTile + 4, 0),
-    ]);
-  }
 
   return tileObj;
 }
@@ -90,21 +58,15 @@ export function drawPlot(
   const { x, y } = getPlotScreenPos(plot);
 
   const plotObj = k.add([
+    k.sprite("tiles", { frame: TileFrames.Plot }),
     k.pos(x, y),
-    k.rect(TILE_SIZE - 4, TILE_SIZE - 4),
-    k.color(...(isActive ? COLORS.arrowGreen : COLORS.plotBg)),
     k.anchor("center"),
     k.area(),
+    k.opacity(isActive ? 1 : 0.6),
     "plot",
   ]);
 
   plotObj.onClick(onClick);
-
-  plotObj.add([
-    k.rect(TILE_SIZE - 12, TILE_SIZE - 12),
-    k.color(40, 40, 40),
-    k.anchor("center"),
-  ]);
 
   return plotObj;
 }
@@ -155,17 +117,19 @@ export function drawCurrentTile(
   onClick: () => void
 ): ReturnType<typeof k.add> {
   const { x, y } = getPlotScreenPos(plot);
-  const tileObj = drawTile(tile, x, y, "currentTile");
-  
-  const clickArea = tileObj.add([
-    k.rect(TILE_SIZE, TILE_SIZE),
-    k.color(255, 255, 255),
-    k.opacity(0),
+  const frame = getTileFrame(tile.type);
+  const angle = orientationToAngle(tile.orientation);
+
+  const tileObj = k.add([
+    k.sprite("tiles", { frame }),
+    k.pos(x, y),
     k.anchor("center"),
+    k.rotate(angle),
     k.area(),
+    "currentTile",
   ]);
 
-  clickArea.onClick(onClick);
-  
+  tileObj.onClick(onClick);
+
   return tileObj;
 }
