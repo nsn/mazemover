@@ -18,14 +18,14 @@ export function getPlotPositions(rows: number, cols: number): PlotPosition[] {
   const plots: PlotPosition[] = [];
 
   for (let c = 0; c < cols; c++) {
-    if (c % 2 === 0) {
+    if (c % 2 === 1) {
       plots.push({ row: -1, col: c, direction: Direction.South });
       plots.push({ row: rows, col: c, direction: Direction.North });
     }
   }
 
   for (let r = 0; r < rows; r++) {
-    if (r % 2 === 0) {
+    if (r % 2 === 1) {
       plots.push({ row: r, col: -1, direction: Direction.East });
       plots.push({ row: r, col: cols, direction: Direction.West });
     }
