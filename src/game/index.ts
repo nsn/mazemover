@@ -10,22 +10,70 @@ import {
   drawGridWithOverlay,
 } from "./render/GridRenderer";
 import { loadAssets } from "./assets";
-import { TurnPhase } from "./types";
+import { TurnPhase, type PlotPosition } from "./types";
 
 let turnManager: TurnManager;
 let inputController: InputController;
 let isAnimating = false;
 
+function handleClick(): void {
+  if (isAnimating) {
+    console.log("Click ignored - animating");
+    return;
+  }
+
+  const pos = k.mousePos();
+  console.log("Click at:", pos);
+
+  const plots = k.get("plot");
+  for (const plot of plots) {
+    if ((plot as any).hasPoint && (plot as any).hasPoint(pos)) {
+      const plotData = (plot as any).plotData as PlotPosition;
+      console.log("Plot hit:", plotData);
+      turnManager.selectPlot(plotData);
+      return;
+    }
+  }
+
+  const previewTiles = k.get("previewTile");
+  for (const tile of previewTiles) {
+    if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
+      console.log("Preview tile hit - rotating");
+      turnManager.rotateTile();
+      return;
+    }
+  }
+
+  const currentTiles = k.get("currentTile");
+  for (const tile of currentTiles) {
+    if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
+      console.log("Current tile hit - rotating");
+      turnManager.rotateTile();
+      return;
+    }
+  }
+
+  const highlightAreas = k.get("highlightArea");
+  for (const area of highlightAreas) {
+    if ((area as any).hasPoint && (area as any).hasPoint(pos)) {
+      console.log("Highlight area hit - pushing");
+      if (turnManager.canPush()) {
+        executePushWithAnimation();
+      }
+      return;
+    }
+  }
+
+  if (turnManager.isPushPhase()) {
+    console.log("Background hit - canceling");
+    turnManager.cancelPlacement();
+  }
+}
+
 export async function initGame(): Promise<void> {
   await loadAssets();
 
-  k.onMousePress(() => {
-    console.log("Global mouse press at:", k.mousePos());
-  });
-
-  k.onTouchStart(() => {
-    console.log("Touch start detected");
-  });
+  k.onMousePress(handleClick);
 
   turnManager = new TurnManager(render);
   inputController = new InputController(turnManager);
@@ -36,45 +84,6 @@ export async function initGame(): Promise<void> {
   });
 
   turnManager.startNewTurn();
-}
-
-function handlePlotClick(plot: Parameters<typeof turnManager.selectPlot>[0]): void {
-  console.log("Plot clicked:", plot);
-  if (isAnimating) {
-    console.log("Ignored - animating");
-    return;
-  }
-  turnManager.selectPlot(plot);
-}
-
-function handleTileClick(): void {
-  console.log("Tile clicked");
-  if (isAnimating) {
-    console.log("Ignored - animating");
-    return;
-  }
-  turnManager.rotateTile();
-}
-
-function handleRowColClick(): void {
-  console.log("Row/Col clicked");
-  if (isAnimating) {
-    console.log("Ignored - animating");
-    return;
-  }
-  if (turnManager.canPush()) {
-    console.log("Executing push");
-    executePushWithAnimation();
-  }
-}
-
-function handleBackgroundClick(): void {
-  console.log("Background clicked");
-  if (isAnimating) {
-    console.log("Ignored - animating");
-    return;
-  }
-  turnManager.cancelPlacement();
 }
 
 async function executePushWithAnimation(): Promise<void> {
@@ -103,22 +112,17 @@ function render(): void {
   const state = turnManager.getState();
 
   if (state.turnPhase === TurnPhase.Place && state.currentTile) {
-    drawGridWithOverlay(state.grid, null, () => {}, () => {});
-    drawPreviewTile(state.currentTile, handleTileClick);
+    drawGridWithOverlay(state.grid, null);
+    drawPreviewTile(state.currentTile);
     const plots = turnManager.getPlots();
-    drawPlots(plots, null, state.turnPhase, handlePlotClick);
+    drawPlots(plots, null, state.turnPhase);
   } else if (state.turnPhase === TurnPhase.Push && state.currentTile && state.selectedPlot) {
-    drawGridWithOverlay(
-      state.grid,
-      state.selectedPlot,
-      handleRowColClick,
-      handleBackgroundClick
-    );
-    drawCurrentTile(state.currentTile, state.selectedPlot, handleTileClick);
+    drawGridWithOverlay(state.grid, state.selectedPlot);
+    drawCurrentTile(state.currentTile, state.selectedPlot);
     const plots = turnManager.getPlots();
-    drawPlots(plots, state.selectedPlot, state.turnPhase, handlePlotClick);
+    drawPlots(plots, state.selectedPlot, state.turnPhase);
   } else {
-    drawGridWithOverlay(state.grid, null, () => {}, () => {});
+    drawGridWithOverlay(state.grid, null);
   }
 }
 

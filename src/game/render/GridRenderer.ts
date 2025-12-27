@@ -78,8 +78,7 @@ export function drawGrid(grid: TileInstance[][]): void {
 export function drawPlot(
   plot: PlotPosition,
   isSelected: boolean,
-  turnPhase: TurnPhase,
-  onClick: () => void
+  turnPhase: TurnPhase
 ): ReturnType<typeof k.add> {
   const { x, y } = getPlotScreenPos(plot);
   const angle = directionToAngle(plot.direction);
@@ -98,9 +97,8 @@ export function drawPlot(
     k.color(tintColor),
     k.opacity(isSelected ? 1 : 0.7),
     "plot",
+    { plotData: plot },
   ]);
-
-  plotObj.onClick(onClick);
 
   return plotObj;
 }
@@ -108,14 +106,13 @@ export function drawPlot(
 export function drawPlots(
   plots: PlotPosition[],
   selectedPlot: PlotPosition | null,
-  turnPhase: TurnPhase,
-  onPlotClick: (plot: PlotPosition) => void
+  turnPhase: TurnPhase
 ): void {
   for (const plot of plots) {
     const isSelected = selectedPlot !== null &&
       selectedPlot.row === plot.row &&
       selectedPlot.col === plot.col;
-    drawPlot(plot, isSelected, turnPhase, () => onPlotClick(plot));
+    drawPlot(plot, isSelected, turnPhase);
   }
 }
 
@@ -130,8 +127,7 @@ export function clearAllTiles(): void {
 }
 
 export function drawPreviewTile(
-  tile: TileInstance,
-  onClick: () => void
+  tile: TileInstance
 ): ReturnType<typeof k.add> {
   k.add([
     k.text("Next Tile", { size: 12 }),
@@ -154,15 +150,12 @@ export function drawPreviewTile(
     "previewTile",
   ]);
 
-  tileObj.onClick(onClick);
   return tileObj;
 }
 
 export function drawGridWithOverlay(
   grid: TileInstance[][],
-  selectedPlot: PlotPosition | null,
-  onRowColClick: () => void,
-  onBackgroundClick: () => void
+  selectedPlot: PlotPosition | null
 ): void {
   const gridWidth = GRID_COLS * TILE_SIZE;
   const gridHeight = GRID_ROWS * TILE_SIZE;
@@ -177,9 +170,8 @@ export function drawGridWithOverlay(
       k.pos(0, 0),
       k.color(...COLORS.overlay),
       k.opacity(0.6),
-      k.area(),
       "overlay",
-    ]).onClick(onBackgroundClick);
+    ]);
 
     for (let r = 0; r < grid.length; r++) {
       for (let c = 0; c < grid[r].length; c++) {
@@ -206,7 +198,7 @@ export function drawGridWithOverlay(
         k.opacity(0),
         k.area(),
         "highlightArea",
-      ]).onClick(onRowColClick);
+      ]);
     } else if (highlightCol !== -1) {
       k.add([
         k.rect(TILE_SIZE, gridHeight),
@@ -215,7 +207,7 @@ export function drawGridWithOverlay(
         k.opacity(0),
         k.area(),
         "highlightArea",
-      ]).onClick(onRowColClick);
+      ]);
     }
   } else {
     for (let r = 0; r < grid.length; r++) {
@@ -233,8 +225,7 @@ export function drawGridWithOverlay(
 
 export function drawCurrentTile(
   tile: TileInstance,
-  plot: PlotPosition,
-  onClick: () => void
+  plot: PlotPosition
 ): ReturnType<typeof k.add> {
   const { x, y } = getPlotScreenPos(plot);
   const frame = getTileFrame(tile.type);
@@ -248,8 +239,6 @@ export function drawCurrentTile(
     k.area(),
     "currentTile",
   ]);
-
-  tileObj.onClick(onClick);
 
   return tileObj;
 }
