@@ -25,25 +25,7 @@ function handleClick(): void {
   const pos = k.mousePos();
   console.log("Click at:", pos);
 
-  const plots = k.get("plot");
-  for (const plot of plots) {
-    if ((plot as any).hasPoint && (plot as any).hasPoint(pos)) {
-      const plotData = (plot as any).plotData as PlotPosition;
-      console.log("Plot hit:", plotData);
-      turnManager.selectPlot(plotData);
-      return;
-    }
-  }
-
-  const previewTiles = k.get("previewTile");
-  for (const tile of previewTiles) {
-    if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
-      console.log("Preview tile hit - rotating");
-      turnManager.rotateTile();
-      return;
-    }
-  }
-
+  // Check current tile FIRST (it's drawn on top of the plot)
   const currentTiles = k.get("currentTile");
   for (const tile of currentTiles) {
     if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
@@ -53,6 +35,17 @@ function handleClick(): void {
     }
   }
 
+  // Check preview tile
+  const previewTiles = k.get("previewTile");
+  for (const tile of previewTiles) {
+    if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
+      console.log("Preview tile hit - rotating");
+      turnManager.rotateTile();
+      return;
+    }
+  }
+
+  // Check highlight areas (for push action)
   const highlightAreas = k.get("highlightArea");
   for (const area of highlightAreas) {
     if ((area as any).hasPoint && (area as any).hasPoint(pos)) {
@@ -64,6 +57,18 @@ function handleClick(): void {
     }
   }
 
+  // Check plots
+  const plots = k.get("plot");
+  for (const plot of plots) {
+    if ((plot as any).hasPoint && (plot as any).hasPoint(pos)) {
+      const plotData = (plot as any).plotData as PlotPosition;
+      console.log("Plot hit:", plotData);
+      turnManager.selectPlot(plotData);
+      return;
+    }
+  }
+
+  // Background click during Push phase cancels placement
   if (turnManager.isPushPhase()) {
     console.log("Background hit - canceling");
     turnManager.cancelPlacement();
