@@ -130,7 +130,7 @@ export function drawPreviewTile(
   tile: TileInstance
 ): ReturnType<typeof k.add> {
   k.add([
-    k.text("Next Tile", { size: 12 }),
+    k.text("Next Tile", { font: "blocky", size: 5 }),
     k.pos(PREVIEW_X, PREVIEW_Y - 40),
     k.anchor("center"),
     k.color(200, 200, 200),

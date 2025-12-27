@@ -32,4 +32,5 @@ export const k = kaplay({
   global: false,
   letterbox: true,
   touchToMouse: true,
+  crisp: true,
 });
