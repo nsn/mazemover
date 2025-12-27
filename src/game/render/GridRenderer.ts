@@ -1,5 +1,5 @@
 import { k } from "../../kaplayCtx";
-import { TileType, type TileInstance, type PlotPosition } from "../types";
+import { TileType, Direction, type TileInstance, type PlotPosition } from "../types";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_COLS, GRID_ROWS } from "../config";
 import { TileFrames } from "../assets";
 
@@ -50,17 +50,23 @@ export function drawGrid(grid: TileInstance[][]): void {
   }
 }
 
+function directionToAngle(direction: Direction): number {
+  return direction * 90;
+}
+
 export function drawPlot(
   plot: PlotPosition,
   isActive: boolean,
   onClick: () => void
 ): ReturnType<typeof k.add> {
   const { x, y } = getPlotScreenPos(plot);
+  const angle = directionToAngle(plot.direction);
 
   const plotObj = k.add([
     k.sprite("tiles", { frame: TileFrames.Plot }),
     k.pos(x, y),
     k.anchor("center"),
+    k.rotate(angle),
     k.area(),
     k.opacity(isActive ? 1 : 0.6),
     "plot",
