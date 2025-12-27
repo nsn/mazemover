@@ -33,12 +33,16 @@ A turn-based 2D maze game using Kaplay.js and TypeScript. Single player vs AI (A
 - Turn phases: Draw -> Place -> Push
 
 ## Controls
-- **Click plot** - Place tile on that plot (Place phase) or push tile into grid (Push phase)
-- **Click tile** - Rotate tile 90 degrees clockwise
+- **Click preview tile** - Rotate tile 90 degrees clockwise (Place phase)
+- **Click plot** - Place tile on that plot
+- **Click placed tile** - Rotate tile 90 degrees clockwise (Push phase)
+- **Click highlighted row/column** - Push tile into grid
+- **Click darkened area** - Cancel placement, return to preview
 - **R key** - Rotate current tile
 - **Space key** - Execute push (when tile is placed)
 
 ## Recent Changes
+- 2025-12-27: Enhanced UI with tile preview area and row/column highlighting
 - 2025-12-27: Implemented Phase 3 (Input & Turn Management) with animation
 - 2025-12-27: Added red/green visual indicators for plot states
 - 2025-12-27: Implemented Phase 1 (Core data structures) and Phase 2 (Rendering)
