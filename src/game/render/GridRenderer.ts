@@ -1,5 +1,5 @@
 import { k } from "../../kaplayCtx";
-import { TileType, Direction, TurnPhase, type TileInstance, type PlotPosition, type MapObject } from "../types";
+import { TileType, Direction, PlayerPhase, type TileInstance, type PlotPosition, type MapObject } from "../types";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_COLS, GRID_ROWS, PREVIEW_X, PREVIEW_Y, COLORS } from "../config";
 import { TileFrames } from "../assets";
 
@@ -78,12 +78,12 @@ export function drawGrid(grid: TileInstance[][]): void {
 export function drawPlot(
   plot: PlotPosition,
   isSelected: boolean,
-  turnPhase: TurnPhase
+  playerPhase: PlayerPhase
 ): ReturnType<typeof k.add> {
   const { x, y } = getPlotScreenPos(plot);
   const angle = directionToAngle(plot.direction);
 
-  const isGreen = isSelected && turnPhase === TurnPhase.TilePlacement;
+  const isGreen = isSelected && playerPhase === PlayerPhase.TilePlacement;
   const tintColor = isGreen
     ? k.rgb(100, 255, 100)
     : k.rgb(255, 100, 100);
@@ -106,13 +106,13 @@ export function drawPlot(
 export function drawPlots(
   plots: PlotPosition[],
   selectedPlot: PlotPosition | null,
-  turnPhase: TurnPhase
+  playerPhase: PlayerPhase
 ): void {
   for (const plot of plots) {
     const isSelected = selectedPlot !== null &&
       selectedPlot.row === plot.row &&
       selectedPlot.col === plot.col;
-    drawPlot(plot, isSelected, turnPhase);
+    drawPlot(plot, isSelected, playerPhase);
   }
 }
 

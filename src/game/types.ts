@@ -42,21 +42,28 @@ export interface PlotPosition {
   direction: Direction;
 }
 
-export const TurnPhase = {
-  PlayerTurn: "PlayerTurn",
-  TilePlacement: "TilePlacement",
-  EnemyTurn: "EnemyTurn",
+export const TurnOwner = {
+  Player: "Player",
+  Enemy: "Enemy",
 } as const;
 
-export type TurnPhase = (typeof TurnPhase)[keyof typeof TurnPhase];
+export type TurnOwner = (typeof TurnOwner)[keyof typeof TurnOwner];
+
+export const PlayerPhase = {
+  AwaitingAction: "AwaitingAction",
+  TilePlacement: "TilePlacement",
+  Moving: "Moving",
+} as const;
+
+export type PlayerPhase = (typeof PlayerPhase)[keyof typeof PlayerPhase];
 
 export interface GameState {
   grid: TileInstance[][];
   currentTile: TileInstance | null;
   selectedPlot: PlotPosition | null;
-  turnPhase: TurnPhase;
+  turnOwner: TurnOwner;
+  playerPhase: PlayerPhase;
   hasPlacedTile: boolean;
-  hasMovedPlayer: boolean;
 }
 
 export const ObjectType = {

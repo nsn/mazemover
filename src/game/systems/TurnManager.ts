@@ -1,4 +1,4 @@
-import { TurnPhase, type PlotPosition, type GameState, type MapObject } from "../types";
+import { TurnOwner, PlayerPhase, type PlotPosition, type GameState, type MapObject } from "../types";
 import { createGrid, getPlotPositions, pushTileIntoGrid } from "../core/Grid";
 import { TileDeck } from "../core/TileDeck";
 import { rotateTile, rotateTileCounterClockwise } from "../core/Tile";
@@ -23,9 +23,9 @@ export class TurnManager {
       grid: createGrid(GRID_ROWS, GRID_COLS, this.deck),
       currentTile: null,
       selectedPlot: null,
-      turnPhase: TurnPhase.PlayerTurn,
+      turnOwner: TurnOwner.Player,
+      playerPhase: PlayerPhase.AwaitingAction,
       hasPlacedTile: false,
-      hasMovedPlayer: false,
     };
   }
 
@@ -45,41 +45,69 @@ export class TurnManager {
     return getPlotPositions(GRID_ROWS, GRID_COLS);
   }
 
-  startNewTurn(): void {
-    console.log("[TurnManager] startNewTurn");
+  // === Turn Control ===
+
+  startPlayerTurn(): void {
+    console.log("[TurnManager] startPlayerTurn");
     this.objectManager.resetAllTurnMovement();
     this.state.currentTile = this.deck.draw();
     this.state.selectedPlot = null;
-    this.state.turnPhase = TurnPhase.PlayerTurn;
+    this.state.turnOwner = TurnOwner.Player;
+    this.state.playerPhase = PlayerPhase.AwaitingAction;
     this.state.hasPlacedTile = false;
-    this.state.hasMovedPlayer = false;
-    console.log("[TurnManager] New turn started - tile:", this.state.currentTile?.type);
+    console.log("[TurnManager] Player turn started - tile:", this.state.currentTile?.type);
     this.onStateChange();
   }
 
+  startEnemyTurn(): void {
+    console.log("[TurnManager] startEnemyTurn");
+    this.state.turnOwner = TurnOwner.Enemy;
+    this.onStateChange();
+  }
+
+  // === State Queries ===
+
   isPlayerTurn(): boolean {
-    return this.state.turnPhase === TurnPhase.PlayerTurn;
+    return this.state.turnOwner === TurnOwner.Player;
+  }
+
+  isEnemyTurn(): boolean {
+    return this.state.turnOwner === TurnOwner.Enemy;
+  }
+
+  isAwaitingAction(): boolean {
+    return this.isPlayerTurn() && this.state.playerPhase === PlayerPhase.AwaitingAction;
   }
 
   isTilePlacement(): boolean {
-    return this.state.turnPhase === TurnPhase.TilePlacement;
+    return this.isPlayerTurn() && this.state.playerPhase === PlayerPhase.TilePlacement;
+  }
+
+  isMoving(): boolean {
+    return this.isPlayerTurn() && this.state.playerPhase === PlayerPhase.Moving;
   }
 
   canPlaceTile(): boolean {
-    return !this.state.hasPlacedTile && this.state.currentTile !== null;
+    return this.isPlayerTurn() && !this.state.hasPlacedTile && this.state.currentTile !== null;
   }
+
+  canMove(): boolean {
+    return this.isPlayerTurn() && this.state.playerPhase !== PlayerPhase.Moving;
+  }
+
+  // === Tile Placement ===
 
   enterTilePlacement(): void {
     console.log("[TurnManager] enterTilePlacement - canPlace:", this.canPlaceTile());
     if (this.canPlaceTile()) {
-      this.state.turnPhase = TurnPhase.TilePlacement;
+      this.state.playerPhase = PlayerPhase.TilePlacement;
       this.onStateChange();
     }
   }
 
   selectPlot(plot: PlotPosition): void {
-    console.log("[TurnManager] selectPlot:", plot, "phase:", this.state.turnPhase);
-    if (this.state.turnPhase === TurnPhase.TilePlacement) {
+    console.log("[TurnManager] selectPlot:", plot, "phase:", this.state.playerPhase);
+    if (this.isTilePlacement()) {
       if (this.state.selectedPlot && this.isSelectedPlot(plot)) {
         this.executePush();
       } else {
@@ -126,8 +154,8 @@ export class TurnManager {
     this.state.currentTile = null;
     this.state.selectedPlot = null;
     this.state.hasPlacedTile = true;
-    this.state.turnPhase = TurnPhase.PlayerTurn;
-    console.log("[TurnManager] Push complete - hasPlacedTile:", this.state.hasPlacedTile, "phase:", this.state.turnPhase);
+    this.state.playerPhase = PlayerPhase.AwaitingAction;
+    console.log("[TurnManager] Push complete - returning to AwaitingAction");
     this.onStateChange();
   }
 
@@ -141,33 +169,42 @@ export class TurnManager {
 
   canPush(): boolean {
     return (
-      this.state.turnPhase === TurnPhase.TilePlacement &&
+      this.isTilePlacement() &&
       this.state.selectedPlot !== null &&
       this.state.currentTile !== null
     );
   }
 
   cancelPlacement(): void {
-    console.log("[TurnManager] cancelPlacement - phase:", this.state.turnPhase);
-    if (this.state.turnPhase === TurnPhase.TilePlacement) {
+    console.log("[TurnManager] cancelPlacement - phase:", this.state.playerPhase);
+    if (this.isTilePlacement()) {
       this.state.selectedPlot = null;
-      this.state.turnPhase = TurnPhase.PlayerTurn;
+      this.state.playerPhase = PlayerPhase.AwaitingAction;
       this.onStateChange();
     }
   }
 
-  markPlayerMoved(): void {
-    console.log("[TurnManager] markPlayerMoved");
-    this.state.hasMovedPlayer = true;
+  // === Movement ===
+
+  startMoving(): void {
+    if (this.canMove()) {
+      console.log("[TurnManager] startMoving");
+      this.state.playerPhase = PlayerPhase.Moving;
+      this.onStateChange();
+    }
   }
 
-  hasPlayerMoved(): boolean {
-    return this.state.hasMovedPlayer;
+  completeMove(): void {
+    console.log("[TurnManager] completeMove - yielding to enemies");
+    this.state.playerPhase = PlayerPhase.AwaitingAction;
+    this.startEnemyTurn();
   }
 
-  startEnemyTurn(): void {
-    console.log("[TurnManager] startEnemyTurn");
-    this.state.turnPhase = TurnPhase.EnemyTurn;
-    this.onStateChange();
+  cancelMoving(): void {
+    if (this.isMoving()) {
+      console.log("[TurnManager] cancelMoving");
+      this.state.playerPhase = PlayerPhase.AwaitingAction;
+      this.onStateChange();
+    }
   }
 }

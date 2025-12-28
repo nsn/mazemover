@@ -12,7 +12,7 @@ import {
   drawReachableTiles,
 } from "./render/GridRenderer";
 import { loadAssets } from "./assets";
-import { TurnPhase, type PlotPosition, type GridPosition, type MapObject } from "./types";
+import { TurnOwner, PlayerPhase, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y } from "./config";
 import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
@@ -196,11 +196,13 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
   k.destroyAll("movingPlayer");
   turnManager.getObjectManager().spendMovement(player, path.length - 1);
-  turnManager.markPlayerMoved();
 
   isAnimating = false;
   exitMovementMode();
-  render();
+  
+  turnManager.completeMove();
+  await executeEnemyTurns();
+  turnManager.startPlayerTurn();
 }
 
 async function executeEnemyTurns(): Promise<void> {
@@ -302,31 +304,12 @@ function handleRightClick(): void {
   }
 }
 
-async function endPlayerTurn(): Promise<void> {
-  if (isAnimating) return;
-  
-  const phase = turnManager.getState().turnPhase;
-  if (phase !== TurnPhase.PlayerTurn && phase !== TurnPhase.TilePlacement) return;
-
-  if (phase === TurnPhase.TilePlacement) {
-    turnManager.cancelPlacement();
-  }
-
-  console.log("Ending player turn - enemies will move");
-  exitMovementMode();
-  turnManager.startEnemyTurn();
-  await executeEnemyTurns();
-  console.log("Starting new turn");
-  turnManager.startNewTurn();
-}
 
 export async function initGame(): Promise<void> {
   await loadAssets();
 
   k.onMousePress("left", handleClick);
   k.onMousePress("right", handleRightClick);
-  k.onKeyPress("enter", () => endPlayerTurn());
-  k.onKeyPress("e", () => endPlayerTurn());
 
   turnManager = new TurnManager(render);
   inputController = new InputController(turnManager);
@@ -342,7 +325,7 @@ export async function initGame(): Promise<void> {
   objManager.createYellowEnemy({ row: 0, col: 6 });
   objManager.createGreenEnemy({ row: 6, col: 0 });
 
-  turnManager.startNewTurn();
+  turnManager.startPlayerTurn();
 }
 
 async function executePushWithAnimation(): Promise<void> {
@@ -374,32 +357,31 @@ function render(): void {
   const state = turnManager.getState();
   const mapObjects = turnManager.getMapObjects();
   
-  if (state.turnPhase === TurnPhase.PlayerTurn) {
-    drawGridWithOverlay(state.grid, null);
-    if (isMovementMode) {
-      drawReachableTiles(reachableTiles);
-    }
-    drawMapObjects(mapObjects);
-    if (state.currentTile && !state.hasPlacedTile) {
-      drawPreviewTile(state.currentTile);
+  if (state.turnOwner === TurnOwner.Player) {
+    if (state.playerPhase === PlayerPhase.TilePlacement && state.currentTile) {
+      drawGridWithOverlay(state.grid, state.selectedPlot);
+      drawMapObjects(mapObjects);
       const plots = turnManager.getPlots();
-      drawPlots(plots, null, state.turnPhase);
-    }
-  } else if (state.turnPhase === TurnPhase.TilePlacement && state.currentTile) {
-    drawGridWithOverlay(state.grid, state.selectedPlot);
-    drawMapObjects(mapObjects);
-    const plots = turnManager.getPlots();
-    drawPlots(plots, state.selectedPlot, state.turnPhase);
-    if (state.selectedPlot) {
-      drawCurrentTile(state.currentTile, state.selectedPlot);
+      drawPlots(plots, state.selectedPlot, state.playerPhase);
+      if (state.selectedPlot) {
+        drawCurrentTile(state.currentTile, state.selectedPlot);
+      } else {
+        drawPreviewTile(state.currentTile);
+      }
     } else {
-      drawPreviewTile(state.currentTile);
+      drawGridWithOverlay(state.grid, null);
+      if (isMovementMode) {
+        drawReachableTiles(reachableTiles);
+      }
+      drawMapObjects(mapObjects);
+      if (state.currentTile && !state.hasPlacedTile) {
+        drawPreviewTile(state.currentTile);
+        const plots = turnManager.getPlots();
+        drawPlots(plots, null, state.playerPhase);
+      }
     }
   } else {
     drawGridWithOverlay(state.grid, null);
-    if (isMovementMode) {
-      drawReachableTiles(reachableTiles);
-    }
     drawMapObjects(mapObjects);
   }
 }
