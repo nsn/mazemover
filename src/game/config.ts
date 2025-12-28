@@ -21,3 +21,11 @@ export const COLORS = {
   plotBg: [40, 40, 40] as [number, number, number],
   overlay: [0, 0, 0] as [number, number, number],
 };
+
+export const TILE_WEIGHTS = {
+  CulDeSac: 1,
+  Straight: 1,
+  L: 1,
+  T: 1,
+  Cross: 1,
+} as const;

@@ -1,13 +1,6 @@
 import { TileType, type TileInstance } from "../types";
 import { getRandomOrientation } from "./Tile";
-
-const TILE_WEIGHTS: Record<TileType, number> = {
-  [TileType.CulDeSac]: 1,
-  [TileType.Straight]: 2,
-  [TileType.L]: 3,
-  [TileType.T]: 3,
-  [TileType.Cross]: 1,
-};
+import { TILE_WEIGHTS } from "../config";
 
 function createRandomTileInstance(): TileInstance {
   const entries = Object.entries(TILE_WEIGHTS) as [TileType, number][];
