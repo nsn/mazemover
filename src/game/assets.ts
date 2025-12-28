@@ -14,11 +14,9 @@ export async function loadAssets(): Promise<void> {
     },
   });
 
-  await k.loadBitmapFont("bblocky", "/blocky.png", 5, 7, {
-    chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZ      abcdefghijklmnopqrstuvwxyz     01234567890       !"#$%&'()*+,-./:;<=>?[]\\^_\`{}|~@∎`,
+  await k.loadBitmapFont("blocky", "/5x5-Blocky.png", 5, 5, {
+    chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 01234567890 !"#$%&'()*+,-./:;<=>?[]\\^_\`{}|~@∎ÄÁÀÂÅÃÇçäáàâåãÑñÏÍÌÎÜÚÙÛïíìîüúùûÖÓÒÔÕŸÝỲöóòôõÿýỳËÉÈÊëéèêÆæßðÐþÞ¿¡Œœ`,
   });
-
-  await k.loadFont("blocky", "/blocky.ttf", {size: 9} );
 }
 
 export const TileFrames = {

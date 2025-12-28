@@ -1,13 +1,37 @@
-import { Direction, type TileInstance, type PlotPosition } from "../types";
+import { Direction, TileType, type TileInstance, type PlotPosition, type Orientation } from "../types";
 import { GRID_COLS, GRID_ROWS, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE } from "../config";
 import { TileDeck } from "./TileDeck";
+
+function getCornerTile(row: number, col: number, rows: number, cols: number): TileInstance | null {
+  const isTopLeft = row === 0 && col === 0;
+  const isTopRight = row === 0 && col === cols - 1;
+  const isBottomLeft = row === rows - 1 && col === 0;
+  const isBottomRight = row === rows - 1 && col === cols - 1;
+
+  if (isTopLeft) {
+    return { type: TileType.L, orientation: 1 as Orientation };
+  } else if (isTopRight) {
+    return { type: TileType.L, orientation: 2 as Orientation };
+  } else if (isBottomLeft) {
+    return { type: TileType.L, orientation: 0 as Orientation };
+  } else if (isBottomRight) {
+    return { type: TileType.L, orientation: 3 as Orientation };
+  }
+
+  return null;
+}
 
 export function createGrid(rows: number, cols: number, deck: TileDeck): TileInstance[][] {
   const grid: TileInstance[][] = [];
   for (let r = 0; r < rows; r++) {
     const row: TileInstance[] = [];
     for (let c = 0; c < cols; c++) {
-      row.push(deck.draw());
+      const cornerTile = getCornerTile(r, c, rows, cols);
+      if (cornerTile) {
+        row.push(cornerTile);
+      } else {
+        row.push(deck.draw());
+      }
     }
     grid.push(row);
   }
