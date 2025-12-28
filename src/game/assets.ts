@@ -14,7 +14,9 @@ export async function loadAssets(): Promise<void> {
     },
   });
 
-  await k.loadFont("blocky", "/Everyday_Slight_Blocky.ttf");
+  await k.loadBitmapFont("blocky", "/5x5-Blocky.png", 5, 5, {
+    chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 01234567890 !"#$%&'()*+,-./:;<=>?[]\\^_\`{}|~@∎ÄÁÀÂÅÃÇçäáàâåãÑñÏÍÌÎÜÚÙÛïíìîüúùûÖÓÒÔÕŸÝỲöóòôõÿýỳËÉÈÊëéèêÆæßðÐþÞ¿¡Œœ`,
+  });
 }
 
 export const TileFrames = {
