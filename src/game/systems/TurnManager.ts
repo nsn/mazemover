@@ -46,12 +46,14 @@ export class TurnManager {
   }
 
   startNewTurn(): void {
+    console.log("[TurnManager] startNewTurn");
     this.objectManager.resetAllTurnMovement();
     this.state.currentTile = this.deck.draw();
     this.state.selectedPlot = null;
     this.state.turnPhase = TurnPhase.PlayerTurn;
     this.state.hasPlacedTile = false;
     this.state.hasMovedPlayer = false;
+    console.log("[TurnManager] New turn started - tile:", this.state.currentTile?.type);
     this.onStateChange();
   }
 
@@ -68,6 +70,7 @@ export class TurnManager {
   }
 
   enterTilePlacement(): void {
+    console.log("[TurnManager] enterTilePlacement - canPlace:", this.canPlaceTile());
     if (this.canPlaceTile()) {
       this.state.turnPhase = TurnPhase.TilePlacement;
       this.onStateChange();
@@ -75,6 +78,7 @@ export class TurnManager {
   }
 
   selectPlot(plot: PlotPosition): void {
+    console.log("[TurnManager] selectPlot:", plot, "phase:", this.state.turnPhase);
     if (this.state.turnPhase === TurnPhase.TilePlacement) {
       if (this.state.selectedPlot && this.isSelectedPlot(plot)) {
         this.executePush();
@@ -106,6 +110,7 @@ export class TurnManager {
   }
 
   executePush(): void {
+    console.log("[TurnManager] executePush - tile:", this.state.currentTile?.type, "plot:", this.state.selectedPlot);
     if (!this.state.currentTile || !this.state.selectedPlot) return;
 
     this.objectManager.handlePush(this.state.selectedPlot);
@@ -122,6 +127,7 @@ export class TurnManager {
     this.state.selectedPlot = null;
     this.state.hasPlacedTile = true;
     this.state.turnPhase = TurnPhase.PlayerTurn;
+    console.log("[TurnManager] Push complete - hasPlacedTile:", this.state.hasPlacedTile, "phase:", this.state.turnPhase);
     this.onStateChange();
   }
 
@@ -142,6 +148,7 @@ export class TurnManager {
   }
 
   cancelPlacement(): void {
+    console.log("[TurnManager] cancelPlacement - phase:", this.state.turnPhase);
     if (this.state.turnPhase === TurnPhase.TilePlacement) {
       this.state.selectedPlot = null;
       this.state.turnPhase = TurnPhase.PlayerTurn;
@@ -150,6 +157,7 @@ export class TurnManager {
   }
 
   markPlayerMoved(): void {
+    console.log("[TurnManager] markPlayerMoved");
     this.state.hasMovedPlayer = true;
   }
 
@@ -158,6 +166,7 @@ export class TurnManager {
   }
 
   startEnemyTurn(): void {
+    console.log("[TurnManager] startEnemyTurn");
     this.state.turnPhase = TurnPhase.EnemyTurn;
     this.onStateChange();
   }
