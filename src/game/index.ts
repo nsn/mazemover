@@ -304,11 +304,19 @@ function handleRightClick(): void {
 
 async function endPlayerTurn(): Promise<void> {
   if (isAnimating) return;
-  if (!turnManager.isPlayerTurn()) return;
+  
+  const phase = turnManager.getState().turnPhase;
+  if (phase !== TurnPhase.PlayerTurn && phase !== TurnPhase.TilePlacement) return;
 
-  console.log("Ending player turn");
+  if (phase === TurnPhase.TilePlacement) {
+    turnManager.cancelPlacement();
+  }
+
+  console.log("Ending player turn - enemies will move");
+  exitMovementMode();
   turnManager.startEnemyTurn();
   await executeEnemyTurns();
+  console.log("Starting new turn");
   turnManager.startNewTurn();
 }
 
@@ -365,7 +373,7 @@ function render(): void {
 
   const state = turnManager.getState();
   const mapObjects = turnManager.getMapObjects();
-
+  
   if (state.turnPhase === TurnPhase.PlayerTurn) {
     drawGridWithOverlay(state.grid, null);
     if (isMovementMode) {
