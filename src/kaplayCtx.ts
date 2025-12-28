@@ -26,8 +26,8 @@ if (!isWebGLSupported()) {
 }
 
 export const k = kaplay({
-  width: 768,
-  height: 432,
+  width: 640,
+  height: 360,
   background: [0, 0, 0],
   global: false,
   letterbox: true,

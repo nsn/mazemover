@@ -27,7 +27,7 @@ A turn-based 2D maze game using Kaplay.js and TypeScript. Single player vs AI (A
 - Kaplay (game framework)
 
 ## Game Mechanics
-- Resolution: 768x432, letterbox mode
+- Resolution: 640x360, letterbox mode
 - Tiles: 32x32 pixels with 8-pixel center door openings
 - 5 tile types: Cul-de-sac, Straight, L, T, Cross
 - Plots positioned beside odd-indexed grid tiles (1, 3, 5...)

@@ -212,7 +212,7 @@ export function drawGridWithOverlay(
     const highlightCol = isHorizontal ? -1 : selectedPlot.col;
 
     k.add([
-      k.rect(768, 432),
+      k.rect(640, 360),
       k.pos(0, 0),
       k.color(...COLORS.overlay),
       k.opacity(0.6),
