@@ -14,14 +14,15 @@ export interface EnemyMove {
 export function calculateEnemyMove(
   grid: TileInstance[][],
   enemy: MapObject,
-  playerPos: GridPosition
+  playerPos: GridPosition,
+  blockedPositions: GridPosition[] = []
 ): EnemyMove | null {
   const moves = enemy.movesRemaining;
   if (moves <= 0) {
     return null;
   }
 
-  const reachable = findReachableTiles(grid, enemy.gridPosition, moves);
+  const reachable = findReachableTiles(grid, enemy.gridPosition, moves, blockedPositions);
   if (reachable.length === 0) {
     return null;
   }
@@ -52,10 +53,23 @@ export function calculateAllEnemyMoves(
   );
 
   const moves: EnemyMove[] = [];
+  const occupiedPositions: GridPosition[] = enemies.map(e => ({ ...e.gridPosition }));
+  
   for (const enemy of enemies) {
-    const move = calculateEnemyMove(grid, enemy, playerPos);
-    if (move) {
+    const otherEnemyPositions = occupiedPositions.filter(
+      pos => !(pos.row === enemy.gridPosition.row && pos.col === enemy.gridPosition.col)
+    );
+    
+    const move = calculateEnemyMove(grid, enemy, playerPos, otherEnemyPositions);
+    if (move && move.path.length > 1) {
       moves.push(move);
+      const enemyIndex = occupiedPositions.findIndex(
+        pos => pos.row === enemy.gridPosition.row && pos.col === enemy.gridPosition.col
+      );
+      if (enemyIndex !== -1) {
+        const finalPos = move.path[move.path.length - 1];
+        occupiedPositions[enemyIndex] = { ...finalPos };
+      }
     }
   }
 

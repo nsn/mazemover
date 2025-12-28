@@ -48,7 +48,8 @@ function canMove(
 export function findReachableTiles(
   grid: TileInstance[][],
   start: GridPosition,
-  maxDistance: number
+  maxDistance: number,
+  blockedPositions: GridPosition[] = []
 ): ReachableTile[] {
   if (maxDistance <= 0) {
     return [];
@@ -62,6 +63,8 @@ export function findReachableTiles(
   const key = (pos: GridPosition) => `${pos.row},${pos.col}`;
   const visited = new Set<string>();
   visited.add(key(start));
+  
+  const blockedSet = new Set(blockedPositions.map(p => key(p)));
 
   while (queue.length > 0) {
     const current = queue.shift()!;
@@ -85,6 +88,10 @@ export function findReachableTiles(
       const neighborKey = key(neighbor);
 
       if (visited.has(neighborKey)) {
+        continue;
+      }
+      
+      if (blockedSet.has(neighborKey)) {
         continue;
       }
 
