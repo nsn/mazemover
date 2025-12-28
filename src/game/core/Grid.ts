@@ -21,6 +21,15 @@ function getCornerTile(row: number, col: number, rows: number, cols: number): Ti
   return null;
 }
 
+function isImmovableEdge(row: number, col: number, rows: number, cols: number): boolean {
+  const isTopOrBottomEdge = row === 0 || row === rows - 1;
+  const isLeftOrRightEdge = col === 0 || col === cols - 1;
+  const hasEvenCol = col % 2 === 0;
+  const hasEvenRow = row % 2 === 0;
+
+  return (isTopOrBottomEdge && hasEvenCol) || (isLeftOrRightEdge && hasEvenRow);
+}
+
 export function createGrid(rows: number, cols: number, deck: TileDeck): TileInstance[][] {
   const grid: TileInstance[][] = [];
   for (let r = 0; r < rows; r++) {
@@ -29,6 +38,13 @@ export function createGrid(rows: number, cols: number, deck: TileDeck): TileInst
       const cornerTile = getCornerTile(r, c, rows, cols);
       if (cornerTile) {
         row.push(cornerTile);
+      } else if (isImmovableEdge(r, c, rows, cols)) {
+        let tile = deck.draw();
+        while (tile.type === TileType.CulDeSac) {
+          deck.discard(tile);
+          tile = deck.draw();
+        }
+        row.push(tile);
       } else {
         row.push(deck.draw());
       }
