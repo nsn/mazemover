@@ -44,6 +44,7 @@ export class TurnManager {
   }
 
   startNewTurn(): void {
+    this.objectManager.resetAllTurnMovement();
     this.state.currentTile = this.deck.draw();
     this.state.selectedPlot = null;
     this.state.turnPhase = TurnPhase.Place;

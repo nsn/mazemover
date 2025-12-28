@@ -9,13 +9,19 @@ import {
   drawPreviewTile,
   drawGridWithOverlay,
   drawMapObjects,
+  drawReachableTiles,
 } from "./render/GridRenderer";
 import { loadAssets } from "./assets";
-import { TurnPhase, type PlotPosition } from "./types";
+import { TurnPhase, type PlotPosition, type GridPosition, type MapObject } from "./types";
+import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y } from "./config";
 
 let turnManager: TurnManager;
 let inputController: InputController;
 let isAnimating = false;
+let isMovementMode = false;
+let reachableTiles: ReachableTile[] = [];
+let selectedPlayer: MapObject | null = null;
 
 function handleClick(): void {
   if (isAnimating) {
@@ -26,7 +32,40 @@ function handleClick(): void {
   const pos = k.mousePos();
   console.log("Click at:", pos);
 
-  // Check current tile FIRST (it's drawn on top of the plot)
+  if (isMovementMode && selectedPlayer) {
+    const reachableHighlights = k.get("reachableHighlight");
+    for (const highlight of reachableHighlights) {
+      if ((highlight as any).hasPoint && (highlight as any).hasPoint(pos)) {
+        const targetPos = (highlight as any).gridPos as GridPosition;
+        console.log("Reachable tile hit - moving to:", targetPos);
+        const target = reachableTiles.find(
+          (t) => t.position.row === targetPos.row && t.position.col === targetPos.col
+        );
+        if (target) {
+          movePlayerAlongPath(selectedPlayer, target.path);
+        }
+        return;
+      }
+    }
+
+    console.log("Click outside reachable - canceling movement mode");
+    exitMovementMode();
+    render();
+    return;
+  }
+
+  const mapObjs = k.get("mapObject");
+  for (const obj of mapObjs) {
+    if ((obj as any).hasPoint && (obj as any).hasPoint(pos)) {
+      const objData = (obj as any).objectData as MapObject;
+      if (objData.type === "Player" && objData.movesRemaining > 0) {
+        console.log("Player clicked - entering movement mode");
+        enterMovementMode(objData);
+        return;
+      }
+    }
+  }
+
   const currentTiles = k.get("currentTile");
   for (const tile of currentTiles) {
     if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
@@ -36,7 +75,6 @@ function handleClick(): void {
     }
   }
 
-  // Check preview tile
   const previewTiles = k.get("previewTile");
   for (const tile of previewTiles) {
     if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
@@ -46,7 +84,6 @@ function handleClick(): void {
     }
   }
 
-  // Check highlight areas (for push action)
   const highlightAreas = k.get("highlightArea");
   for (const area of highlightAreas) {
     if ((area as any).hasPoint && (area as any).hasPoint(pos)) {
@@ -58,7 +95,6 @@ function handleClick(): void {
     }
   }
 
-  // Check plots
   const plots = k.get("plot");
   for (const plot of plots) {
     if ((plot as any).hasPoint && (plot as any).hasPoint(pos)) {
@@ -69,11 +105,82 @@ function handleClick(): void {
     }
   }
 
-  // Background click during Push phase cancels placement
   if (turnManager.isPushPhase()) {
     console.log("Background hit - canceling");
     turnManager.cancelPlacement();
   }
+}
+
+function enterMovementMode(player: MapObject): void {
+  selectedPlayer = player;
+  isMovementMode = true;
+  const state = turnManager.getState();
+  const moves = turnManager.getObjectManager().getAvailableMoves(player);
+  reachableTiles = findReachableTiles(state.grid, player.gridPosition, moves);
+  console.log("Reachable tiles:", reachableTiles.length);
+  render();
+}
+
+function exitMovementMode(): void {
+  isMovementMode = false;
+  selectedPlayer = null;
+  reachableTiles = [];
+}
+
+async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Promise<void> {
+  if (path.length <= 1) {
+    exitMovementMode();
+    render();
+    return;
+  }
+
+  isAnimating = true;
+  const stepDuration = 0.15;
+
+  k.destroyAll("mapObject");
+  k.destroyAll("reachableHighlight");
+
+  const from = path[0];
+  const startX = GRID_OFFSET_X + from.col * TILE_SIZE + TILE_SIZE / 2;
+  const startY = GRID_OFFSET_Y + from.row * TILE_SIZE + TILE_SIZE / 2;
+
+  const movingSprite = k.add([
+    k.sprite(player.sprite),
+    k.pos(startX, startY),
+    k.anchor("center"),
+    "movingPlayer",
+  ]);
+
+  for (let i = 1; i < path.length; i++) {
+    const to = path[i];
+
+    const endX = GRID_OFFSET_X + to.col * TILE_SIZE + TILE_SIZE / 2;
+    const endY = GRID_OFFSET_Y + to.row * TILE_SIZE + TILE_SIZE / 2;
+
+    const currentPos = movingSprite.pos.clone();
+
+    k.tween(
+      currentPos,
+      k.vec2(endX, endY),
+      stepDuration,
+      (val) => {
+        movingSprite.pos = val;
+      },
+      k.easings.easeOutQuad
+    );
+
+    await k.wait(stepDuration);
+
+    player.gridPosition.row = to.row;
+    player.gridPosition.col = to.col;
+  }
+
+  k.destroyAll("movingPlayer");
+  turnManager.getObjectManager().spendMovement(player, path.length - 1);
+
+  isAnimating = false;
+  exitMovementMode();
+  render();
 }
 
 function handleRightClick(): void {
@@ -152,6 +259,9 @@ function render(): void {
 
   if (state.turnPhase === TurnPhase.Place && state.currentTile) {
     drawGridWithOverlay(state.grid, null);
+    if (isMovementMode) {
+      drawReachableTiles(reachableTiles);
+    }
     drawMapObjects(mapObjects);
     drawPreviewTile(state.currentTile);
     const plots = turnManager.getPlots();
@@ -164,6 +274,9 @@ function render(): void {
     drawCurrentTile(state.currentTile, state.selectedPlot);
   } else {
     drawGridWithOverlay(state.grid, null);
+    if (isMovementMode) {
+      drawReachableTiles(reachableTiles);
+    }
     drawMapObjects(mapObjects);
   }
 }

@@ -45,9 +45,18 @@ A turn-based 2D maze game using Kaplay.js and TypeScript. Single player vs AI (A
 ## Map Objects System
 - MapObject types: Player, Enemy, Item, Exit
 - Properties: gridPosition, pixelOffset (for animation), renderOrder, sprite, name
+- Movement properties: movementSpeed, movementAccumulator, movesRemaining
 - Objects move with their tile when pushed
 - Objects pushed off-grid are destroyed (logged to console)
 - Factory methods: createPlayer(), createEnemy(), createItem(), createExit()
+
+## Movement System
+- Fractional speed accumulation: speed 0.5 = move 1 tile every 2 turns
+- Click player to see reachable tiles (green highlight)
+- Click highlighted tile to move player smoothly along path
+- Click anywhere else to cancel movement mode
+- Pathfinding uses flood-fill through connected tile doors
+- Movement resets at the start of each turn
 
 ## Grid Initialization Rules
 - Corner tiles: Always L-shaped, oriented with openings pointing inward
@@ -55,6 +64,8 @@ A turn-based 2D maze game using Kaplay.js and TypeScript. Single player vs AI (A
 - Tile weights configurable in config.ts (currently all equal)
 
 ## Recent Changes
+- 2025-12-28: Implemented player movement with pathfinding and smooth animation
+- 2025-12-28: Added fractional movement speed accumulation system
 - 2025-12-28: Fixed push animation to keep entire grid visible (only affected row/col animates)
 - 2025-12-28: Map objects now animate smoothly with their tiles during push
 - 2025-12-28: Updated player sprite to 16x16 pixels

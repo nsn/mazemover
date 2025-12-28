@@ -74,4 +74,7 @@ export interface MapObject {
   pixelOffset: { x: number; y: number };
   renderOrder: number;
   sprite: string;
+  movementSpeed: number;
+  movementAccumulator: number;
+  movesRemaining: number;
 }

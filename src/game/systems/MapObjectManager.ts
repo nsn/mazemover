@@ -11,7 +11,8 @@ export class MapObjectManager {
     gridPosition: GridPosition,
     name: string,
     sprite: string,
-    renderOrder: number = 0
+    renderOrder: number = 0,
+    movementSpeed: number = 1
   ): MapObject {
     const obj: MapObject = {
       id: nextId++,
@@ -21,6 +22,9 @@ export class MapObjectManager {
       pixelOffset: { x: 0, y: 0 },
       renderOrder,
       sprite,
+      movementSpeed,
+      movementAccumulator: 0,
+      movesRemaining: 0,
     };
     this.objects.set(obj.id, obj);
     return obj;
@@ -139,5 +143,33 @@ export class MapObjectManager {
       obj.pixelOffset.x = 0;
       obj.pixelOffset.y = 0;
     }
+  }
+
+  resetTurnMovement(obj: MapObject): void {
+    const total = obj.movementAccumulator + obj.movementSpeed;
+    obj.movesRemaining = Math.floor(total);
+    obj.movementAccumulator = total - obj.movesRemaining;
+  }
+
+  resetAllTurnMovement(): void {
+    for (const obj of this.objects.values()) {
+      this.resetTurnMovement(obj);
+    }
+  }
+
+  getAvailableMoves(obj: MapObject): number {
+    return obj.movesRemaining;
+  }
+
+  spendMovement(obj: MapObject, tiles: number = 1): boolean {
+    if (obj.movesRemaining >= tiles) {
+      obj.movesRemaining -= tiles;
+      return true;
+    }
+    return false;
+  }
+
+  getPlayer(): MapObject | undefined {
+    return this.getAllObjects().find(obj => obj.type === ObjectType.Player);
   }
 }

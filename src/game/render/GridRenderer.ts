@@ -125,6 +125,8 @@ export function clearAllTiles(): void {
   k.destroyAll("overlay");
   k.destroyAll("highlightArea");
   k.destroyAll("mapObject");
+  k.destroyAll("reachableHighlight");
+  k.destroyAll("movingPlayer");
 }
 
 export function drawMapObjects(objects: MapObject[]): void {
@@ -138,8 +140,27 @@ export function drawMapObjects(objects: MapObject[]): void {
       k.sprite(obj.sprite),
       k.pos(x, y),
       k.anchor("center"),
+      k.area(),
       "mapObject",
       { objectData: obj },
+    ]);
+  }
+}
+
+export function drawReachableTiles(tiles: { position: { row: number; col: number } }[]): void {
+  for (const tile of tiles) {
+    const x = GRID_OFFSET_X + tile.position.col * TILE_SIZE + TILE_SIZE / 2;
+    const y = GRID_OFFSET_Y + tile.position.row * TILE_SIZE + TILE_SIZE / 2;
+
+    k.add([
+      k.rect(TILE_SIZE - 2, TILE_SIZE - 2),
+      k.pos(x, y),
+      k.anchor("center"),
+      k.color(100, 255, 100),
+      k.opacity(0.3),
+      k.area(),
+      "reachableHighlight",
+      { gridPos: tile.position },
     ]);
   }
 }
