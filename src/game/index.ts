@@ -79,8 +79,13 @@ function handleClick(): void {
   const previewTiles = k.get("previewTile");
   for (const tile of previewTiles) {
     if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
-      console.log("Preview tile hit - rotating");
-      turnManager.rotateTile();
+      if (turnManager.isPlayerTurn() && turnManager.canPlaceTile()) {
+        console.log("Preview tile hit - entering tile placement");
+        turnManager.enterTilePlacement();
+      } else if (turnManager.isTilePlacement()) {
+        console.log("Preview tile hit - rotating");
+        turnManager.rotateTile();
+      }
       return;
     }
   }
@@ -101,12 +106,17 @@ function handleClick(): void {
     if ((plot as any).hasPoint && (plot as any).hasPoint(pos)) {
       const plotData = (plot as any).plotData as PlotPosition;
       console.log("Plot hit:", plotData);
-      turnManager.selectPlot(plotData);
+      if (turnManager.isPlayerTurn() && turnManager.canPlaceTile()) {
+        turnManager.enterTilePlacement();
+        turnManager.selectPlot(plotData);
+      } else if (turnManager.isTilePlacement()) {
+        turnManager.selectPlot(plotData);
+      }
       return;
     }
   }
 
-  if (turnManager.isPushPhase()) {
+  if (turnManager.isTilePlacement()) {
     console.log("Background hit - canceling");
     turnManager.cancelPlacement();
   }
@@ -186,12 +196,11 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
   k.destroyAll("movingPlayer");
   turnManager.getObjectManager().spendMovement(player, path.length - 1);
+  turnManager.markPlayerMoved();
 
   isAnimating = false;
   exitMovementMode();
   render();
-
-  await executeEnemyTurns();
 }
 
 async function executeEnemyTurns(): Promise<void> {
@@ -274,7 +283,6 @@ function handleRightClick(): void {
 
   const pos = k.mousePos();
 
-  // Check current tile
   const currentTiles = k.get("currentTile");
   for (const tile of currentTiles) {
     if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
@@ -284,7 +292,6 @@ function handleRightClick(): void {
     }
   }
 
-  // Check preview tile
   const previewTiles = k.get("previewTile");
   for (const tile of previewTiles) {
     if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
@@ -295,11 +302,23 @@ function handleRightClick(): void {
   }
 }
 
+async function endPlayerTurn(): Promise<void> {
+  if (isAnimating) return;
+  if (!turnManager.isPlayerTurn()) return;
+
+  console.log("Ending player turn");
+  turnManager.startEnemyTurn();
+  await executeEnemyTurns();
+  turnManager.startNewTurn();
+}
+
 export async function initGame(): Promise<void> {
   await loadAssets();
 
   k.onMousePress("left", handleClick);
   k.onMousePress("right", handleRightClick);
+  k.onKeyPress("enter", () => endPlayerTurn());
+  k.onKeyPress("e", () => endPlayerTurn());
 
   turnManager = new TurnManager(render);
   inputController = new InputController(turnManager);
@@ -347,21 +366,27 @@ function render(): void {
   const state = turnManager.getState();
   const mapObjects = turnManager.getMapObjects();
 
-  if (state.turnPhase === TurnPhase.Place && state.currentTile) {
+  if (state.turnPhase === TurnPhase.PlayerTurn) {
     drawGridWithOverlay(state.grid, null);
     if (isMovementMode) {
       drawReachableTiles(reachableTiles);
     }
     drawMapObjects(mapObjects);
-    drawPreviewTile(state.currentTile);
-    const plots = turnManager.getPlots();
-    drawPlots(plots, null, state.turnPhase);
-  } else if (state.turnPhase === TurnPhase.Push && state.currentTile && state.selectedPlot) {
+    if (state.currentTile && !state.hasPlacedTile) {
+      drawPreviewTile(state.currentTile);
+      const plots = turnManager.getPlots();
+      drawPlots(plots, null, state.turnPhase);
+    }
+  } else if (state.turnPhase === TurnPhase.TilePlacement && state.currentTile) {
     drawGridWithOverlay(state.grid, state.selectedPlot);
     drawMapObjects(mapObjects);
     const plots = turnManager.getPlots();
     drawPlots(plots, state.selectedPlot, state.turnPhase);
-    drawCurrentTile(state.currentTile, state.selectedPlot);
+    if (state.selectedPlot) {
+      drawCurrentTile(state.currentTile, state.selectedPlot);
+    } else {
+      drawPreviewTile(state.currentTile);
+    }
   } else {
     drawGridWithOverlay(state.grid, null);
     if (isMovementMode) {

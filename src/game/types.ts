@@ -43,9 +43,9 @@ export interface PlotPosition {
 }
 
 export const TurnPhase = {
-  Draw: "Draw",
-  Place: "Place",
-  Push: "Push",
+  PlayerTurn: "PlayerTurn",
+  TilePlacement: "TilePlacement",
+  EnemyTurn: "EnemyTurn",
 } as const;
 
 export type TurnPhase = (typeof TurnPhase)[keyof typeof TurnPhase];
@@ -55,6 +55,8 @@ export interface GameState {
   currentTile: TileInstance | null;
   selectedPlot: PlotPosition | null;
   turnPhase: TurnPhase;
+  hasPlacedTile: boolean;
+  hasMovedPlayer: boolean;
 }
 
 export const ObjectType = {

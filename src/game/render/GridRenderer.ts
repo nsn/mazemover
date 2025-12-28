@@ -83,7 +83,7 @@ export function drawPlot(
   const { x, y } = getPlotScreenPos(plot);
   const angle = directionToAngle(plot.direction);
 
-  const isGreen = isSelected && turnPhase === TurnPhase.Push;
+  const isGreen = isSelected && turnPhase === TurnPhase.TilePlacement;
   const tintColor = isGreen
     ? k.rgb(100, 255, 100)
     : k.rgb(255, 100, 100);

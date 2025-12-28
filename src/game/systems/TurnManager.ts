@@ -23,7 +23,9 @@ export class TurnManager {
       grid: createGrid(GRID_ROWS, GRID_COLS, this.deck),
       currentTile: null,
       selectedPlot: null,
-      turnPhase: TurnPhase.Draw,
+      turnPhase: TurnPhase.PlayerTurn,
+      hasPlacedTile: false,
+      hasMovedPlayer: false,
     };
   }
 
@@ -47,17 +49,34 @@ export class TurnManager {
     this.objectManager.resetAllTurnMovement();
     this.state.currentTile = this.deck.draw();
     this.state.selectedPlot = null;
-    this.state.turnPhase = TurnPhase.Place;
+    this.state.turnPhase = TurnPhase.PlayerTurn;
+    this.state.hasPlacedTile = false;
+    this.state.hasMovedPlayer = false;
     this.onStateChange();
   }
 
-  selectPlot(plot: PlotPosition): void {
-    if (this.state.turnPhase === TurnPhase.Place) {
-      this.state.selectedPlot = plot;
-      this.state.turnPhase = TurnPhase.Push;
+  isPlayerTurn(): boolean {
+    return this.state.turnPhase === TurnPhase.PlayerTurn;
+  }
+
+  isTilePlacement(): boolean {
+    return this.state.turnPhase === TurnPhase.TilePlacement;
+  }
+
+  canPlaceTile(): boolean {
+    return !this.state.hasPlacedTile && this.state.currentTile !== null;
+  }
+
+  enterTilePlacement(): void {
+    if (this.canPlaceTile()) {
+      this.state.turnPhase = TurnPhase.TilePlacement;
       this.onStateChange();
-    } else if (this.state.turnPhase === TurnPhase.Push) {
-      if (this.isSelectedPlot(plot)) {
+    }
+  }
+
+  selectPlot(plot: PlotPosition): void {
+    if (this.state.turnPhase === TurnPhase.TilePlacement) {
+      if (this.state.selectedPlot && this.isSelectedPlot(plot)) {
         this.executePush();
       } else {
         this.state.selectedPlot = plot;
@@ -99,7 +118,11 @@ export class TurnManager {
 
     this.deck.discard(ejectedTile);
     this.state.grid = newGrid;
-    this.startNewTurn();
+    this.state.currentTile = null;
+    this.state.selectedPlot = null;
+    this.state.hasPlacedTile = true;
+    this.state.turnPhase = TurnPhase.PlayerTurn;
+    this.onStateChange();
   }
 
   isSelectedPlot(plot: PlotPosition): boolean {
@@ -112,25 +135,30 @@ export class TurnManager {
 
   canPush(): boolean {
     return (
-      this.state.turnPhase === TurnPhase.Push &&
+      this.state.turnPhase === TurnPhase.TilePlacement &&
       this.state.selectedPlot !== null &&
       this.state.currentTile !== null
     );
   }
 
-  isPlacePhase(): boolean {
-    return this.state.turnPhase === TurnPhase.Place;
-  }
-
-  isPushPhase(): boolean {
-    return this.state.turnPhase === TurnPhase.Push;
-  }
-
   cancelPlacement(): void {
-    if (this.state.turnPhase === TurnPhase.Push) {
+    if (this.state.turnPhase === TurnPhase.TilePlacement) {
       this.state.selectedPlot = null;
-      this.state.turnPhase = TurnPhase.Place;
+      this.state.turnPhase = TurnPhase.PlayerTurn;
       this.onStateChange();
     }
+  }
+
+  markPlayerMoved(): void {
+    this.state.hasMovedPlayer = true;
+  }
+
+  hasPlayerMoved(): boolean {
+    return this.state.hasMovedPlayer;
+  }
+
+  startEnemyTurn(): void {
+    this.state.turnPhase = TurnPhase.EnemyTurn;
+    this.onStateChange();
   }
 }
