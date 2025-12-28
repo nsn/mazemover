@@ -1,4 +1,4 @@
-import { ObjectType, type MapObject, type GridPosition, type PlotPosition, Direction } from "../types";
+import { ObjectType, type MapObject, type GridPosition, type PlotPosition, Direction, type MapObjectCallback } from "../types";
 import { GRID_ROWS, GRID_COLS } from "../config";
 
 let nextId = 1;
@@ -12,7 +12,9 @@ export class MapObjectManager {
     name: string,
     sprite: string,
     renderOrder: number = 0,
-    movementSpeed: number = 1
+    movementSpeed: number = 1,
+    onEnter?: MapObjectCallback,
+    onExit?: MapObjectCallback
   ): MapObject {
     const obj: MapObject = {
       id: nextId++,
@@ -25,6 +27,8 @@ export class MapObjectManager {
       movementSpeed,
       movementAccumulator: 0,
       movesRemaining: 0,
+      onEnter,
+      onExit,
     };
     this.objects.set(obj.id, obj);
     return obj;
@@ -62,8 +66,34 @@ export class MapObjectManager {
     return this.createObject(ObjectType.Item, gridPosition, name, "item", 50);
   }
 
-  createExit(gridPosition: GridPosition, name: string = "Exit"): MapObject {
-    return this.createObject(ObjectType.Exit, gridPosition, name, "exit", 10);
+  createExit(gridPosition: GridPosition, name: string = "Exit", onEnter?: MapObjectCallback): MapObject {
+    return this.createObject(ObjectType.Exit, gridPosition, name, "exit", 10, 0, onEnter);
+  }
+
+  getExit(): MapObject | undefined {
+    return this.getAllObjects().find(obj => obj.type === ObjectType.Exit);
+  }
+
+  checkInteractions(mob: MapObject, previousPosition: GridPosition): void {
+    const isPlayer = mob.type === ObjectType.Player;
+    const currentPos = mob.gridPosition;
+    
+    for (const obj of this.getAllObjects()) {
+      if (obj.id === mob.id) continue;
+      
+      const wasOnTile = obj.gridPosition.row === previousPosition.row && 
+                        obj.gridPosition.col === previousPosition.col;
+      const isOnTile = obj.gridPosition.row === currentPos.row && 
+                       obj.gridPosition.col === currentPos.col;
+      
+      if (wasOnTile && !isOnTile && obj.onExit) {
+        obj.onExit(mob, isPlayer);
+      }
+      
+      if (!wasOnTile && isOnTile && obj.onEnter) {
+        obj.onEnter(mob, isPlayer);
+      }
+    }
   }
 
   getObject(id: number): MapObject | undefined {

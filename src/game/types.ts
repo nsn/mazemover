@@ -75,6 +75,8 @@ export const ObjectType = {
 
 export type ObjectType = (typeof ObjectType)[keyof typeof ObjectType];
 
+export type MapObjectCallback = (mob: MapObject, isPlayer: boolean) => void;
+
 export interface MapObject {
   id: number;
   name: string;
@@ -86,4 +88,6 @@ export interface MapObject {
   movementSpeed: number;
   movementAccumulator: number;
   movesRemaining: number;
+  onEnter?: MapObjectCallback;
+  onExit?: MapObjectCallback;
 }

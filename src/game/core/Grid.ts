@@ -30,6 +30,61 @@ function isImmovableEdge(row: number, col: number, rows: number, cols: number): 
   return (isTopOrBottomEdge && hasEvenCol) || (isLeftOrRightEdge && hasEvenRow);
 }
 
+export type EdgeSide = "top" | "bottom" | "left" | "right";
+
+export interface ImmovableEdgeTile {
+  row: number;
+  col: number;
+  side: EdgeSide;
+}
+
+export function getImmovableEdgeTiles(rows: number, cols: number): ImmovableEdgeTile[] {
+  const tiles: ImmovableEdgeTile[] = [];
+  
+  for (let c = 0; c < cols; c++) {
+    if (c % 2 === 0) {
+      if (c !== 0 && c !== cols - 1) {
+        tiles.push({ row: 0, col: c, side: "top" });
+        tiles.push({ row: rows - 1, col: c, side: "bottom" });
+      }
+    }
+  }
+  
+  for (let r = 0; r < rows; r++) {
+    if (r % 2 === 0) {
+      if (r !== 0 && r !== rows - 1) {
+        tiles.push({ row: r, col: 0, side: "left" });
+        tiles.push({ row: r, col: cols - 1, side: "right" });
+      }
+    }
+  }
+  
+  return tiles;
+}
+
+export function getOppositeSide(side: EdgeSide): EdgeSide {
+  switch (side) {
+    case "top": return "bottom";
+    case "bottom": return "top";
+    case "left": return "right";
+    case "right": return "left";
+  }
+}
+
+export function getRandomTileOnSide(side: EdgeSide, rows: number, cols: number): { row: number; col: number } {
+  const tiles = getImmovableEdgeTiles(rows, cols).filter(t => t.side === side);
+  if (tiles.length === 0) {
+    switch (side) {
+      case "top": return { row: 0, col: Math.floor(cols / 2) };
+      case "bottom": return { row: rows - 1, col: Math.floor(cols / 2) };
+      case "left": return { row: Math.floor(rows / 2), col: 0 };
+      case "right": return { row: Math.floor(rows / 2), col: cols - 1 };
+    }
+  }
+  const tile = tiles[Math.floor(Math.random() * tiles.length)];
+  return { row: tile.row, col: tile.col };
+}
+
 export function createGrid(rows: number, cols: number, deck: TileDeck): TileInstance[][] {
   const grid: TileInstance[][] = [];
   for (let r = 0; r < rows; r++) {

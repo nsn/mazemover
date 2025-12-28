@@ -14,8 +14,9 @@ import {
 import { loadAssets } from "./assets";
 import { TurnOwner, PlayerPhase, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
-import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y } from "./config";
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS } from "./config";
 import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
+import { getImmovableEdgeTiles, getOppositeSide, getRandomTileOnSide } from "./core/Grid";
 
 let turnManager: TurnManager;
 let inputController: InputController;
@@ -170,7 +171,10 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
     "movingPlayer",
   ]);
 
+  const objectManager = turnManager.getObjectManager();
+  
   for (let i = 1; i < path.length; i++) {
+    const previousPosition = { ...player.gridPosition };
     const to = path[i];
 
     const endX = GRID_OFFSET_X + to.col * TILE_SIZE + TILE_SIZE / 2;
@@ -192,6 +196,8 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
     player.gridPosition.row = to.row;
     player.gridPosition.col = to.col;
+    
+    objectManager.checkInteractions(player, previousPosition);
   }
 
   k.destroyAll("movingPlayer");
@@ -320,10 +326,51 @@ export async function initGame(): Promise<void> {
   });
 
   const objManager = turnManager.getObjectManager();
-  objManager.createPlayer({ row: 3, col: 3 }, "Player1");
-  objManager.createRedEnemy({ row: 0, col: 0 });
-  objManager.createYellowEnemy({ row: 0, col: 6 });
-  objManager.createGreenEnemy({ row: 6, col: 0 });
+  
+  const immovableEdges = getImmovableEdgeTiles(GRID_ROWS, GRID_COLS);
+  const exitTile = immovableEdges[Math.floor(Math.random() * immovableEdges.length)];
+  
+  objManager.createExit(
+    { row: exitTile.row, col: exitTile.col },
+    "Exit Stairs",
+    (_mob, isPlayer) => {
+      if (isPlayer) {
+        console.log("[Game] Player reached the exit! Victory!");
+        k.add([
+          k.rect(640, 360),
+          k.pos(0, 0),
+          k.color(0, 0, 0),
+          k.opacity(0.8),
+          k.z(1000),
+          "victoryOverlay",
+        ]);
+        k.add([
+          k.text("VICTORY!", { size: 48 }),
+          k.pos(320, 150),
+          k.anchor("center"),
+          k.color(255, 215, 0),
+          k.z(1001),
+          "victoryText",
+        ]);
+        k.add([
+          k.text("You escaped the maze!", { size: 24 }),
+          k.pos(320, 220),
+          k.anchor("center"),
+          k.color(255, 255, 255),
+          k.z(1001),
+          "victoryText",
+        ]);
+      }
+    }
+  );
+  
+  const oppositeSide = getOppositeSide(exitTile.side);
+  const playerTile = getRandomTileOnSide(oppositeSide, GRID_ROWS, GRID_COLS);
+  objManager.createPlayer({ row: playerTile.row, col: playerTile.col }, "Player1");
+  
+  objManager.createRedEnemy({ row: 3, col: 3 });
+  objManager.createYellowEnemy({ row: 3, col: 2 });
+  objManager.createGreenEnemy({ row: 2, col: 3 });
 
   turnManager.startPlayerTurn();
 }
