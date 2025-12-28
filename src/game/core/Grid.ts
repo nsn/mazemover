@@ -1,13 +1,13 @@
 import { Direction, type TileInstance, type PlotPosition } from "../types";
-import { createRandomTile } from "./Tile";
 import { GRID_COLS, GRID_ROWS, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE } from "../config";
+import { TileDeck } from "./TileDeck";
 
-export function createGrid(rows: number, cols: number): TileInstance[][] {
+export function createGrid(rows: number, cols: number, deck: TileDeck): TileInstance[][] {
   const grid: TileInstance[][] = [];
   for (let r = 0; r < rows; r++) {
     const row: TileInstance[] = [];
     for (let c = 0; c < cols; c++) {
-      row.push(createRandomTile());
+      row.push(deck.draw());
     }
     grid.push(row);
   }
