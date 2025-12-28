@@ -14,7 +14,9 @@ export async function loadAssets(): Promise<void> {
     },
   });
 
-  await k.loadBitmapFont("blocky", "/5x5-Blocky.png", 5, 5, {
+  await k.loadFont("blocky", "/5x5-Blocky.png")
+
+  await k.loadBitmapFont("bblocky", "/blocky.png", 5, 5, {
     chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz 01234567890 !"#$%&'()*+,-./:;<=>?[]\\^_\`{}|~@∎ÄÁÀÂÅÃÇçäáàâåãÑñÏÍÌÎÜÚÙÛïíìîüúùûÖÓÒÔÕŸÝỲöóòôõÿýỳËÉÈÊëéèêÆæßðÐþÞ¿¡Œœ`,
   });
 }
