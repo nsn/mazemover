@@ -34,8 +34,28 @@ export class MapObjectManager {
     return this.createObject(ObjectType.Player, gridPosition, name, "player", 100);
   }
 
-  createEnemy(gridPosition: GridPosition, name: string = "Enemy"): MapObject {
-    return this.createObject(ObjectType.Enemy, gridPosition, name, "enemy", 90);
+  createEnemy(gridPosition: GridPosition, name: string = "Enemy", movementSpeed: number = 1, color?: { r: number; g: number; b: number }): MapObject {
+    const enemy = this.createObject(ObjectType.Enemy, gridPosition, name, "enemy", 90, movementSpeed);
+    if (color) {
+      (enemy as any).color = color;
+    }
+    return enemy;
+  }
+
+  createRedEnemy(gridPosition: GridPosition): MapObject {
+    return this.createEnemy(gridPosition, "Red Enemy", 2, { r: 255, g: 80, b: 80 });
+  }
+
+  createYellowEnemy(gridPosition: GridPosition): MapObject {
+    return this.createEnemy(gridPosition, "Yellow Enemy", 0.5, { r: 255, g: 220, b: 80 });
+  }
+
+  createGreenEnemy(gridPosition: GridPosition): MapObject {
+    return this.createEnemy(gridPosition, "Green Enemy", 1, { r: 80, g: 220, b: 80 });
+  }
+
+  getEnemies(): MapObject[] {
+    return this.getAllObjects().filter(obj => obj.type === ObjectType.Enemy);
   }
 
   createItem(gridPosition: GridPosition, name: string = "Item"): MapObject {

@@ -21,6 +21,7 @@ export async function loadAssets(): Promise<void> {
   });
 
   await k.loadSprite("player", "/player.png");
+  await k.loadSprite("enemy", "/enemy.png");
 }
 
 export const TileFrames = {

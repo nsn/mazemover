@@ -136,14 +136,21 @@ export function drawMapObjects(objects: MapObject[]): void {
     const x = GRID_OFFSET_X + obj.gridPosition.col * TILE_SIZE + TILE_SIZE / 2 + obj.pixelOffset.x;
     const y = GRID_OFFSET_Y + obj.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 + obj.pixelOffset.y;
 
-    k.add([
+    const components: any[] = [
       k.sprite(obj.sprite),
       k.pos(x, y),
       k.anchor("center"),
       k.area(),
       "mapObject",
       { objectData: obj },
-    ]);
+    ];
+
+    const color = (obj as any).color;
+    if (color) {
+      components.push(k.color(color.r, color.g, color.b));
+    }
+
+    k.add(components);
   }
 }
 
