@@ -68,6 +68,30 @@ function handleClick(): void {
     }
   }
 
+  // Check if clicked on a reachable grid tile (direct move without entering movement mode first)
+  if (turnManager.isPlayerTurn() && !turnManager.isTilePlacement()) {
+    const player = turnManager.getObjectManager().getPlayer();
+    if (player && player.movesRemaining > 0) {
+      const clickedGridCol = Math.floor((pos.x - GRID_OFFSET_X) / TILE_SIZE);
+      const clickedGridRow = Math.floor((pos.y - GRID_OFFSET_Y) / TILE_SIZE);
+      
+      if (clickedGridRow >= 0 && clickedGridRow < GRID_ROWS && 
+          clickedGridCol >= 0 && clickedGridCol < GRID_COLS) {
+        const state = turnManager.getState();
+        const moves = turnManager.getObjectManager().getAvailableMoves(player);
+        const reachable = findReachableTiles(state.grid, player.gridPosition, moves);
+        const target = reachable.find(
+          (t) => t.position.row === clickedGridRow && t.position.col === clickedGridCol
+        );
+        if (target && target.path.length > 1) {
+          console.log("Direct move to reachable tile:", target.position);
+          movePlayerAlongPath(player, target.path);
+          return;
+        }
+      }
+    }
+  }
+
   const currentTiles = k.get("currentTile");
   for (const tile of currentTiles) {
     if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {

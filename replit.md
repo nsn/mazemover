@@ -34,8 +34,8 @@ A turn-based 2D maze game using Kaplay.js and TypeScript. Single player vs AI (A
 - Turn phases: Draw -> Place -> Push
 
 ## Controls
-- **Click player** - Enter movement mode, see reachable tiles
-- **Click reachable tile** - Move player (automatically ends turn, triggers enemies)
+- **Click player** - Enter movement mode, see reachable tiles highlighted
+- **Click any reachable tile** - Move player directly (works with or without movement mode)
 - **Click preview tile** - Enter tile placement mode (or rotate if already placing)
 - **Click plot** - Select plot for tile placement
 - **Click highlighted row/column** - Push tile into grid
