@@ -50,6 +50,19 @@ function handleClick(): void {
       }
     }
 
+    // Check if clicking on the player sprite itself (to skip turn)
+    const mapObjs = k.get("mapObject");
+    for (const obj of mapObjs) {
+      if ((obj as any).hasPoint && (obj as any).hasPoint(pos)) {
+        const objData = (obj as any).objectData as MapObject;
+        if (objData.type === "Player" && objData === selectedPlayer) {
+          console.log("Same player clicked - skipping turn");
+          skipPlayerTurn(selectedPlayer);
+          return;
+        }
+      }
+    }
+
     console.log("Click outside reachable - canceling movement mode");
     exitMovementMode();
     render();
@@ -229,7 +242,23 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
   isAnimating = false;
   exitMovementMode();
-  
+
+  turnManager.completeMove();
+  await executeEnemyTurns();
+  turnManager.startPlayerTurn();
+}
+
+async function skipPlayerTurn(_player: MapObject): Promise<void> {
+  console.log("Skipping player turn - passing to enemies");
+
+  isAnimating = true;
+
+  k.destroyAll("reachableHighlight");
+
+  exitMovementMode();
+
+  isAnimating = false;
+
   turnManager.completeMove();
   await executeEnemyTurns();
   turnManager.startPlayerTurn();
