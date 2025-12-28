@@ -23,9 +23,9 @@ export const COLORS = {
 };
 
 export const TILE_WEIGHTS = {
-  CulDeSac: 1,
-  Straight: 2,
-  L: 3,
-  T: 4,
-  Cross: 3,
+  CulDeSac: 5,
+  Straight: 12,
+  L: 20,
+  T: 18,
+  Cross: 5,
 } as const;
