@@ -55,6 +55,9 @@ A turn-based 2D maze game using Kaplay.js and TypeScript. Single player vs AI (A
 - Tile weights configurable in config.ts (currently all equal)
 
 ## Recent Changes
+- 2025-12-28: Fixed push animation to keep entire grid visible (only affected row/col animates)
+- 2025-12-28: Map objects now animate smoothly with their tiles during push
+- 2025-12-28: Updated player sprite to 16x16 pixels
 - 2025-12-28: Implemented Map Objects system (Player, Enemy, Item, Exit)
 - 2025-12-28: Added corner tile and edge tile initialization rules
 - 2025-12-28: Added tile weights to configuration

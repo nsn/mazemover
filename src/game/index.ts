@@ -128,10 +128,13 @@ async function executePushWithAnimation(): Promise<void> {
   isAnimating = true;
   clearAllTiles();
 
+  const mapObjects = turnManager.getMapObjects();
+
   await animatePush(
     state.grid,
     state.selectedPlot,
     state.currentTile,
+    mapObjects,
     () => {
       isAnimating = false;
       turnManager.executePush();

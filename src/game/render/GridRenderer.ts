@@ -265,6 +265,7 @@ export async function animatePush(
   grid: TileInstance[][],
   plot: PlotPosition,
   newTile: TileInstance,
+  objects: MapObject[],
   onComplete: () => void
 ): Promise<void> {
   const duration = 0.2;
@@ -283,11 +284,33 @@ export async function animatePush(
     deltaX = -TILE_SIZE;
   }
 
+  const isVertical = plot.row === -1 || plot.row === GRID_ROWS;
+  const affectedRow = isVertical ? -1 : plot.row;
+  const affectedCol = isVertical ? plot.col : -1;
+
+  k.destroyAll("gridTile");
+  k.destroyAll("mapObject");
+
+  for (let r = 0; r < grid.length; r++) {
+    for (let c = 0; c < grid[r].length; c++) {
+      const tile = grid[r][c];
+      if (tile) {
+        const isAffected = (affectedRow !== -1 && r === affectedRow) ||
+                          (affectedCol !== -1 && c === affectedCol);
+        if (!isAffected) {
+          const x = GRID_OFFSET_X + c * TILE_SIZE + TILE_SIZE / 2;
+          const y = GRID_OFFSET_Y + r * TILE_SIZE + TILE_SIZE / 2;
+          drawTile(tile, x, y, "gridTile");
+        }
+      }
+    }
+  }
+
   const newTileObj = drawTile(newTile, startX, startY, "animatingTile");
 
-  const affectedTiles: ReturnType<typeof k.add>[] = [];
+  const affectedTileObjs: ReturnType<typeof k.add>[] = [];
 
-  if (plot.row === -1 || plot.row === GRID_ROWS) {
+  if (isVertical) {
     const col = plot.col;
     for (let r = 0; r < grid.length; r++) {
       const tile = grid[r][col];
@@ -295,7 +318,7 @@ export async function animatePush(
         const x = GRID_OFFSET_X + col * TILE_SIZE + TILE_SIZE / 2;
         const y = GRID_OFFSET_Y + r * TILE_SIZE + TILE_SIZE / 2;
         const tileObj = drawTile(tile, x, y, "animatingTile");
-        affectedTiles.push(tileObj);
+        affectedTileObjs.push(tileObj);
       }
     }
   } else {
@@ -306,23 +329,44 @@ export async function animatePush(
         const x = GRID_OFFSET_X + c * TILE_SIZE + TILE_SIZE / 2;
         const y = GRID_OFFSET_Y + row * TILE_SIZE + TILE_SIZE / 2;
         const tileObj = drawTile(tile, x, y, "animatingTile");
-        affectedTiles.push(tileObj);
+        affectedTileObjs.push(tileObj);
       }
     }
   }
 
-  k.destroyAll("gridTile");
+  const animatingObjectObjs: ReturnType<typeof k.add>[] = [];
+  const staticObjects: MapObject[] = [];
 
-  const allTiles = [newTileObj, ...affectedTiles];
-  for (const tileObj of allTiles) {
-    const startPos = (tileObj as any).pos.clone();
+  for (const obj of objects) {
+    const isAffected = (affectedRow !== -1 && obj.gridPosition.row === affectedRow) ||
+                      (affectedCol !== -1 && obj.gridPosition.col === affectedCol);
+    if (isAffected) {
+      const x = GRID_OFFSET_X + obj.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
+      const y = GRID_OFFSET_Y + obj.gridPosition.row * TILE_SIZE + TILE_SIZE / 2;
+      const objSprite = k.add([
+        k.sprite(obj.sprite),
+        k.pos(x, y),
+        k.anchor("center"),
+        "animatingObject",
+      ]);
+      animatingObjectObjs.push(objSprite);
+    } else {
+      staticObjects.push(obj);
+    }
+  }
+
+  drawMapObjects(staticObjects);
+
+  const allAnimating = [newTileObj, ...affectedTileObjs, ...animatingObjectObjs];
+  for (const gameObj of allAnimating) {
+    const startPos = (gameObj as any).pos.clone();
     const endPos = k.vec2(startPos.x + deltaX, startPos.y + deltaY);
     k.tween(
       startPos,
       endPos,
       duration,
       (val) => {
-        (tileObj as any).pos = val;
+        (gameObj as any).pos = val;
       },
       k.easings.easeOutQuad
     );
@@ -331,5 +375,6 @@ export async function animatePush(
   await k.wait(duration);
 
   k.destroyAll("animatingTile");
+  k.destroyAll("animatingObject");
   onComplete();
 }
