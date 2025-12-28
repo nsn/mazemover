@@ -15,6 +15,7 @@ import { loadAssets } from "./assets";
 import { TurnPhase, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y } from "./config";
+import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
 
 let turnManager: TurnManager;
 let inputController: InputController;
@@ -181,6 +182,76 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
   isAnimating = false;
   exitMovementMode();
   render();
+
+  await executeEnemyTurns();
+}
+
+async function executeEnemyTurns(): Promise<void> {
+  const state = turnManager.getState();
+  const objectManager = turnManager.getObjectManager();
+  const player = objectManager.getPlayer();
+  if (!player) return;
+
+  const enemyMoves = calculateAllEnemyMoves(state.grid, objectManager, player.gridPosition);
+
+  for (const move of enemyMoves) {
+    await animateEnemyMove(move);
+  }
+}
+
+async function animateEnemyMove(move: EnemyMove): Promise<void> {
+  const { enemy, path } = move;
+  if (path.length <= 1) return;
+
+  isAnimating = true;
+  const stepDuration = 0.12;
+
+  k.destroyAll("mapObject");
+
+  const from = path[0];
+  const startX = GRID_OFFSET_X + from.col * TILE_SIZE + TILE_SIZE / 2;
+  const startY = GRID_OFFSET_Y + from.row * TILE_SIZE + TILE_SIZE / 2;
+
+  const color = (enemy as any).color;
+  const spriteComponents: any[] = [
+    k.sprite(enemy.sprite),
+    k.pos(startX, startY),
+    k.anchor("center"),
+    "movingEnemy",
+  ];
+  if (color) {
+    spriteComponents.push(k.color(color.r, color.g, color.b));
+  }
+
+  const movingSprite = k.add(spriteComponents);
+
+  for (let i = 1; i < path.length; i++) {
+    const to = path[i];
+    const endX = GRID_OFFSET_X + to.col * TILE_SIZE + TILE_SIZE / 2;
+    const endY = GRID_OFFSET_Y + to.row * TILE_SIZE + TILE_SIZE / 2;
+    const currentPos = movingSprite.pos.clone();
+
+    k.tween(
+      currentPos,
+      k.vec2(endX, endY),
+      stepDuration,
+      (val) => {
+        movingSprite.pos = val;
+      },
+      k.easings.easeOutQuad
+    );
+
+    await k.wait(stepDuration);
+
+    enemy.gridPosition.row = to.row;
+    enemy.gridPosition.col = to.col;
+  }
+
+  k.destroyAll("movingEnemy");
+  turnManager.getObjectManager().spendMovement(enemy, path.length - 1);
+
+  isAnimating = false;
+  render();
 }
 
 function handleRightClick(): void {
@@ -223,7 +294,11 @@ export async function initGame(): Promise<void> {
     }
   });
 
-  turnManager.getObjectManager().createPlayer({ row: 3, col: 3 }, "Player1");
+  const objManager = turnManager.getObjectManager();
+  objManager.createPlayer({ row: 3, col: 3 }, "Player1");
+  objManager.createRedEnemy({ row: 0, col: 0 });
+  objManager.createYellowEnemy({ row: 0, col: 6 });
+  objManager.createGreenEnemy({ row: 6, col: 0 });
 
   turnManager.startNewTurn();
 }

@@ -64,6 +64,7 @@ A turn-based 2D maze game using Kaplay.js and TypeScript. Single player vs AI (A
 - Tile weights configurable in config.ts (currently all equal)
 
 ## Recent Changes
+- 2025-12-28: Added 3 enemy types (red speed 2, yellow speed 0.5, green speed 1) with chase AI
 - 2025-12-28: Implemented player movement with pathfinding and smooth animation
 - 2025-12-28: Added fractional movement speed accumulation system
 - 2025-12-28: Fixed push animation to keep entire grid visible (only affected row/col animates)
