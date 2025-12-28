@@ -1,5 +1,5 @@
 import { k } from "../../kaplayCtx";
-import { TileType, Direction, TurnPhase, type TileInstance, type PlotPosition } from "../types";
+import { TileType, Direction, TurnPhase, type TileInstance, type PlotPosition, type MapObject } from "../types";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_COLS, GRID_ROWS, PREVIEW_X, PREVIEW_Y, COLORS } from "../config";
 import { TileFrames } from "../assets";
 
@@ -124,6 +124,24 @@ export function clearAllTiles(): void {
   k.destroyAll("previewLabel");
   k.destroyAll("overlay");
   k.destroyAll("highlightArea");
+  k.destroyAll("mapObject");
+}
+
+export function drawMapObjects(objects: MapObject[]): void {
+  const sorted = [...objects].sort((a, b) => a.renderOrder - b.renderOrder);
+
+  for (const obj of sorted) {
+    const x = GRID_OFFSET_X + obj.gridPosition.col * TILE_SIZE + TILE_SIZE / 2 + obj.pixelOffset.x;
+    const y = GRID_OFFSET_Y + obj.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 + obj.pixelOffset.y;
+
+    k.add([
+      k.sprite(obj.sprite),
+      k.pos(x, y),
+      k.anchor("center"),
+      "mapObject",
+      { objectData: obj },
+    ]);
+  }
 }
 
 export function drawPreviewTile(

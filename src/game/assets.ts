@@ -19,6 +19,8 @@ export async function loadAssets(): Promise<void> {
   await k.loadBitmapFont("bblocky", "/blocky.png", 5, 7, {
     chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZ      abcdefghijklmnopqrstuvwxyz      01234567890      !"#$%&'()*+,-./:;<=>?[]\\^_\`{}|~@∎`,
   });
+
+  await k.loadSprite("player", "/player.png");
 }
 
 export const TileFrames = {

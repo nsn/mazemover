@@ -56,3 +56,22 @@ export interface GameState {
   selectedPlot: PlotPosition | null;
   turnPhase: TurnPhase;
 }
+
+export const ObjectType = {
+  Player: "Player",
+  Enemy: "Enemy",
+  Item: "Item",
+  Exit: "Exit",
+} as const;
+
+export type ObjectType = (typeof ObjectType)[keyof typeof ObjectType];
+
+export interface MapObject {
+  id: number;
+  name: string;
+  type: ObjectType;
+  gridPosition: GridPosition;
+  pixelOffset: { x: number; y: number };
+  renderOrder: number;
+  sprite: string;
+}

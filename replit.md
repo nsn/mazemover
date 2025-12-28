@@ -7,6 +7,7 @@ A turn-based 2D maze game using Kaplay.js and TypeScript. Single player vs AI (A
 - `src/` - TypeScript source files
   - `game/` - Game logic
     - `core/` - Data structures (Tile, Grid, TileDeck)
+    - `systems/` - Game systems (TurnManager, InputController, MapObjectManager)
     - `render/` - Kaplay rendering (GridRenderer)
     - `types.ts` - Type definitions
     - `config.ts` - Game constants
@@ -41,7 +42,22 @@ A turn-based 2D maze game using Kaplay.js and TypeScript. Single player vs AI (A
 - **R key** - Rotate current tile
 - **Space key** - Execute push (when tile is placed)
 
+## Map Objects System
+- MapObject types: Player, Enemy, Item, Exit
+- Properties: gridPosition, pixelOffset (for animation), renderOrder, sprite, name
+- Objects move with their tile when pushed
+- Objects pushed off-grid are destroyed (logged to console)
+- Factory methods: createPlayer(), createEnemy(), createItem(), createExit()
+
+## Grid Initialization Rules
+- Corner tiles: Always L-shaped, oriented with openings pointing inward
+- Immovable edge tiles (even indices on edges): Never cul-de-sac tiles
+- Tile weights configurable in config.ts (currently all equal)
+
 ## Recent Changes
+- 2025-12-28: Implemented Map Objects system (Player, Enemy, Item, Exit)
+- 2025-12-28: Added corner tile and edge tile initialization rules
+- 2025-12-28: Added tile weights to configuration
 - 2025-12-27: Enhanced UI with tile preview area and row/column highlighting
 - 2025-12-27: Implemented Phase 3 (Input & Turn Management) with animation
 - 2025-12-27: Added red/green visual indicators for plot states

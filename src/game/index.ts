@@ -8,6 +8,7 @@ import {
   animatePush,
   drawPreviewTile,
   drawGridWithOverlay,
+  drawMapObjects,
 } from "./render/GridRenderer";
 import { loadAssets } from "./assets";
 import { TurnPhase, type PlotPosition } from "./types";
@@ -115,6 +116,8 @@ export async function initGame(): Promise<void> {
     }
   });
 
+  turnManager.getObjectManager().createPlayer({ row: 3, col: 3 }, "Player1");
+
   turnManager.startNewTurn();
 }
 
@@ -142,19 +145,23 @@ function render(): void {
   clearAllTiles();
 
   const state = turnManager.getState();
+  const mapObjects = turnManager.getMapObjects();
 
   if (state.turnPhase === TurnPhase.Place && state.currentTile) {
     drawGridWithOverlay(state.grid, null);
+    drawMapObjects(mapObjects);
     drawPreviewTile(state.currentTile);
     const plots = turnManager.getPlots();
     drawPlots(plots, null, state.turnPhase);
   } else if (state.turnPhase === TurnPhase.Push && state.currentTile && state.selectedPlot) {
     drawGridWithOverlay(state.grid, state.selectedPlot);
+    drawMapObjects(mapObjects);
     const plots = turnManager.getPlots();
     drawPlots(plots, state.selectedPlot, state.turnPhase);
     drawCurrentTile(state.currentTile, state.selectedPlot);
   } else {
     drawGridWithOverlay(state.grid, null);
+    drawMapObjects(mapObjects);
   }
 }
 

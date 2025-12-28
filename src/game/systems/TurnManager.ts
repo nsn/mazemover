@@ -1,8 +1,9 @@
-import { TurnPhase, type PlotPosition, type GameState } from "../types";
+import { TurnPhase, type PlotPosition, type GameState, type MapObject } from "../types";
 import { createGrid, getPlotPositions, pushTileIntoGrid } from "../core/Grid";
 import { TileDeck } from "../core/TileDeck";
 import { rotateTile, rotateTileCounterClockwise } from "../core/Tile";
 import { GRID_COLS, GRID_ROWS } from "../config";
+import { MapObjectManager } from "./MapObjectManager";
 
 export type TurnManagerCallback = () => void;
 
@@ -10,18 +11,28 @@ export class TurnManager {
   private state: GameState;
   private onStateChange: TurnManagerCallback;
   private deck: TileDeck;
+  private objectManager: MapObjectManager;
 
   constructor(onStateChange: TurnManagerCallback, extraTiles: number = 1) {
     this.onStateChange = onStateChange;
     const n = Math.max(1, extraTiles);
     const totalTiles = GRID_ROWS * GRID_COLS + n;
     this.deck = new TileDeck(totalTiles);
+    this.objectManager = new MapObjectManager();
     this.state = {
       grid: createGrid(GRID_ROWS, GRID_COLS, this.deck),
       currentTile: null,
       selectedPlot: null,
       turnPhase: TurnPhase.Draw,
     };
+  }
+
+  getObjectManager(): MapObjectManager {
+    return this.objectManager;
+  }
+
+  getMapObjects(): MapObject[] {
+    return this.objectManager.getAllObjects();
   }
 
   getState(): GameState {
@@ -76,6 +87,8 @@ export class TurnManager {
 
   executePush(): void {
     if (!this.state.currentTile || !this.state.selectedPlot) return;
+
+    this.objectManager.handlePush(this.state.selectedPlot);
 
     const { newGrid, ejectedTile } = pushTileIntoGrid(
       this.state.grid,
