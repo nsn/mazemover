@@ -206,7 +206,14 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
   isAnimating = true;
   const stepDuration = 0.12;
 
-  k.destroyAll("mapObject");
+  const mapObjs = k.get("mapObject");
+  for (const obj of mapObjs) {
+    const objData = (obj as any).objectData as MapObject;
+    if (objData.id === enemy.id) {
+      obj.destroy();
+      break;
+    }
+  }
 
   const from = path[0];
   const startX = GRID_OFFSET_X + from.col * TILE_SIZE + TILE_SIZE / 2;
