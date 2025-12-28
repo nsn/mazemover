@@ -85,7 +85,12 @@ A turn-based 2D maze game using Kaplay.js and TypeScript. Single player vs AI (A
 - Immovable edge tiles (even indices on edges): Never cul-de-sac tiles
 - Tile weights configurable in config.ts (currently all equal)
 
+## Enemy AI Types
+- **Hunter** (default): Chases the player, moves toward the tile closest to player
+- **Guardian**: Protects an assigned tile, moves to the tile closest to both the protected tile AND the player (minimizes sum of distances)
+
 ## Recent Changes
+- 2025-12-28: Added AI type system with Hunter and Guardian behaviors
 - 2025-12-28: Added exit stairs map object with victory condition
 - 2025-12-28: Added onEnter/onExit callbacks to MapObject system
 - 2025-12-28: Player now spawns on opposite edge from exit

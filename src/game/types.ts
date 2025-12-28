@@ -75,6 +75,13 @@ export const ObjectType = {
 
 export type ObjectType = (typeof ObjectType)[keyof typeof ObjectType];
 
+export const AIType = {
+  Hunter: "Hunter",
+  Guardian: "Guardian",
+} as const;
+
+export type AIType = (typeof AIType)[keyof typeof AIType];
+
 export type MapObjectCallback = (mob: MapObject, isPlayer: boolean) => void;
 
 export interface MapObject {
@@ -90,4 +97,6 @@ export interface MapObject {
   movesRemaining: number;
   onEnter?: MapObjectCallback;
   onExit?: MapObjectCallback;
+  aiType?: AIType;
+  protectedTile?: TileInstance;
 }

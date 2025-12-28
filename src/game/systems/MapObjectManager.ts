@@ -1,5 +1,13 @@
-import { ObjectType, type MapObject, type GridPosition, type PlotPosition, Direction, type MapObjectCallback } from "../types";
+import { ObjectType, type MapObject, type GridPosition, type PlotPosition, Direction, type MapObjectCallback, AIType, type TileInstance } from "../types";
 import { GRID_ROWS, GRID_COLS } from "../config";
+
+export interface EnemyConfig {
+  name?: string;
+  movementSpeed?: number;
+  color?: { r: number; g: number; b: number };
+  aiType?: AIType;
+  protectedTile?: TileInstance;
+}
 
 let nextId = 1;
 
@@ -38,24 +46,44 @@ export class MapObjectManager {
     return this.createObject(ObjectType.Player, gridPosition, name, "player", 100);
   }
 
-  createEnemy(gridPosition: GridPosition, name: string = "Enemy", movementSpeed: number = 1, color?: { r: number; g: number; b: number }): MapObject {
+  createEnemy(gridPosition: GridPosition, config: EnemyConfig = {}): MapObject {
+    const {
+      name = "Enemy",
+      movementSpeed = 1,
+      color,
+      aiType = AIType.Hunter,
+      protectedTile,
+    } = config;
+    
     const enemy = this.createObject(ObjectType.Enemy, gridPosition, name, "enemy", 90, movementSpeed);
+    enemy.aiType = aiType;
+    if (protectedTile) {
+      enemy.protectedTile = protectedTile;
+    }
     if (color) {
       (enemy as any).color = color;
     }
     return enemy;
   }
 
+  createHunter(gridPosition: GridPosition, config: Omit<EnemyConfig, 'aiType' | 'protectedTile'> = {}): MapObject {
+    return this.createEnemy(gridPosition, { ...config, aiType: AIType.Hunter });
+  }
+
+  createGuardian(gridPosition: GridPosition, protectedTile: TileInstance, config: Omit<EnemyConfig, 'aiType' | 'protectedTile'> = {}): MapObject {
+    return this.createEnemy(gridPosition, { ...config, aiType: AIType.Guardian, protectedTile });
+  }
+
   createRedEnemy(gridPosition: GridPosition): MapObject {
-    return this.createEnemy(gridPosition, "Red Enemy", 2, { r: 255, g: 80, b: 80 });
+    return this.createHunter(gridPosition, { name: "Red Hunter", movementSpeed: 2, color: { r: 255, g: 80, b: 80 } });
   }
 
   createYellowEnemy(gridPosition: GridPosition): MapObject {
-    return this.createEnemy(gridPosition, "Yellow Enemy", 0.5, { r: 255, g: 220, b: 80 });
+    return this.createHunter(gridPosition, { name: "Yellow Hunter", movementSpeed: 0.5, color: { r: 255, g: 220, b: 80 } });
   }
 
   createGreenEnemy(gridPosition: GridPosition): MapObject {
-    return this.createEnemy(gridPosition, "Green Enemy", 1, { r: 80, g: 220, b: 80 });
+    return this.createHunter(gridPosition, { name: "Green Hunter", movementSpeed: 1, color: { r: 80, g: 220, b: 80 } });
   }
 
   getEnemies(): MapObject[] {
