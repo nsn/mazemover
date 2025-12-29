@@ -1,6 +1,7 @@
 import { k } from "../kaplayCtx";
 import { TurnManager } from "./systems/TurnManager";
 import { InputController } from "./systems/InputController";
+import { CursorManager } from "./systems/CursorManager";
 import {
   drawPlots,
   clearAllTiles,
@@ -20,6 +21,7 @@ import { getImmovableEdgeTiles, getOppositeSide, getRandomTileOnSide } from "./c
 
 let turnManager: TurnManager;
 let inputController: InputController;
+let cursorManager: CursorManager;
 let isAnimating = false;
 let isMovementMode = false;
 let reachableTiles: ReachableTile[] = [];
@@ -367,6 +369,9 @@ function handleRightClick(): void {
 export async function initGame(): Promise<void> {
   await loadAssets();
 
+  cursorManager = new CursorManager();
+  cursorManager.initialize();
+
   k.onMousePress("left", handleClick);
   k.onMousePress("right", handleRightClick);
 
@@ -376,6 +381,11 @@ export async function initGame(): Promise<void> {
     if (!isAnimating && turnManager.canPush()) {
       executePushWithAnimation();
     }
+  });
+
+  // Register cursor update callback
+  k.onDraw(() => {
+    cursorManager.update(turnManager);
   });
 
   const objManager = turnManager.getObjectManager();
@@ -474,7 +484,7 @@ function render(): void {
         drawReachableTiles(reachableTiles);
       }
       drawMapObjects(mapObjects);
-      if (state.currentTile && !state.hasPlacedTile) {
+      if (state.currentTile) {
         drawPreviewTile(state.currentTile);
         const plots = turnManager.getPlots();
         drawPlots(plots, null, state.playerPhase);

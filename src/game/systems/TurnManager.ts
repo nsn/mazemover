@@ -54,7 +54,6 @@ export class TurnManager {
     this.state.selectedPlot = null;
     this.state.turnOwner = TurnOwner.Player;
     this.state.playerPhase = PlayerPhase.AwaitingAction;
-    this.state.hasPlacedTile = false;
     console.log("[TurnManager] Player turn started - tile:", this.state.currentTile?.type);
     this.onStateChange();
   }
@@ -88,7 +87,7 @@ export class TurnManager {
   }
 
   canPlaceTile(): boolean {
-    return this.isPlayerTurn() && !this.state.hasPlacedTile && this.state.currentTile !== null;
+    return this.isPlayerTurn() && this.state.currentTile !== null;
   }
 
   canMove(): boolean {
@@ -151,11 +150,12 @@ export class TurnManager {
 
     this.deck.discard(ejectedTile);
     this.state.grid = newGrid;
-    this.state.currentTile = null;
     this.state.selectedPlot = null;
-    this.state.hasPlacedTile = true;
     this.state.playerPhase = PlayerPhase.AwaitingAction;
-    console.log("[TurnManager] Push complete - returning to AwaitingAction");
+
+    // Auto-draw new tile for continuous placement
+    this.state.currentTile = this.deck.draw();
+    console.log("[TurnManager] Push complete - auto-drew new tile:", this.state.currentTile?.type);
     this.onStateChange();
   }
 
