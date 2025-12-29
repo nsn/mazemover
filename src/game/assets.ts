@@ -21,6 +21,10 @@ export async function loadAssets(): Promise<void> {
     chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567890!"#$%&'()*+,-./:;<=>?[]\\^_\`{}|~@∎ `,
   });
 
+  await k.loadBitmapFont("3x5", "/font_3x5.png", 4, 6, {
+    chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567890+-=:.,()/\?!'% `,
+  });
+
   await k.loadSprite("player", "/player.png");
   await k.loadSprite("enemy", "/enemy.png");
   await k.loadSprite("exit", "/exit.png");
