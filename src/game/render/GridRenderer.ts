@@ -176,9 +176,9 @@ export function drawPreviewTile(
   tile: TileInstance
 ): ReturnType<typeof k.add> {
   k.add([
-    k.text("AZ az 10 !@", { font: "bblocky", size: 14 }),
+    k.text("The quick brown fox jumps over the lazy dog", { font: "bblocky", size: 7  }),
     k.pos(PREVIEW_X, PREVIEW_Y - 40),
-    k.anchor("center"),
+    //k.anchor("center"),
     k.color(200, 200, 200),
     "previewLabel",
   ]);
