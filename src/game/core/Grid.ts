@@ -2,6 +2,10 @@ import { Direction, TileType, type TileInstance, type PlotPosition, type Orienta
 import { GRID_COLS, GRID_ROWS, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE } from "../config";
 import { TileDeck } from "./TileDeck";
 
+/**
+ * Returns the appropriate L-shaped corner tile for grid corners.
+ * Each corner has a specific orientation to form the grid perimeter.
+ */
 function getCornerTile(row: number, col: number, rows: number, cols: number): TileInstance | null {
   const isTopLeft = row === 0 && col === 0;
   const isTopRight = row === 0 && col === cols - 1;
@@ -21,6 +25,10 @@ function getCornerTile(row: number, col: number, rows: number, cols: number): Ti
   return null;
 }
 
+/**
+ * Determines if a grid position is an immovable edge tile.
+ * Immovable edges are at even positions on the grid perimeter (excluding corners).
+ */
 function isImmovableEdge(row: number, col: number, rows: number, cols: number): boolean {
   const isTopOrBottomEdge = row === 0 || row === rows - 1;
   const isLeftOrRightEdge = col === 0 || col === cols - 1;
@@ -28,6 +36,30 @@ function isImmovableEdge(row: number, col: number, rows: number, cols: number): 
   const hasEvenRow = row % 2 === 0;
 
   return (isTopOrBottomEdge && hasEvenCol) || (isLeftOrRightEdge && hasEvenRow);
+}
+
+/**
+ * Returns a T-shaped tile with the closed side facing outward for edge positions.
+ * T tile orientations: 0=south closed, 1=west closed, 2=north closed, 3=east closed
+ */
+function getEdgeTTile(row: number, col: number, rows: number, cols: number): TileInstance {
+  // Determine which edge and set orientation so closed side faces outward
+  if (row === 0) {
+    // Top edge: closed side should face north (outward)
+    return { type: TileType.T, orientation: 2 as Orientation };
+  } else if (row === rows - 1) {
+    // Bottom edge: closed side should face south (outward)
+    return { type: TileType.T, orientation: 0 as Orientation };
+  } else if (col === 0) {
+    // Left edge: closed side should face west (outward)
+    return { type: TileType.T, orientation: 1 as Orientation };
+  } else if (col === cols - 1) {
+    // Right edge: closed side should face east (outward)
+    return { type: TileType.T, orientation: 3 as Orientation };
+  }
+
+  // Fallback (should never reach here for valid edge positions)
+  return { type: TileType.T, orientation: 0 as Orientation };
 }
 
 export type EdgeSide = "top" | "bottom" | "left" | "right";
@@ -38,6 +70,10 @@ export interface ImmovableEdgeTile {
   side: EdgeSide;
 }
 
+/**
+ * Returns all immovable edge tile positions on the grid perimeter.
+ * Used for placing objects like exits at fixed edge locations.
+ */
 export function getImmovableEdgeTiles(rows: number, cols: number): ImmovableEdgeTile[] {
   const tiles: ImmovableEdgeTile[] = [];
   
@@ -62,6 +98,10 @@ export function getImmovableEdgeTiles(rows: number, cols: number): ImmovableEdge
   return tiles;
 }
 
+/**
+ * Returns the opposite side of the grid (e.g., top -> bottom, left -> right).
+ * Used for placing the player opposite the exit.
+ */
 export function getOppositeSide(side: EdgeSide): EdgeSide {
   switch (side) {
     case "top": return "bottom";
@@ -71,6 +111,10 @@ export function getOppositeSide(side: EdgeSide): EdgeSide {
   }
 }
 
+/**
+ * Returns a random tile position on the specified side of the grid.
+ * Falls back to center position if no immovable edges exist on that side.
+ */
 export function getRandomTileOnSide(side: EdgeSide, rows: number, cols: number): { row: number; col: number } {
   const tiles = getImmovableEdgeTiles(rows, cols).filter(t => t.side === side);
   if (tiles.length === 0) {
@@ -85,15 +129,37 @@ export function getRandomTileOnSide(side: EdgeSide, rows: number, cols: number):
   return { row: tile.row, col: tile.col };
 }
 
+/**
+ * Determines if a grid position is an interior immovable tile.
+ * Interior immovable tiles are at even row/col positions but not on the grid perimeter.
+ */
+function isInteriorImmovable(row: number, col: number, rows: number, cols: number): boolean {
+  const hasEvenRow = row % 2 === 0;
+  const hasEvenCol = col % 2 === 0;
+  const isInterior = row > 0 && row < rows - 1 && col > 0 && col < cols - 1;
+
+  return hasEvenRow && hasEvenCol && isInterior;
+}
+
+/**
+ * Creates the initial game grid with fixed corners, immovable edges, and random interior tiles.
+ * Ensures immovable tiles (edges and interior) are never CulDeSac tiles to maintain accessibility.
+ */
 export function createGrid(rows: number, cols: number, deck: TileDeck): TileInstance[][] {
   const grid: TileInstance[][] = [];
   for (let r = 0; r < rows; r++) {
     const row: TileInstance[] = [];
     for (let c = 0; c < cols; c++) {
+      // Check if this position is one of the four corners (0,0), (0,6), (6,0), (6,6)
       const cornerTile = getCornerTile(r, c, rows, cols);
       if (cornerTile) {
+        // Corner position: place L-shaped tile with specific orientation
         row.push(cornerTile);
       } else if (isImmovableEdge(r, c, rows, cols)) {
+        // Edge position at even row/col (but not corner): place T tile with closed side facing outward
+        row.push(getEdgeTTile(r, c, rows, cols));
+      } else if (isInteriorImmovable(r, c, rows, cols)) {
+        // Interior immovable position (even row AND even col, not on perimeter): draw random tile but never CulDeSac
         let tile = deck.draw();
         while (tile.type === TileType.CulDeSac) {
           deck.discard(tile);
@@ -101,6 +167,7 @@ export function createGrid(rows: number, cols: number, deck: TileDeck): TileInst
         }
         row.push(tile);
       } else {
+        // Movable position (odd row OR odd col): draw any random tile from deck
         row.push(deck.draw());
       }
     }
@@ -109,6 +176,10 @@ export function createGrid(rows: number, cols: number, deck: TileDeck): TileInst
   return grid;
 }
 
+/**
+ * Returns all plot positions (tile insertion points) around the grid perimeter.
+ * Plots are placed at odd-numbered positions outside the grid.
+ */
 export function getPlotPositions(rows: number, cols: number): PlotPosition[] {
   const plots: PlotPosition[] = [];
 
@@ -129,6 +200,10 @@ export function getPlotPositions(rows: number, cols: number): PlotPosition[] {
   return plots;
 }
 
+/**
+ * Pushes a new tile into the grid from a plot position, shifting all tiles in that row/column.
+ * Returns the updated grid and the tile that was ejected from the opposite end.
+ */
 export function pushTileIntoGrid(
   grid: TileInstance[][],
   plot: PlotPosition,
@@ -177,6 +252,10 @@ export function pushTileIntoGrid(
   return { newGrid, ejectedTile };
 }
 
+/**
+ * Converts a plot position to screen coordinates for rendering.
+ * Plots are positioned just outside the grid boundary.
+ */
 export function getPlotScreenPosition(plot: PlotPosition): { x: number; y: number } {
   let x: number;
   let y: number;

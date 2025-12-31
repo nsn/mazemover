@@ -36,6 +36,19 @@ function handleClick(): void {
   const pos = k.mousePos();
   console.log("Click at:", pos);
 
+  // Check for skip button click
+  const skipButtons = k.get("skipButton");
+  for (const button of skipButtons) {
+    if ((button as any).hasPoint && (button as any).hasPoint(pos)) {
+      console.log("Skip button clicked");
+      const player = turnManager.getObjectManager().getPlayer();
+      if (player) {
+        skipPlayerTurn(player);
+      }
+      return;
+    }
+  }
+
   if (isMovementMode && selectedPlayer) {
     const reachableHighlights = k.get("reachableHighlight");
     for (const highlight of reachableHighlights) {
@@ -49,19 +62,6 @@ function handleClick(): void {
           movePlayerAlongPath(selectedPlayer, target.path);
         }
         return;
-      }
-    }
-
-    // Check if clicking on the player sprite itself (to skip turn)
-    const mapObjs = k.get("mapObject");
-    for (const obj of mapObjs) {
-      if ((obj as any).hasPoint && (obj as any).hasPoint(pos)) {
-        const objData = (obj as any).objectData as MapObject;
-        if (objData.type === "Player" && objData === selectedPlayer) {
-          console.log("Same player clicked - skipping turn");
-          skipPlayerTurn(selectedPlayer);
-          return;
-        }
       }
     }
 
@@ -478,6 +478,7 @@ function render(): void {
       } else {
         drawPreviewTile(state.currentTile);
       }
+      drawSkipButton();
     } else {
       drawGridWithOverlay(state.grid, null);
       if (isMovementMode) {
@@ -489,11 +490,26 @@ function render(): void {
         const plots = turnManager.getPlots();
         drawPlots(plots, null, state.playerPhase);
       }
+      drawSkipButton();
     }
   } else {
     drawGridWithOverlay(state.grid, null);
     drawMapObjects(mapObjects);
   }
+}
+
+function drawSkipButton(): void {
+  const buttonX = GRID_OFFSET_X + GRID_COLS * TILE_SIZE + TILE_SIZE * 3;
+  const buttonY = 360 / 2 + 80;
+
+  k.add([
+    k.sprite("skip_button"),
+    k.pos(buttonX, buttonY),
+    k.anchor("center"),
+    k.area(),
+    k.z(100),
+    "skipButton",
+  ]);
 }
 
 export function getGameState() {

@@ -127,6 +127,7 @@ export function clearAllTiles(): void {
   k.destroyAll("mapObject");
   k.destroyAll("reachableHighlight");
   k.destroyAll("movingPlayer");
+  k.destroyAll("skipButton");
 }
 
 export function drawMapObjects(objects: MapObject[]): void {
