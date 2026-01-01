@@ -103,6 +103,7 @@ export interface MapObject {
   movementAccumulator: number;
   movesRemaining: number;
   stats?: Stats;
+  currentHP?: number;
   onEnter?: MapObjectCallback;
   onExit?: MapObjectCallback;
   aiType?: AIType;

@@ -44,6 +44,7 @@ export class MapObjectManager {
       movementAccumulator: 0,
       movesRemaining: 0,
       stats: stats ? { ...stats } : undefined,
+      currentHP: stats ? stats.hp : undefined,
       onEnter,
       onExit,
     };
