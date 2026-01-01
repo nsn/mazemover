@@ -470,6 +470,54 @@ function handleRightClick(): void {
   }
 }
 
+function tryMovePlayerInDirection(rowDelta: number, colDelta: number): void {
+  if (isAnimating) return;
+  if (!turnManager.isPlayerTurn() || turnManager.isTilePlacement()) return;
+
+  const player = turnManager.getObjectManager().getPlayer();
+  if (!player || player.movesRemaining <= 0) return;
+
+  const targetRow = player.gridPosition.row + rowDelta;
+  const targetCol = player.gridPosition.col + colDelta;
+
+  // Check if target is within grid bounds
+  if (targetRow < 0 || targetRow >= GRID_ROWS || targetCol < 0 || targetCol >= GRID_COLS) {
+    console.log("Target out of bounds");
+    return;
+  }
+
+  const state = turnManager.getState();
+  const moves = turnManager.getObjectManager().getAvailableMoves(player);
+  const reachable = findReachableTiles(state.grid, player.gridPosition, moves);
+
+  const target = reachable.find(
+    (t) => t.position.row === targetRow && t.position.col === targetCol
+  );
+
+  if (target && target.path.length > 1) {
+    console.log(`Keyboard move to (${targetRow}, ${targetCol})`);
+    movePlayerAlongPath(player, target.path);
+  } else {
+    console.log("Target tile not reachable");
+  }
+}
+
+function handleMoveUp(): void {
+  tryMovePlayerInDirection(-1, 0);
+}
+
+function handleMoveDown(): void {
+  tryMovePlayerInDirection(1, 0);
+}
+
+function handleMoveLeft(): void {
+  tryMovePlayerInDirection(0, -1);
+}
+
+function handleMoveRight(): void {
+  tryMovePlayerInDirection(0, 1);
+}
+
 
 export async function initGame(): Promise<void> {
   await loadAssets();
@@ -480,6 +528,12 @@ export async function initGame(): Promise<void> {
 
   k.onMousePress("left", handleClick);
   k.onMousePress("right", handleRightClick);
+
+  // Keyboard movement using predefined buttons from kaplayCtx
+  k.onButtonPress("up", handleMoveUp);
+  k.onButtonPress("down", handleMoveDown);
+  k.onButtonPress("left", handleMoveLeft);
+  k.onButtonPress("right", handleMoveRight);
 
   turnManager = new TurnManager(render, enemyDatabase);
   inputController = new InputController(turnManager);

@@ -29,6 +29,20 @@ export const k = kaplay({
   width: 640,
   height: 360,
   background: [0, 0, 0],
+  buttons: {
+    left: {
+      keyboard: ["left", "a", "h"],
+    },
+    right: {
+      keyboard: ["right", "d", "l"],
+    },
+    up: {
+      keyboard: ["up", "w", "k"],
+    },
+    down: {
+      keyboard: ["down", "s", "j"],
+    },
+  },
   global: false,
   letterbox: true,
   touchToMouse: true,
