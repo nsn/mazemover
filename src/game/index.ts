@@ -18,11 +18,13 @@ import {
   drawPlayerStats,
   drawPreviewTile,
   drawSkipButton,
+  drawDebugInfo,
   clearUI,
 } from "./render/UIRenderer";
 import { loadAssets, loadEnemyDatabase, enemyDatabase } from "./assets";
 import { TurnOwner, PlayerPhase, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
+import { spawnScrollingText } from "./systems/ScrollingCombatText";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y } from "./config";
 import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
 import { getImmovableEdgeTiles, getOppositeSide, getRandomTileOnSide } from "./core/Grid";
@@ -252,6 +254,66 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
     if (enemy) {
       const combatResult = executeCombat(player, enemy);
 
+      // Spawn SCT for attacker's damage on defender
+      const defenderX = GRID_OFFSET_X + enemy.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
+      const defenderY = GRID_OFFSET_Y + enemy.gridPosition.row * TILE_SIZE + TILE_SIZE / 2;
+
+      if (combatResult.attackerAttack.hit) {
+        const damageText = combatResult.attackerAttack.critical
+          ? `${combatResult.attackerAttack.damage}!`
+          : `${combatResult.attackerAttack.damage}`;
+        const damageColor = combatResult.attackerAttack.critical
+          ? { r: 255, g: 255, b: 100 }  // Yellow for crits
+          : { r: 255, g: 100, b: 100 };  // Red for normal hits
+
+        spawnScrollingText({
+          text: damageText,
+          x: defenderX,
+          y: defenderY,
+          color: damageColor,
+          fontSize: combatResult.attackerAttack.critical ? 16 : 12,
+        });
+      } else {
+        spawnScrollingText({
+          text: "MISS",
+          x: defenderX,
+          y: defenderY,
+          color: { r: 150, g: 150, b: 150 },
+          fontSize: 10,
+        });
+      }
+
+      // Spawn SCT for defender's retaliation on attacker
+      if (combatResult.defenderRetaliation) {
+        const attackerX = GRID_OFFSET_X + player.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
+        const attackerY = GRID_OFFSET_Y + player.gridPosition.row * TILE_SIZE + TILE_SIZE / 2;
+
+        if (combatResult.defenderRetaliation.hit) {
+          const retDamageText = combatResult.defenderRetaliation.critical
+            ? `${combatResult.defenderRetaliation.damage}!`
+            : `${combatResult.defenderRetaliation.damage}`;
+          const retDamageColor = combatResult.defenderRetaliation.critical
+            ? { r: 255, g: 255, b: 100 }
+            : { r: 255, g: 100, b: 100 };
+
+          spawnScrollingText({
+            text: retDamageText,
+            x: attackerX,
+            y: attackerY,
+            color: retDamageColor,
+            fontSize: combatResult.defenderRetaliation.critical ? 16 : 12,
+          });
+        } else {
+          spawnScrollingText({
+            text: "MISS",
+            x: attackerX,
+            y: attackerY,
+            color: { r: 150, g: 150, b: 150 },
+            fontSize: 10,
+          });
+        }
+      }
+
       // Remove dead enemy
       if (combatResult.attackerAttack.defenderDied) {
         objectManager.destroyObject(enemy);
@@ -396,6 +458,66 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
 
     if (target) {
       const combatResult = executeCombat(enemy, target);
+
+      // Spawn SCT for attacker's damage on defender
+      const defenderX = GRID_OFFSET_X + target.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
+      const defenderY = GRID_OFFSET_Y + target.gridPosition.row * TILE_SIZE + TILE_SIZE / 2;
+
+      if (combatResult.attackerAttack.hit) {
+        const damageText = combatResult.attackerAttack.critical
+          ? `${combatResult.attackerAttack.damage}!`
+          : `${combatResult.attackerAttack.damage}`;
+        const damageColor = combatResult.attackerAttack.critical
+          ? { r: 255, g: 255, b: 100 }  // Yellow for crits
+          : { r: 255, g: 100, b: 100 };  // Red for normal hits
+
+        spawnScrollingText({
+          text: damageText,
+          x: defenderX,
+          y: defenderY,
+          color: damageColor,
+          fontSize: combatResult.attackerAttack.critical ? 16 : 12,
+        });
+      } else {
+        spawnScrollingText({
+          text: "MISS",
+          x: defenderX,
+          y: defenderY,
+          color: { r: 150, g: 150, b: 150 },
+          fontSize: 10,
+        });
+      }
+
+      // Spawn SCT for defender's retaliation on attacker
+      if (combatResult.defenderRetaliation) {
+        const attackerX = GRID_OFFSET_X + enemy.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
+        const attackerY = GRID_OFFSET_Y + enemy.gridPosition.row * TILE_SIZE + TILE_SIZE / 2;
+
+        if (combatResult.defenderRetaliation.hit) {
+          const retDamageText = combatResult.defenderRetaliation.critical
+            ? `${combatResult.defenderRetaliation.damage}!`
+            : `${combatResult.defenderRetaliation.damage}`;
+          const retDamageColor = combatResult.defenderRetaliation.critical
+            ? { r: 255, g: 255, b: 100 }
+            : { r: 255, g: 100, b: 100 };
+
+          spawnScrollingText({
+            text: retDamageText,
+            x: attackerX,
+            y: attackerY,
+            color: retDamageColor,
+            fontSize: combatResult.defenderRetaliation.critical ? 16 : 12,
+          });
+        } else {
+          spawnScrollingText({
+            text: "MISS",
+            x: attackerX,
+            y: attackerY,
+            color: { r: 150, g: 150, b: 150 },
+            fontSize: 10,
+          });
+        }
+      }
 
       // Remove dead target (player)
       if (combatResult.attackerAttack.defenderDied) {
@@ -679,6 +801,9 @@ function render(): void {
     drawGridWithOverlay(state.grid, null, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360);
     drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
   }
+
+  // Draw debug info
+  drawDebugInfo();
 }
 
 export function getGameState() {

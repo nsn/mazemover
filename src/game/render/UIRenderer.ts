@@ -123,6 +123,20 @@ export function drawPreviewTile(
 }
 
 /**
+ * Draws debug object count in bottom left corner
+ */
+export function drawDebugInfo(): void {
+  const objCount = k.debug.numObjects();
+  k.add([
+    k.text(`Objects: ${objCount}`, { font: "3x5", size: 10 }),
+    k.pos(10, 350),
+    k.color(150, 150, 150),
+    k.z(2000),
+    "debugInfo",
+  ]);
+}
+
+/**
  * Clears all UI elements
  */
 export function clearUI(): void {
@@ -130,4 +144,5 @@ export function clearUI(): void {
   k.destroyAll("skipButton");
   k.destroyAll("previewTile");
   k.destroyAll("previewLabel");
+  k.destroyAll("debugInfo");
 }

@@ -1,8 +1,9 @@
 import { k } from "../../kaplayCtx";
-import { PlayerPhase, Direction } from "../types";
+import { PlayerPhase, Direction, TurnOwner } from "../types";
 import type { TurnManager } from "./TurnManager";
 import type { PlotPosition } from "../types";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS } from "../config";
+import { findReachableTiles } from "./Pathfinding";
 
 // Centralized cursor definitions - easy to extend with new cursor types
 const CURSORS = {
@@ -13,6 +14,10 @@ const CURSORS = {
   push_up: "url('/cursors/navigation_n.png'), auto",
   push_down: "url('/cursors/navigation_s.png'), auto",
   place: "url('/cursors/cursor_copy.png'), auto",
+  move_left: "url('/cursors/arrow_w.png'), auto",
+  move_right: "url('/cursors/arrow_e.png'), auto",
+  move_up: "url('/cursors/arrow_n.png'), auto",
+  move_down: "url('/cursors/arrow_s.png'), auto",
 } as const;
 
 type CursorType = keyof typeof CURSORS;
@@ -34,7 +39,7 @@ export class CursorManager {
     // Determine cursor type based on hover state
     const state = turnManager.getState();
     const mousePos = k.mousePos();
-    const newCursorType = this.determineCursorType(state, mousePos);
+    const newCursorType = this.determineCursorType(state, mousePos, turnManager);
 
     // Only update CSS if cursor type changed (optimization)
     if (newCursorType !== this.currentCursorType) {
@@ -42,7 +47,7 @@ export class CursorManager {
     }
   }
 
-  private determineCursorType(state: any, mousePos: any): CursorType {
+  private determineCursorType(state: any, mousePos: any, turnManager: TurnManager): CursorType {
     // Check if hovering over currentTile (rotation)
     if (this.shouldShowRotateCursor(state, mousePos)) {
       return "rotate";
@@ -52,6 +57,12 @@ export class CursorManager {
     const plotCursor = this.getPlotCursor(state, mousePos);
     if (plotCursor) {
       return plotCursor;
+    }
+
+    // Check if hovering over a reachable tile (movement)
+    const moveCursor = this.getMoveCursor(mousePos, state, turnManager);
+    if (moveCursor) {
+      return moveCursor;
     }
 
     // Default cursor
@@ -151,6 +162,60 @@ export class CursorManager {
         return "push_left";
       default:
         return "default";
+    }
+  }
+
+  private getMoveCursor(mousePos: any, state: any, turnManager: TurnManager): CursorType | null {
+    // Only show move cursors during player turn and not in tile placement
+    if (state.turnOwner !== TurnOwner.Player || state.playerPhase === PlayerPhase.TilePlacement) {
+      return null;
+    }
+
+    // Get player
+    const player = turnManager.getObjectManager().getPlayer();
+    if (!player || player.movesRemaining <= 0) {
+      return null;
+    }
+
+    // Calculate which grid cell the mouse is over
+    const gridCol = Math.floor((mousePos.x - GRID_OFFSET_X) / TILE_SIZE);
+    const gridRow = Math.floor((mousePos.y - GRID_OFFSET_Y) / TILE_SIZE);
+
+    // Check if mouse is within grid bounds
+    if (gridRow < 0 || gridRow >= GRID_ROWS || gridCol < 0 || gridCol >= GRID_COLS) {
+      return null;
+    }
+
+    // Calculate reachable tiles
+    const moves = turnManager.getObjectManager().getAvailableMoves(player);
+    const reachable = findReachableTiles(state.grid, player.gridPosition, moves);
+
+    // Check if the hovered tile is reachable
+    const target = reachable.find(
+      (t) => t.position.row === gridRow && t.position.col === gridCol
+    );
+
+    if (!target || target.path.length <= 1) {
+      return null;
+    }
+
+    // Calculate direction from player to target
+    const rowDiff = gridRow - player.gridPosition.row;
+    const colDiff = gridCol - player.gridPosition.col;
+
+    // For adjacent tiles, show exact direction
+    if (Math.abs(rowDiff) === 1 && colDiff === 0) {
+      return rowDiff < 0 ? "move_up" : "move_down";
+    } else if (Math.abs(colDiff) === 1 && rowDiff === 0) {
+      return colDiff < 0 ? "move_left" : "move_right";
+    }
+
+    // For non-adjacent tiles, show primary direction
+    // Prioritize vertical movement if both row and col differ
+    if (Math.abs(rowDiff) >= Math.abs(colDiff)) {
+      return rowDiff < 0 ? "move_up" : "move_down";
+    } else {
+      return colDiff < 0 ? "move_left" : "move_right";
     }
   }
 
