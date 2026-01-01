@@ -29,3 +29,12 @@ export const TILE_WEIGHTS = {
   T: 18,
   Cross: 5,
 } as const;
+
+// Combat Configuration
+export const COMBAT = {
+  BASE_HIT: 50,           // Base hit chance percentage
+  HIT_MODIFIER: 2,        // Multiplier for AGI difference
+  TO_HIT: 100,            // Threshold for successful hit (toHitRoll must be <= this)
+  CRIT_CHANCE: 95,        // Threshold for critical hit (toHitRoll must be >= this)
+  CRIT_MULT: 2,           // Critical hit damage multiplier
+} as const;

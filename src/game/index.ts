@@ -26,6 +26,7 @@ import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y } from "./config";
 import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
 import { getImmovableEdgeTiles, getOppositeSide, getRandomTileOnSide } from "./core/Grid";
+import { executeCombat, checkForCombat } from "./systems/Combat";
 
 let turnManager: TurnManager;
 let inputController: InputController;
@@ -219,7 +220,7 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
   ]);
 
   const objectManager = turnManager.getObjectManager();
-  
+
   for (let i = 1; i < path.length; i++) {
     const previousPosition = { ...player.gridPosition };
     const to = path[i];
@@ -243,7 +244,30 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
     player.gridPosition.row = to.row;
     player.gridPosition.col = to.col;
-    
+
+    // Check for combat
+    const objectsAtPosition = objectManager.getObjectsAtPosition(to.row, to.col);
+    const enemy = checkForCombat(player, objectsAtPosition);
+
+    if (enemy) {
+      const combatResult = executeCombat(player, enemy);
+
+      // Remove dead enemy
+      if (combatResult.attackerAttack.defenderDied) {
+        objectManager.destroyObject(enemy);
+      }
+
+      // Check if player died from retaliation
+      if (combatResult.defenderRetaliation?.defenderDied) {
+        console.log("[Game] Player died!");
+        k.destroyAll("movingPlayer");
+        isAnimating = false;
+        exitMovementMode();
+        render();
+        return;
+      }
+    }
+
     objectManager.checkInteractions(player, previousPosition);
   }
 
@@ -319,6 +343,7 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
   }
 
   const movingSprite = k.add(spriteComponents);
+  const objectManager = turnManager.getObjectManager();
 
   for (let i = 1; i < path.length; i++) {
     const to = path[i];
@@ -340,6 +365,29 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
 
     enemy.gridPosition.row = to.row;
     enemy.gridPosition.col = to.col;
+
+    // Check for combat with player
+    const objectsAtPosition = objectManager.getObjectsAtPosition(to.row, to.col);
+    const target = checkForCombat(enemy, objectsAtPosition);
+
+    if (target) {
+      const combatResult = executeCombat(enemy, target);
+
+      // Remove dead target (player)
+      if (combatResult.attackerAttack.defenderDied) {
+        objectManager.destroyObject(target);
+        console.log("[Game] Player was killed by enemy!");
+      }
+
+      // Check if enemy died from retaliation
+      if (combatResult.defenderRetaliation?.defenderDied) {
+        objectManager.destroyObject(enemy);
+        k.destroyAll("movingEnemy");
+        isAnimating = false;
+        render();
+        return;
+      }
+    }
   }
 
   k.destroyAll("movingEnemy");
