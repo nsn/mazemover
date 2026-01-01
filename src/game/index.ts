@@ -255,6 +255,30 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
       // Remove dead enemy
       if (combatResult.attackerAttack.defenderDied) {
         objectManager.destroyObject(enemy);
+      } else {
+        // Defender survived - bounce player back to previous position
+        console.log("[Game] Defender survived - bouncing player back");
+        const bounceX = GRID_OFFSET_X + previousPosition.col * TILE_SIZE + TILE_SIZE / 2;
+        const bounceY = GRID_OFFSET_Y + previousPosition.row * TILE_SIZE + TILE_SIZE / 2;
+
+        const bouncePos = movingSprite.pos.clone();
+        k.tween(
+          bouncePos,
+          k.vec2(bounceX, bounceY),
+          stepDuration,
+          (val) => {
+            movingSprite.pos = val;
+          },
+          k.easings.easeOutQuad
+        );
+
+        await k.wait(stepDuration);
+
+        player.gridPosition.row = previousPosition.row;
+        player.gridPosition.col = previousPosition.col;
+
+        // Stop movement after bounce
+        break;
       }
 
       // Check if player died from retaliation
@@ -377,6 +401,31 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
       if (combatResult.attackerAttack.defenderDied) {
         objectManager.destroyObject(target);
         console.log("[Game] Player was killed by enemy!");
+      } else {
+        // Defender survived - bounce enemy back to previous position
+        console.log("[Game] Defender survived - bouncing enemy back");
+        const previousPos = path[i - 1];
+        const bounceX = GRID_OFFSET_X + previousPos.col * TILE_SIZE + TILE_SIZE / 2;
+        const bounceY = GRID_OFFSET_Y + previousPos.row * TILE_SIZE + TILE_SIZE / 2;
+
+        const bouncePos = movingSprite.pos.clone();
+        k.tween(
+          bouncePos,
+          k.vec2(bounceX, bounceY),
+          stepDuration,
+          (val) => {
+            movingSprite.pos = val;
+          },
+          k.easings.easeOutQuad
+        );
+
+        await k.wait(stepDuration);
+
+        enemy.gridPosition.row = previousPos.row;
+        enemy.gridPosition.col = previousPos.col;
+
+        // Stop movement after bounce
+        break;
       }
 
       // Check if enemy died from retaliation
