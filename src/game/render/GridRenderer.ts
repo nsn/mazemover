@@ -1,6 +1,6 @@
 import { k } from "../../kaplayCtx";
 import { TileType, Direction, PlayerPhase, type TileInstance, type PlotPosition, type MapObject } from "../types";
-import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_COLS, GRID_ROWS, PREVIEW_X, PREVIEW_Y, COLORS } from "../config";
+import { COLORS } from "../config";
 import { TileFrames } from "../assets";
 
 function getTileFrame(type: TileType): number {
@@ -21,27 +21,50 @@ function directionToAngle(direction: Direction): number {
   return direction * 90;
 }
 
-export function getPlotScreenPos(plot: PlotPosition): { x: number; y: number } {
+/**
+ * Calculates screen position for a plot (tile placement zone)
+ * @param plot The plot position to convert
+ * @param gridOffsetX X offset of the grid in pixels
+ * @param gridOffsetY Y offset of the grid in pixels
+ * @param gridRows Number of rows in the grid
+ * @param gridCols Number of columns in the grid
+ * @param tileSize Size of each tile in pixels
+ */
+export function getPlotScreenPos(
+  plot: PlotPosition,
+  gridOffsetX: number,
+  gridOffsetY: number,
+  gridRows: number,
+  gridCols: number,
+  tileSize: number
+): { x: number; y: number } {
   let x: number;
   let y: number;
 
   if (plot.row === -1) {
-    x = GRID_OFFSET_X + plot.col * TILE_SIZE + TILE_SIZE / 2;
-    y = GRID_OFFSET_Y - TILE_SIZE / 2;
-  } else if (plot.row === GRID_ROWS) {
-    x = GRID_OFFSET_X + plot.col * TILE_SIZE + TILE_SIZE / 2;
-    y = GRID_OFFSET_Y + GRID_ROWS * TILE_SIZE + TILE_SIZE / 2;
+    x = gridOffsetX + plot.col * tileSize + tileSize / 2;
+    y = gridOffsetY - tileSize / 2;
+  } else if (plot.row === gridRows) {
+    x = gridOffsetX + plot.col * tileSize + tileSize / 2;
+    y = gridOffsetY + gridRows * tileSize + tileSize / 2;
   } else if (plot.col === -1) {
-    x = GRID_OFFSET_X - TILE_SIZE / 2;
-    y = GRID_OFFSET_Y + plot.row * TILE_SIZE + TILE_SIZE / 2;
+    x = gridOffsetX - tileSize / 2;
+    y = gridOffsetY + plot.row * tileSize + tileSize / 2;
   } else {
-    x = GRID_OFFSET_X + GRID_COLS * TILE_SIZE + TILE_SIZE / 2;
-    y = GRID_OFFSET_Y + plot.row * TILE_SIZE + TILE_SIZE / 2;
+    x = gridOffsetX + gridCols * tileSize + tileSize / 2;
+    y = gridOffsetY + plot.row * tileSize + tileSize / 2;
   }
 
   return { x, y };
 }
 
+/**
+ * Draws a single tile at the specified position
+ * @param tile The tile to draw
+ * @param x X position in pixels
+ * @param y Y position in pixels
+ * @param tag Optional tag for the game object
+ */
 export function drawTile(
   tile: TileInstance,
   x: number,
@@ -62,25 +85,53 @@ export function drawTile(
   return tileObj;
 }
 
-export function drawGrid(grid: TileInstance[][]): void {
+/**
+ * Draws the entire grid of tiles
+ * @param grid 2D array of tiles
+ * @param gridOffsetX X offset of the grid in pixels
+ * @param gridOffsetY Y offset of the grid in pixels
+ * @param tileSize Size of each tile in pixels
+ */
+export function drawGrid(
+  grid: TileInstance[][],
+  gridOffsetX: number,
+  gridOffsetY: number,
+  tileSize: number
+): void {
   for (let r = 0; r < grid.length; r++) {
     for (let c = 0; c < grid[r].length; c++) {
       const tile = grid[r][c];
       if (tile) {
-        const x = GRID_OFFSET_X + c * TILE_SIZE + TILE_SIZE / 2;
-        const y = GRID_OFFSET_Y + r * TILE_SIZE + TILE_SIZE / 2;
+        const x = gridOffsetX + c * tileSize + tileSize / 2;
+        const y = gridOffsetY + r * tileSize + tileSize / 2;
         drawTile(tile, x, y, "gridTile");
       }
     }
   }
 }
 
+/**
+ * Draws a single plot (tile placement zone)
+ * @param plot The plot position
+ * @param isSelected Whether this plot is selected
+ * @param playerPhase Current player phase
+ * @param gridOffsetX X offset of the grid in pixels
+ * @param gridOffsetY Y offset of the grid in pixels
+ * @param gridRows Number of rows in the grid
+ * @param gridCols Number of columns in the grid
+ * @param tileSize Size of each tile in pixels
+ */
 export function drawPlot(
   plot: PlotPosition,
   isSelected: boolean,
-  playerPhase: PlayerPhase
+  playerPhase: PlayerPhase,
+  gridOffsetX: number,
+  gridOffsetY: number,
+  gridRows: number,
+  gridCols: number,
+  tileSize: number
 ): ReturnType<typeof k.add> {
-  const { x, y } = getPlotScreenPos(plot);
+  const { x, y } = getPlotScreenPos(plot, gridOffsetX, gridOffsetY, gridRows, gridCols, tileSize);
   const angle = directionToAngle(plot.direction);
 
   const isGreen = isSelected && playerPhase === PlayerPhase.TilePlacement;
@@ -103,117 +154,68 @@ export function drawPlot(
   return plotObj;
 }
 
+/**
+ * Draws all plots
+ * @param plots Array of plot positions
+ * @param selectedPlot Currently selected plot
+ * @param playerPhase Current player phase
+ * @param gridOffsetX X offset of the grid in pixels
+ * @param gridOffsetY Y offset of the grid in pixels
+ * @param gridRows Number of rows in the grid
+ * @param gridCols Number of columns in the grid
+ * @param tileSize Size of each tile in pixels
+ */
 export function drawPlots(
   plots: PlotPosition[],
   selectedPlot: PlotPosition | null,
-  playerPhase: PlayerPhase
+  playerPhase: PlayerPhase,
+  gridOffsetX: number,
+  gridOffsetY: number,
+  gridRows: number,
+  gridCols: number,
+  tileSize: number
 ): void {
   for (const plot of plots) {
     const isSelected = selectedPlot !== null &&
       selectedPlot.row === plot.row &&
       selectedPlot.col === plot.col;
-    drawPlot(plot, isSelected, playerPhase);
+    drawPlot(plot, isSelected, playerPhase, gridOffsetX, gridOffsetY, gridRows, gridCols, tileSize);
   }
 }
 
-export function clearAllTiles(): void {
-  k.destroyAll("gridTile");
-  k.destroyAll("plot");
-  k.destroyAll("currentTile");
-  k.destroyAll("previewTile");
-  k.destroyAll("previewLabel");
-  k.destroyAll("overlay");
-  k.destroyAll("highlightArea");
-  k.destroyAll("mapObject");
-  k.destroyAll("reachableHighlight");
-  k.destroyAll("movingPlayer");
-  k.destroyAll("skipButton");
-}
-
-export function drawMapObjects(objects: MapObject[]): void {
-  const sorted = [...objects].sort((a, b) => a.renderOrder - b.renderOrder);
-
-  for (const obj of sorted) {
-    const x = GRID_OFFSET_X + obj.gridPosition.col * TILE_SIZE + TILE_SIZE / 2 + obj.pixelOffset.x;
-    const y = GRID_OFFSET_Y + obj.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 + obj.pixelOffset.y;
-
-    const components: any[] = [
-      k.sprite(obj.sprite),
-      k.pos(x, y),
-      k.anchor("center"),
-      k.area(),
-      "mapObject",
-      { objectData: obj },
-    ];
-
-    const color = (obj as any).color;
-    if (color) {
-      components.push(k.color(color.r, color.g, color.b));
-    }
-
-    k.add(components);
-  }
-}
-
-export function drawReachableTiles(tiles: { position: { row: number; col: number } }[]): void {
-  for (const tile of tiles) {
-    const x = GRID_OFFSET_X + tile.position.col * TILE_SIZE + TILE_SIZE / 2;
-    const y = GRID_OFFSET_Y + tile.position.row * TILE_SIZE + TILE_SIZE / 2;
-
-    k.add([
-      k.rect(TILE_SIZE - 2, TILE_SIZE - 2),
-      k.pos(x, y),
-      k.anchor("center"),
-      k.color(100, 255, 100),
-      k.opacity(0.3),
-      k.area(),
-      "reachableHighlight",
-      { gridPos: tile.position },
-    ]);
-  }
-}
-
-export function drawPreviewTile(
-  tile: TileInstance
-): ReturnType<typeof k.add> {
-  k.add([
-    k.text("The quick brown fox jumps over the lazy dog", { font: "3x5", size: 12 }),
-    k.pos(PREVIEW_X, PREVIEW_Y - 40),
-    //k.anchor("center"),
-    k.color(200, 200, 200),
-    "previewLabel",
-  ]);
-
-  const frame = getTileFrame(tile.type);
-  const angle = orientationToAngle(tile.orientation);
-
-  const tileObj = k.add([
-    k.sprite("tiles", { frame }),
-    k.pos(PREVIEW_X, PREVIEW_Y),
-    k.anchor("center"),
-    k.rotate(angle),
-    k.scale(1.5),
-    k.area(),
-    "previewTile",
-  ]);
-
-  return tileObj;
-}
-
+/**
+ * Draws the grid with optional overlay and highlight
+ * @param grid 2D array of tiles
+ * @param selectedPlot Currently selected plot (for overlay)
+ * @param gridOffsetX X offset of the grid in pixels
+ * @param gridOffsetY Y offset of the grid in pixels
+ * @param gridRows Number of rows in the grid
+ * @param gridCols Number of columns in the grid
+ * @param tileSize Size of each tile in pixels
+ * @param screenWidth Width of the screen in pixels
+ * @param screenHeight Height of the screen in pixels
+ */
 export function drawGridWithOverlay(
   grid: TileInstance[][],
-  selectedPlot: PlotPosition | null
+  selectedPlot: PlotPosition | null,
+  gridOffsetX: number,
+  gridOffsetY: number,
+  gridRows: number,
+  gridCols: number,
+  tileSize: number,
+  screenWidth: number,
+  screenHeight: number
 ): void {
-  const gridWidth = GRID_COLS * TILE_SIZE;
-  const gridHeight = GRID_ROWS * TILE_SIZE;
+  const gridWidth = gridCols * tileSize;
+  const gridHeight = gridRows * tileSize;
 
   if (selectedPlot) {
-    const isHorizontal = selectedPlot.col === -1 || selectedPlot.col === GRID_COLS;
+    const isHorizontal = selectedPlot.col === -1 || selectedPlot.col === gridCols;
     const highlightRow = isHorizontal ? selectedPlot.row : -1;
     const highlightCol = isHorizontal ? -1 : selectedPlot.col;
 
     k.add([
-      k.rect(640, 360),
+      k.rect(screenWidth, screenHeight),
       k.pos(0, 0),
       k.color(...COLORS.overlay),
       k.opacity(0.6),
@@ -224,11 +226,11 @@ export function drawGridWithOverlay(
       for (let c = 0; c < grid[r].length; c++) {
         const tile = grid[r][c];
         if (tile) {
-          const x = GRID_OFFSET_X + c * TILE_SIZE + TILE_SIZE / 2;
-          const y = GRID_OFFSET_Y + r * TILE_SIZE + TILE_SIZE / 2;
+          const x = gridOffsetX + c * tileSize + tileSize / 2;
+          const y = gridOffsetY + r * tileSize + tileSize / 2;
           const isDarkened = (highlightRow !== -1 && r !== highlightRow) ||
                             (highlightCol !== -1 && c !== highlightCol);
-          
+
           const tileObj = drawTile(tile, x, y, "gridTile");
           if (isDarkened) {
             (tileObj as any).opacity = 0.3;
@@ -239,8 +241,8 @@ export function drawGridWithOverlay(
 
     if (highlightRow !== -1) {
       k.add([
-        k.rect(gridWidth, TILE_SIZE),
-        k.pos(GRID_OFFSET_X, GRID_OFFSET_Y + highlightRow * TILE_SIZE),
+        k.rect(gridWidth, tileSize),
+        k.pos(gridOffsetX, gridOffsetY + highlightRow * tileSize),
         k.color(255, 255, 255),
         k.opacity(0),
         k.area(),
@@ -248,8 +250,8 @@ export function drawGridWithOverlay(
       ]);
     } else if (highlightCol !== -1) {
       k.add([
-        k.rect(TILE_SIZE, gridHeight),
-        k.pos(GRID_OFFSET_X + highlightCol * TILE_SIZE, GRID_OFFSET_Y),
+        k.rect(tileSize, gridHeight),
+        k.pos(gridOffsetX + highlightCol * tileSize, gridOffsetY),
         k.color(255, 255, 255),
         k.opacity(0),
         k.area(),
@@ -261,8 +263,8 @@ export function drawGridWithOverlay(
       for (let c = 0; c < grid[r].length; c++) {
         const tile = grid[r][c];
         if (tile) {
-          const x = GRID_OFFSET_X + c * TILE_SIZE + TILE_SIZE / 2;
-          const y = GRID_OFFSET_Y + r * TILE_SIZE + TILE_SIZE / 2;
+          const x = gridOffsetX + c * tileSize + tileSize / 2;
+          const y = gridOffsetY + r * tileSize + tileSize / 2;
           drawTile(tile, x, y, "gridTile");
         }
       }
@@ -270,11 +272,26 @@ export function drawGridWithOverlay(
   }
 }
 
+/**
+ * Draws the current tile being placed at a plot position
+ * @param tile The tile to draw
+ * @param plot The plot position
+ * @param gridOffsetX X offset of the grid in pixels
+ * @param gridOffsetY Y offset of the grid in pixels
+ * @param gridRows Number of rows in the grid
+ * @param gridCols Number of columns in the grid
+ * @param tileSize Size of each tile in pixels
+ */
 export function drawCurrentTile(
   tile: TileInstance,
-  plot: PlotPosition
+  plot: PlotPosition,
+  gridOffsetX: number,
+  gridOffsetY: number,
+  gridRows: number,
+  gridCols: number,
+  tileSize: number
 ): ReturnType<typeof k.add> {
-  const { x, y } = getPlotScreenPos(plot);
+  const { x, y } = getPlotScreenPos(plot, gridOffsetX, gridOffsetY, gridRows, gridCols, tileSize);
   const frame = getTileFrame(tile.type);
   const angle = orientationToAngle(tile.orientation);
 
@@ -290,30 +307,48 @@ export function drawCurrentTile(
   return tileObj;
 }
 
+/**
+ * Animates a tile push operation
+ * @param grid The grid of tiles
+ * @param plot The plot position where the push originates
+ * @param newTile The new tile being pushed in
+ * @param objects Map objects that may be affected by the push
+ * @param gridOffsetX X offset of the grid in pixels
+ * @param gridOffsetY Y offset of the grid in pixels
+ * @param gridRows Number of rows in the grid
+ * @param gridCols Number of columns in the grid
+ * @param tileSize Size of each tile in pixels
+ * @param onComplete Callback when animation completes
+ */
 export async function animatePush(
   grid: TileInstance[][],
   plot: PlotPosition,
   newTile: TileInstance,
   objects: MapObject[],
+  gridOffsetX: number,
+  gridOffsetY: number,
+  gridRows: number,
+  gridCols: number,
+  tileSize: number,
   onComplete: () => void
 ): Promise<void> {
   const duration = 0.2;
-  const { x: startX, y: startY } = getPlotScreenPos(plot);
+  const { x: startX, y: startY } = getPlotScreenPos(plot, gridOffsetX, gridOffsetY, gridRows, gridCols, tileSize);
 
   let deltaX = 0;
   let deltaY = 0;
 
   if (plot.direction === Direction.South) {
-    deltaY = TILE_SIZE;
+    deltaY = tileSize;
   } else if (plot.direction === Direction.North) {
-    deltaY = -TILE_SIZE;
+    deltaY = -tileSize;
   } else if (plot.direction === Direction.East) {
-    deltaX = TILE_SIZE;
+    deltaX = tileSize;
   } else if (plot.direction === Direction.West) {
-    deltaX = -TILE_SIZE;
+    deltaX = -tileSize;
   }
 
-  const isVertical = plot.row === -1 || plot.row === GRID_ROWS;
+  const isVertical = plot.row === -1 || plot.row === gridRows;
   const affectedRow = isVertical ? -1 : plot.row;
   const affectedCol = isVertical ? plot.col : -1;
 
@@ -327,8 +362,8 @@ export async function animatePush(
         const isAffected = (affectedRow !== -1 && r === affectedRow) ||
                           (affectedCol !== -1 && c === affectedCol);
         if (!isAffected) {
-          const x = GRID_OFFSET_X + c * TILE_SIZE + TILE_SIZE / 2;
-          const y = GRID_OFFSET_Y + r * TILE_SIZE + TILE_SIZE / 2;
+          const x = gridOffsetX + c * tileSize + tileSize / 2;
+          const y = gridOffsetY + r * tileSize + tileSize / 2;
           drawTile(tile, x, y, "gridTile");
         }
       }
@@ -344,8 +379,8 @@ export async function animatePush(
     for (let r = 0; r < grid.length; r++) {
       const tile = grid[r][col];
       if (tile) {
-        const x = GRID_OFFSET_X + col * TILE_SIZE + TILE_SIZE / 2;
-        const y = GRID_OFFSET_Y + r * TILE_SIZE + TILE_SIZE / 2;
+        const x = gridOffsetX + col * tileSize + tileSize / 2;
+        const y = gridOffsetY + r * tileSize + tileSize / 2;
         const tileObj = drawTile(tile, x, y, "animatingTile");
         affectedTileObjs.push(tileObj);
       }
@@ -355,8 +390,8 @@ export async function animatePush(
     for (let c = 0; c < grid[row].length; c++) {
       const tile = grid[row][c];
       if (tile) {
-        const x = GRID_OFFSET_X + c * TILE_SIZE + TILE_SIZE / 2;
-        const y = GRID_OFFSET_Y + row * TILE_SIZE + TILE_SIZE / 2;
+        const x = gridOffsetX + c * tileSize + tileSize / 2;
+        const y = gridOffsetY + row * tileSize + tileSize / 2;
         const tileObj = drawTile(tile, x, y, "animatingTile");
         affectedTileObjs.push(tileObj);
       }
@@ -370,8 +405,8 @@ export async function animatePush(
     const isAffected = (affectedRow !== -1 && obj.gridPosition.row === affectedRow) ||
                       (affectedCol !== -1 && obj.gridPosition.col === affectedCol);
     if (isAffected) {
-      const x = GRID_OFFSET_X + obj.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
-      const y = GRID_OFFSET_Y + obj.gridPosition.row * TILE_SIZE + TILE_SIZE / 2;
+      const x = gridOffsetX + obj.gridPosition.col * tileSize + tileSize / 2;
+      const y = gridOffsetY + obj.gridPosition.row * tileSize + tileSize / 2;
       const objSprite = k.add([
         k.sprite(obj.sprite),
         k.pos(x, y),
@@ -384,7 +419,23 @@ export async function animatePush(
     }
   }
 
-  drawMapObjects(staticObjects);
+  // Draw static objects using simple rendering (not importing MapObjectRenderer to avoid circular deps)
+  const sorted = [...staticObjects].sort((a, b) => a.renderOrder - b.renderOrder);
+  for (const obj of sorted) {
+    const x = gridOffsetX + obj.gridPosition.col * tileSize + tileSize / 2 + obj.pixelOffset.x;
+    const y = gridOffsetY + obj.gridPosition.row * tileSize + tileSize / 2 + obj.pixelOffset.y;
+    const components: any[] = [
+      k.sprite(obj.sprite),
+      k.pos(x, y),
+      k.anchor("center"),
+      "mapObject",
+    ];
+    const color = (obj as any).color;
+    if (color) {
+      components.push(k.color(color.r, color.g, color.b));
+    }
+    k.add(components);
+  }
 
   const allAnimating = [newTileObj, ...affectedTileObjs, ...animatingObjectObjs];
   for (const gameObj of allAnimating) {
@@ -406,4 +457,15 @@ export async function animatePush(
   k.destroyAll("animatingTile");
   k.destroyAll("animatingObject");
   onComplete();
+}
+
+/**
+ * Clears all grid-related visual elements
+ */
+export function clearGrid(): void {
+  k.destroyAll("gridTile");
+  k.destroyAll("plot");
+  k.destroyAll("currentTile");
+  k.destroyAll("overlay");
+  k.destroyAll("highlightArea");
 }

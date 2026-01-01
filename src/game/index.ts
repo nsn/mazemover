@@ -4,18 +4,26 @@ import { InputController } from "./systems/InputController";
 import { CursorManager } from "./systems/CursorManager";
 import {
   drawPlots,
-  clearAllTiles,
   drawCurrentTile,
   animatePush,
-  drawPreviewTile,
   drawGridWithOverlay,
+  clearGrid,
+} from "./render/GridRenderer";
+import {
   drawMapObjects,
   drawReachableTiles,
-} from "./render/GridRenderer";
+  clearMapObjects,
+} from "./render/MapObjectRenderer";
+import {
+  drawPlayerStats,
+  drawPreviewTile,
+  drawSkipButton,
+  clearUI,
+} from "./render/UIRenderer";
 import { loadAssets, loadEnemyDatabase, enemyDatabase } from "./assets";
 import { TurnOwner, PlayerPhase, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
-import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS } from "./config";
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y } from "./config";
 import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
 import { getImmovableEdgeTiles, getOppositeSide, getRandomTileOnSide } from "./core/Grid";
 
@@ -439,12 +447,18 @@ export async function initGame(): Promise<void> {
   turnManager.startPlayerTurn();
 }
 
+function clearAll(): void {
+  clearGrid();
+  clearMapObjects();
+  clearUI();
+}
+
 async function executePushWithAnimation(): Promise<void> {
   const state = turnManager.getState();
   if (!state.currentTile || !state.selectedPlot) return;
 
   isAnimating = true;
-  clearAllTiles();
+  clearAll();
 
   const mapObjects = turnManager.getMapObjects();
 
@@ -453,6 +467,11 @@ async function executePushWithAnimation(): Promise<void> {
     state.selectedPlot,
     state.currentTile,
     mapObjects,
+    GRID_OFFSET_X,
+    GRID_OFFSET_Y,
+    GRID_ROWS,
+    GRID_COLS,
+    TILE_SIZE,
     () => {
       isAnimating = false;
       turnManager.executePush();
@@ -463,54 +482,52 @@ async function executePushWithAnimation(): Promise<void> {
 function render(): void {
   if (isAnimating) return;
 
-  clearAllTiles();
+  clearAll();
 
   const state = turnManager.getState();
   const mapObjects = turnManager.getMapObjects();
-  
+  const player = turnManager.getObjectManager().getPlayer();
+
+  // Calculate UI positions
+  const statsX = 8;
+  const statsY = 8;
+  const skipButtonX = GRID_OFFSET_X + GRID_COLS * TILE_SIZE + TILE_SIZE * 3;
+  const skipButtonY = 360 / 2 + 80;
+
+  // Draw player stats UI
+  if (player) {
+    drawPlayerStats(player, statsX, statsY);
+  }
+
   if (state.turnOwner === TurnOwner.Player) {
     if (state.playerPhase === PlayerPhase.TilePlacement && state.currentTile) {
-      drawGridWithOverlay(state.grid, state.selectedPlot);
-      drawMapObjects(mapObjects);
+      drawGridWithOverlay(state.grid, state.selectedPlot, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360);
+      drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
       const plots = turnManager.getPlots();
-      drawPlots(plots, state.selectedPlot, state.playerPhase);
+      drawPlots(plots, state.selectedPlot, state.playerPhase, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE);
       if (state.selectedPlot) {
-        drawCurrentTile(state.currentTile, state.selectedPlot);
+        drawCurrentTile(state.currentTile, state.selectedPlot, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE);
       } else {
-        drawPreviewTile(state.currentTile);
+        drawPreviewTile(state.currentTile, PREVIEW_X, PREVIEW_Y, "The quick brown fox jumps over the lazy dog");
       }
-      drawSkipButton();
+      drawSkipButton(skipButtonX, skipButtonY);
     } else {
-      drawGridWithOverlay(state.grid, null);
+      drawGridWithOverlay(state.grid, null, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360);
       if (isMovementMode) {
-        drawReachableTiles(reachableTiles);
+        drawReachableTiles(reachableTiles, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
       }
-      drawMapObjects(mapObjects);
+      drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
       if (state.currentTile) {
-        drawPreviewTile(state.currentTile);
+        drawPreviewTile(state.currentTile, PREVIEW_X, PREVIEW_Y, "The quick brown fox jumps over the lazy dog");
         const plots = turnManager.getPlots();
-        drawPlots(plots, null, state.playerPhase);
+        drawPlots(plots, null, state.playerPhase, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE);
       }
-      drawSkipButton();
+      drawSkipButton(skipButtonX, skipButtonY);
     }
   } else {
-    drawGridWithOverlay(state.grid, null);
-    drawMapObjects(mapObjects);
+    drawGridWithOverlay(state.grid, null, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360);
+    drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
   }
-}
-
-function drawSkipButton(): void {
-  const buttonX = GRID_OFFSET_X + GRID_COLS * TILE_SIZE + TILE_SIZE * 3;
-  const buttonY = 360 / 2 + 80;
-
-  k.add([
-    k.sprite("skip_button"),
-    k.pos(buttonX, buttonY),
-    k.anchor("center"),
-    k.area(),
-    k.z(100),
-    "skipButton",
-  ]);
 }
 
 export function getGameState() {

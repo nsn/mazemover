@@ -1,0 +1,133 @@
+import { k } from "../../kaplayCtx";
+import { type TileInstance, type MapObject, TileType } from "../types";
+import { TileFrames } from "../assets";
+
+function getTileFrame(type: TileType): number {
+  switch (type) {
+    case TileType.CulDeSac: return TileFrames.CulDeSac;
+    case TileType.Straight: return TileFrames.Straight;
+    case TileType.L: return TileFrames.L;
+    case TileType.T: return TileFrames.T;
+    case TileType.Cross: return TileFrames.Cross;
+  }
+}
+
+function orientationToAngle(orientation: number): number {
+  return orientation * 90;
+}
+
+/**
+ * Draws player stats in the UI
+ * @param player The player object with stats
+ * @param x X coordinate for stats display
+ * @param y Y coordinate for stats display
+ */
+export function drawPlayerStats(player: MapObject, x: number, y: number): void {
+  if (!player.stats || player.currentHP === undefined) return;
+
+  const lineHeight = 8;
+
+  // Display player name
+  k.add([
+    k.text(player.name, { font: "3x5", size: 12 }),
+    k.pos(x, y),
+    k.color(255, 255, 255),
+    "playerStats",
+  ]);
+
+  // Display HP with current/max format
+  k.add([
+    k.text(`HP: ${player.currentHP}/${player.stats.hp}`, { font: "3x5", size: 12 }),
+    k.pos(x, y + lineHeight),
+    k.color(255, 100, 100),
+    "playerStats",
+  ]);
+
+  // Display ATK
+  k.add([
+    k.text(`ATK: ${player.stats.atk}`, { font: "3x5", size: 12 }),
+    k.pos(x, y + lineHeight * 2),
+    k.color(255, 200, 100),
+    "playerStats",
+  ]);
+
+  // Display DEF
+  k.add([
+    k.text(`DEF: ${player.stats.def}`, { font: "3x5", size: 12 }),
+    k.pos(x, y + lineHeight * 3),
+    k.color(100, 200, 255),
+    "playerStats",
+  ]);
+
+  // Display AGI
+  k.add([
+    k.text(`AGI: ${player.stats.agi}`, { font: "3x5", size: 12 }),
+    k.pos(x, y + lineHeight * 4),
+    k.color(100, 255, 100),
+    "playerStats",
+  ]);
+}
+
+/**
+ * Draws the skip turn button
+ * @param x X coordinate for button center
+ * @param y Y coordinate for button center
+ */
+export function drawSkipButton(x: number, y: number): void {
+  k.add([
+    k.sprite("skip_button"),
+    k.pos(x, y),
+    k.anchor("center"),
+    k.area(),
+    k.z(100),
+    "skipButton",
+  ]);
+}
+
+/**
+ * Draws the preview tile with label
+ * @param tile The tile to preview
+ * @param x X coordinate for tile center
+ * @param y Y coordinate for tile center
+ * @param labelText Optional label text to display above the tile
+ */
+export function drawPreviewTile(
+  tile: TileInstance,
+  x: number,
+  y: number,
+  labelText?: string
+): ReturnType<typeof k.add> {
+  if (labelText) {
+    k.add([
+      k.text(labelText, { font: "3x5", size: 12 }),
+      k.pos(x, y - 40),
+      k.color(200, 200, 200),
+      "previewLabel",
+    ]);
+  }
+
+  const frame = getTileFrame(tile.type);
+  const angle = orientationToAngle(tile.orientation);
+
+  const tileObj = k.add([
+    k.sprite("tiles", { frame }),
+    k.pos(x, y),
+    k.anchor("center"),
+    k.rotate(angle),
+    k.scale(1.5),
+    k.area(),
+    "previewTile",
+  ]);
+
+  return tileObj;
+}
+
+/**
+ * Clears all UI elements
+ */
+export function clearUI(): void {
+  k.destroyAll("playerStats");
+  k.destroyAll("skipButton");
+  k.destroyAll("previewTile");
+  k.destroyAll("previewLabel");
+}
