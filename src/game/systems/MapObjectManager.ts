@@ -1,5 +1,6 @@
-import { ObjectType, type MapObject, type GridPosition, type PlotPosition, Direction, type MapObjectCallback, AIType, type TileInstance } from "../types";
+import { ObjectType, type MapObject, type GridPosition, type PlotPosition, Direction, type MapObjectCallback, AIType, type TileInstance, type Stats } from "../types";
 import { GRID_ROWS, GRID_COLS } from "../config";
+import { EnemyDatabase } from "./EnemyDatabase";
 
 export interface EnemyConfig {
   name?: string;
@@ -7,12 +8,18 @@ export interface EnemyConfig {
   color?: { r: number; g: number; b: number };
   aiType?: AIType;
   protectedTile?: TileInstance;
+  stats?: Stats;
 }
 
 let nextId = 1;
 
 export class MapObjectManager {
   private objects: Map<number, MapObject> = new Map();
+  private enemyDatabase: EnemyDatabase;
+
+  constructor(enemyDatabase: EnemyDatabase) {
+    this.enemyDatabase = enemyDatabase;
+  }
 
   createObject(
     type: ObjectType,
@@ -21,6 +28,7 @@ export class MapObjectManager {
     sprite: string,
     renderOrder: number = 0,
     movementSpeed: number = 1,
+    stats?: Stats,
     onEnter?: MapObjectCallback,
     onExit?: MapObjectCallback
   ): MapObject {
@@ -35,6 +43,7 @@ export class MapObjectManager {
       movementSpeed,
       movementAccumulator: 0,
       movesRemaining: 0,
+      stats: stats ? { ...stats } : undefined,
       onEnter,
       onExit,
     };
@@ -42,48 +51,64 @@ export class MapObjectManager {
     return obj;
   }
 
-  createPlayer(gridPosition: GridPosition, name: string = "Player"): MapObject {
-    return this.createObject(ObjectType.Player, gridPosition, name, "player", 100);
+  createPlayer(gridPosition: GridPosition, name?: string): MapObject {
+    const playerDef = this.enemyDatabase.getPlayerDefinition();
+    const player = this.createObject(
+      ObjectType.Player,
+      gridPosition,
+      name || playerDef.name,
+      "player",
+      100,
+      1,
+      playerDef.stats
+    );
+    console.log(`[MapObjectManager] Created player with stats:`, player.stats);
+    return player;
   }
 
-  createEnemy(gridPosition: GridPosition, config: EnemyConfig = {}): MapObject {
-    const {
-      name = "Enemy",
-      movementSpeed = 1,
-      color,
-      aiType = AIType.Hunter,
-      protectedTile,
-    } = config;
-    
-    const enemy = this.createObject(ObjectType.Enemy, gridPosition, name, "enemy", 90, movementSpeed);
-    enemy.aiType = aiType;
+  createEnemy(gridPosition: GridPosition, enemyId: string, protectedTile?: TileInstance): MapObject {
+    const enemyDef = this.enemyDatabase.getEnemyDefinition(enemyId);
+    if (!enemyDef) {
+      console.error(`[MapObjectManager] Enemy definition not found: ${enemyId}`);
+      throw new Error(`Enemy definition not found: ${enemyId}`);
+    }
+
+    const enemy = this.createObject(
+      ObjectType.Enemy,
+      gridPosition,
+      enemyDef.name,
+      enemyDef.sprite,
+      90,
+      enemyDef.movementSpeed,
+      enemyDef.stats
+    );
+
+    enemy.aiType = enemyDef.aiType;
     if (protectedTile) {
       enemy.protectedTile = protectedTile;
     }
-    if (color) {
-      (enemy as any).color = color;
+    if (enemyDef.color) {
+      (enemy as any).color = enemyDef.color;
     }
+    console.log(`[MapObjectManager] Created ${enemyDef.name} with stats:`, enemy.stats);
     return enemy;
   }
 
-  createHunter(gridPosition: GridPosition, config: Omit<EnemyConfig, 'aiType' | 'protectedTile'> = {}): MapObject {
-    return this.createEnemy(gridPosition, { ...config, aiType: AIType.Hunter });
-  }
-
-  createGuardian(gridPosition: GridPosition, protectedTile: TileInstance, config: Omit<EnemyConfig, 'aiType' | 'protectedTile'> = {}): MapObject {
-    return this.createEnemy(gridPosition, { ...config, aiType: AIType.Guardian, protectedTile });
-  }
-
+  // Convenience methods for creating specific enemy types
   createRedEnemy(gridPosition: GridPosition): MapObject {
-    return this.createHunter(gridPosition, { name: "Red Hunter", movementSpeed: 2, color: { r: 255, g: 80, b: 80 } });
+    return this.createEnemy(gridPosition, "red_hunter");
   }
 
   createYellowEnemy(gridPosition: GridPosition): MapObject {
-    return this.createHunter(gridPosition, { name: "Yellow Hunter", movementSpeed: 0.5, color: { r: 255, g: 220, b: 80 } });
+    return this.createEnemy(gridPosition, "yellow_hunter");
   }
 
   createGreenEnemy(gridPosition: GridPosition): MapObject {
-    return this.createHunter(gridPosition, { name: "Green Hunter", movementSpeed: 1, color: { r: 80, g: 220, b: 80 } });
+    return this.createEnemy(gridPosition, "green_hunter");
+  }
+
+  createGuardian(gridPosition: GridPosition, protectedTile: TileInstance): MapObject {
+    return this.createEnemy(gridPosition, "guardian", protectedTile);
   }
 
   getEnemies(): MapObject[] {
@@ -91,11 +116,11 @@ export class MapObjectManager {
   }
 
   createItem(gridPosition: GridPosition, name: string = "Item"): MapObject {
-    return this.createObject(ObjectType.Item, gridPosition, name, "item", 50);
+    return this.createObject(ObjectType.Item, gridPosition, name, "item", 50, 1, undefined);
   }
 
   createExit(gridPosition: GridPosition, name: string = "Exit", onEnter?: MapObjectCallback): MapObject {
-    return this.createObject(ObjectType.Exit, gridPosition, name, "exit", 10, 0, onEnter);
+    return this.createObject(ObjectType.Exit, gridPosition, name, "exit", 10, 0, undefined, onEnter);
   }
 
   getExit(): MapObject | undefined {

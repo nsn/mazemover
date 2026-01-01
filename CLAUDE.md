@@ -19,6 +19,10 @@ npm run build
 npm preview
 ```
 
+## Development Constraints
+
+- Do not add npm dependencies without explicit user consent (see RULES.md)
+
 ## Architecture Overview
 
 ### State Machine Core
@@ -113,6 +117,12 @@ movementAccumulator = (movementAccumulator + movementSpeed) % 1
 - `movingPlayer`/`movingEnemy`: Animated movement sprites
 - `reachableHighlight`: Movement range visualization
 
+**CursorManager** (src/game/systems/CursorManager.ts):
+- Manages context-sensitive CSS cursors based on game state
+- Custom cursor assets in `/public/cursors/` directory
+- Updates cursor appearance based on hover state and player phase
+- Cursor types: default, rotate (over currentTile), place (over plots), directional push (push_up/down/left/right)
+
 Click handling (src/game/index.ts `handleClick()`):
 1. Query Kaplay objects by tag at click position
 2. Priority order determines which object was clicked
@@ -166,8 +176,17 @@ src/
 │   ├── config.ts        # Constants (GRID_SIZE, TILE_SIZE, movement speeds)
 │   ├── assets.ts        # Sprite/asset loading
 │   ├── core/            # Domain logic (Grid, Tile, TileDeck)
-│   ├── systems/         # Game systems (TurnManager, AI, Pathfinding, Input, MapObjects)
+│   ├── systems/         # Game systems (TurnManager, AI, Pathfinding, Input, MapObjects, CursorManager)
 │   └── render/          # UI rendering (GridRenderer)
 ```
 
 Core domain logic (core/) is pure logic with no Kaplay dependencies. Systems and render depend on Kaplay context.
+
+## Assets
+
+Custom assets located in `/public/`:
+- `tiles.png`: Tile sprite sheet (5 types × 4 orientations)
+- `player.png`, `enemy.png`, `exit.png`: Entity sprites
+- `cursors/`: Custom cursor images for context-sensitive UI
+- `blocky.ttf`: Custom pixel font
+- `skip_button.png`: UI element for skipping movement

@@ -12,7 +12,7 @@ import {
   drawMapObjects,
   drawReachableTiles,
 } from "./render/GridRenderer";
-import { loadAssets } from "./assets";
+import { loadAssets, loadEnemyDatabase, enemyDatabase } from "./assets";
 import { TurnOwner, PlayerPhase, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS } from "./config";
@@ -368,6 +368,7 @@ function handleRightClick(): void {
 
 export async function initGame(): Promise<void> {
   await loadAssets();
+  await loadEnemyDatabase();
 
   cursorManager = new CursorManager();
   cursorManager.initialize();
@@ -375,7 +376,7 @@ export async function initGame(): Promise<void> {
   k.onMousePress("left", handleClick);
   k.onMousePress("right", handleRightClick);
 
-  turnManager = new TurnManager(render);
+  turnManager = new TurnManager(render, enemyDatabase);
   inputController = new InputController(turnManager);
   inputController.setOnPushRequested(() => {
     if (!isAnimating && turnManager.canPush()) {

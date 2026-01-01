@@ -82,6 +82,13 @@ export const AIType = {
 
 export type AIType = (typeof AIType)[keyof typeof AIType];
 
+export interface Stats {
+  hp: number;
+  atk: number;
+  def: number;
+  agi: number;
+}
+
 export type MapObjectCallback = (mob: MapObject, isPlayer: boolean) => void;
 
 export interface MapObject {
@@ -95,6 +102,7 @@ export interface MapObject {
   movementSpeed: number;
   movementAccumulator: number;
   movesRemaining: number;
+  stats?: Stats;
   onEnter?: MapObjectCallback;
   onExit?: MapObjectCallback;
   aiType?: AIType;

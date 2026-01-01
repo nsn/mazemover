@@ -4,6 +4,7 @@ import { TileDeck } from "../core/TileDeck";
 import { rotateTile, rotateTileCounterClockwise } from "../core/Tile";
 import { GRID_COLS, GRID_ROWS } from "../config";
 import { MapObjectManager } from "./MapObjectManager";
+import type { EnemyDatabase } from "./EnemyDatabase";
 
 export type TurnManagerCallback = () => void;
 
@@ -13,12 +14,12 @@ export class TurnManager {
   private deck: TileDeck;
   private objectManager: MapObjectManager;
 
-  constructor(onStateChange: TurnManagerCallback, extraTiles: number = 1) {
+  constructor(onStateChange: TurnManagerCallback, enemyDatabase: EnemyDatabase, extraTiles: number = 1) {
     this.onStateChange = onStateChange;
     const n = Math.max(1, extraTiles);
     const totalTiles = GRID_ROWS * GRID_COLS + n;
     this.deck = new TileDeck(totalTiles);
-    this.objectManager = new MapObjectManager();
+    this.objectManager = new MapObjectManager(enemyDatabase);
     this.state = {
       grid: createGrid(GRID_ROWS, GRID_COLS, this.deck),
       currentTile: null,

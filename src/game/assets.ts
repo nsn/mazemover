@@ -1,4 +1,5 @@
 import { k } from "../kaplayCtx";
+import { EnemyDatabase } from "./systems/EnemyDatabase";
 
 export async function loadAssets(): Promise<void> {
   await k.loadSprite("tiles", "/tiles.png", {
@@ -39,3 +40,10 @@ export const TileFrames = {
   Cross: 4,
   Plot: 5,
 } as const;
+
+// Global enemy database instance
+export const enemyDatabase = new EnemyDatabase();
+
+export async function loadEnemyDatabase(): Promise<void> {
+  await enemyDatabase.load("/enemies.json");
+}
