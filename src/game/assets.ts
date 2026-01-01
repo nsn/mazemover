@@ -23,7 +23,7 @@ export async function loadAssets(): Promise<void> {
   });
 
   await k.loadBitmapFont("3x5", "/font_3x5.png", 4, 6, {
-    chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=:.,()/\?!'% `,
+    chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=:.,()/\\?!'% `,
   });
 
   await k.loadSprite("player", "/player.png");
