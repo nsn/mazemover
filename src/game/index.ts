@@ -227,8 +227,29 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
     const previousPosition = { ...player.gridPosition };
     const to = path[i];
 
-    const endX = GRID_OFFSET_X + to.col * TILE_SIZE + TILE_SIZE / 2;
-    const endY = GRID_OFFSET_Y + to.row * TILE_SIZE + TILE_SIZE / 2;
+    // Check if there will be combat at this position
+    const objectsAtPosition = objectManager.getObjectsAtPosition(to.row, to.col);
+    const enemy = checkForCombat(player, objectsAtPosition);
+
+    const tileCenterX = GRID_OFFSET_X + to.col * TILE_SIZE + TILE_SIZE / 2;
+    const tileCenterY = GRID_OFFSET_Y + to.row * TILE_SIZE + TILE_SIZE / 2;
+
+    let endX = tileCenterX;
+    let endY = tileCenterY;
+
+    // If combat will occur, stop 16 pixels before the tile center
+    if (enemy) {
+      const deltaX = tileCenterX - movingSprite.pos.x;
+      const deltaY = tileCenterY - movingSprite.pos.y;
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+      if (distance > 0) {
+        const stopDistance = Math.max(0, distance - 16);
+        const ratio = stopDistance / distance;
+        endX = movingSprite.pos.x + deltaX * ratio;
+        endY = movingSprite.pos.y + deltaY * ratio;
+      }
+    }
 
     const currentPos = movingSprite.pos.clone();
 
@@ -246,10 +267,6 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
     player.gridPosition.row = to.row;
     player.gridPosition.col = to.col;
-
-    // Check for combat
-    const objectsAtPosition = objectManager.getObjectsAtPosition(to.row, to.col);
-    const enemy = checkForCombat(player, objectsAtPosition);
 
     if (enemy) {
       const combatResult = executeCombat(player, enemy);
@@ -283,40 +300,23 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
         });
       }
 
-      // Spawn SCT for defender's retaliation on attacker
-      if (combatResult.defenderRetaliation) {
-        const attackerX = GRID_OFFSET_X + player.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
-        const attackerY = GRID_OFFSET_Y + player.gridPosition.row * TILE_SIZE + TILE_SIZE / 2;
-
-        if (combatResult.defenderRetaliation.hit) {
-          const retDamageText = combatResult.defenderRetaliation.critical
-            ? `${combatResult.defenderRetaliation.damage}!`
-            : `${combatResult.defenderRetaliation.damage}`;
-          const retDamageColor = combatResult.defenderRetaliation.critical
-            ? { r: 255, g: 255, b: 100 }
-            : { r: 255, g: 100, b: 100 };
-
-          spawnScrollingText({
-            text: retDamageText,
-            x: attackerX,
-            y: attackerY,
-            color: retDamageColor,
-            fontSize: combatResult.defenderRetaliation.critical ? 16 : 12,
-          });
-        } else {
-          spawnScrollingText({
-            text: "MISS",
-            x: attackerX,
-            y: attackerY,
-            color: { r: 150, g: 150, b: 150 },
-            fontSize: 10,
-          });
-        }
-      }
-
-      // Remove dead enemy
+      // Remove dead enemy and complete movement to tile center
       if (combatResult.attackerAttack.defenderDied) {
         objectManager.destroyObject(enemy);
+
+        // Complete movement to tile center (was stopped 16 pixels before)
+        const finalPos = movingSprite.pos.clone();
+        k.tween(
+          finalPos,
+          k.vec2(tileCenterX, tileCenterY),
+          stepDuration * 0.3,
+          (val) => {
+            movingSprite.pos = val;
+          },
+          k.easings.easeOutQuad
+        );
+
+        await k.wait(stepDuration * 0.3);
       } else {
         // Defender survived - bounce player back to previous position
         console.log("[Game] Defender survived - bouncing player back");
@@ -341,16 +341,6 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
         // Stop movement after bounce
         break;
-      }
-
-      // Check if player died from retaliation
-      if (combatResult.defenderRetaliation?.defenderDied) {
-        console.log("[Game] Player died!");
-        k.destroyAll("movingPlayer");
-        isAnimating = false;
-        exitMovementMode();
-        render();
-        return;
       }
     }
 
@@ -432,9 +422,33 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
   const objectManager = turnManager.getObjectManager();
 
   for (let i = 1; i < path.length; i++) {
+    const previousPos = path[i - 1];
     const to = path[i];
-    const endX = GRID_OFFSET_X + to.col * TILE_SIZE + TILE_SIZE / 2;
-    const endY = GRID_OFFSET_Y + to.row * TILE_SIZE + TILE_SIZE / 2;
+
+    // Check if there will be combat at this position
+    const objectsAtPosition = objectManager.getObjectsAtPosition(to.row, to.col);
+    const target = checkForCombat(enemy, objectsAtPosition);
+
+    const tileCenterX = GRID_OFFSET_X + to.col * TILE_SIZE + TILE_SIZE / 2;
+    const tileCenterY = GRID_OFFSET_Y + to.row * TILE_SIZE + TILE_SIZE / 2;
+
+    let endX = tileCenterX;
+    let endY = tileCenterY;
+
+    // If combat will occur, stop 16 pixels before the tile center
+    if (target) {
+      const deltaX = tileCenterX - movingSprite.pos.x;
+      const deltaY = tileCenterY - movingSprite.pos.y;
+      const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+
+      if (distance > 0) {
+        const stopDistance = Math.max(0, distance - 16);
+        const ratio = stopDistance / distance;
+        endX = movingSprite.pos.x + deltaX * ratio;
+        endY = movingSprite.pos.y + deltaY * ratio;
+      }
+    }
+
     const currentPos = movingSprite.pos.clone();
 
     k.tween(
@@ -451,10 +465,6 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
 
     enemy.gridPosition.row = to.row;
     enemy.gridPosition.col = to.col;
-
-    // Check for combat with player
-    const objectsAtPosition = objectManager.getObjectsAtPosition(to.row, to.col);
-    const target = checkForCombat(enemy, objectsAtPosition);
 
     if (target) {
       const combatResult = executeCombat(enemy, target);
@@ -488,45 +498,27 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
         });
       }
 
-      // Spawn SCT for defender's retaliation on attacker
-      if (combatResult.defenderRetaliation) {
-        const attackerX = GRID_OFFSET_X + enemy.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
-        const attackerY = GRID_OFFSET_Y + enemy.gridPosition.row * TILE_SIZE + TILE_SIZE / 2;
-
-        if (combatResult.defenderRetaliation.hit) {
-          const retDamageText = combatResult.defenderRetaliation.critical
-            ? `${combatResult.defenderRetaliation.damage}!`
-            : `${combatResult.defenderRetaliation.damage}`;
-          const retDamageColor = combatResult.defenderRetaliation.critical
-            ? { r: 255, g: 255, b: 100 }
-            : { r: 255, g: 100, b: 100 };
-
-          spawnScrollingText({
-            text: retDamageText,
-            x: attackerX,
-            y: attackerY,
-            color: retDamageColor,
-            fontSize: combatResult.defenderRetaliation.critical ? 16 : 12,
-          });
-        } else {
-          spawnScrollingText({
-            text: "MISS",
-            x: attackerX,
-            y: attackerY,
-            color: { r: 150, g: 150, b: 150 },
-            fontSize: 10,
-          });
-        }
-      }
-
-      // Remove dead target (player)
+      // Remove dead target (player) and complete movement to tile center
       if (combatResult.attackerAttack.defenderDied) {
         objectManager.destroyObject(target);
         console.log("[Game] Player was killed by enemy!");
+
+        // Complete movement to tile center (was stopped 16 pixels before)
+        const finalPos = movingSprite.pos.clone();
+        k.tween(
+          finalPos,
+          k.vec2(tileCenterX, tileCenterY),
+          stepDuration * 0.3,
+          (val) => {
+            movingSprite.pos = val;
+          },
+          k.easings.easeOutQuad
+        );
+
+        await k.wait(stepDuration * 0.3);
       } else {
         // Defender survived - bounce enemy back to previous position
         console.log("[Game] Defender survived - bouncing enemy back");
-        const previousPos = path[i - 1];
         const bounceX = GRID_OFFSET_X + previousPos.col * TILE_SIZE + TILE_SIZE / 2;
         const bounceY = GRID_OFFSET_Y + previousPos.row * TILE_SIZE + TILE_SIZE / 2;
 
@@ -548,15 +540,6 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
 
         // Stop movement after bounce
         break;
-      }
-
-      // Check if enemy died from retaliation
-      if (combatResult.defenderRetaliation?.defenderDied) {
-        objectManager.destroyObject(enemy);
-        k.destroyAll("movingEnemy");
-        isAnimating = false;
-        render();
-        return;
       }
     }
   }

@@ -12,7 +12,6 @@ export interface AttackResult {
 
 export interface CombatResult {
   attackerAttack: AttackResult;
-  defenderRetaliation?: AttackResult;
 }
 
 /**
@@ -88,11 +87,11 @@ function executeAttack(attacker: MapObject, defender: MapObject): AttackResult {
 }
 
 /**
- * Executes full combat between two creatures
- * The attacker attacks first, then defender retaliates if still alive
+ * Executes combat between two creatures
+ * The attacker attacks the defender once (no retaliation)
  * @param attacker The attacking creature (moving onto defender's tile)
  * @param defender The defending creature (occupying the tile)
- * @returns Complete combat result
+ * @returns Combat result with attack outcome
  */
 export function executeCombat(attacker: MapObject, defender: MapObject): CombatResult {
   console.log(`[Combat] ${attacker.name} attacks ${defender.name}`);
@@ -103,24 +102,9 @@ export function executeCombat(attacker: MapObject, defender: MapObject): CombatR
   console.log(`[Combat] ${attacker.name} ${attackerAttack.hit ? 'hits' : 'misses'} ${defender.name}${attackerAttack.critical ? ' (CRITICAL)' : ''} for ${attackerAttack.damage} damage`);
   console.log(`[Combat] ${defender.name} HP: ${defender.currentHP}/${defender.stats?.hp}`);
 
-  const result: CombatResult = {
+  return {
     attackerAttack,
   };
-
-  // Defender retaliates if still alive
-  if (!attackerAttack.defenderDied && defender.currentHP !== undefined && defender.currentHP > 0) {
-    console.log(`[Combat] ${defender.name} retaliates against ${attacker.name}`);
-    const defenderRetaliation = executeAttack(defender, attacker);
-
-    console.log(`[Combat] ${defender.name} ${defenderRetaliation.hit ? 'hits' : 'misses'} ${attacker.name}${defenderRetaliation.critical ? ' (CRITICAL)' : ''} for ${defenderRetaliation.damage} damage`);
-    console.log(`[Combat] ${attacker.name} HP: ${attacker.currentHP}/${attacker.stats?.hp}`);
-
-    result.defenderRetaliation = defenderRetaliation;
-  } else {
-    console.log(`[Combat] ${defender.name} is dead and cannot retaliate`);
-  }
-
-  return result;
 }
 
 /**
@@ -133,10 +117,14 @@ export function checkForCombat(
   movingCreature: MapObject,
   objectsAtPosition: MapObject[]
 ): MapObject | null {
-  // Find a creature to fight (not items, exits, or self)
+  // Determine what type of opponent to look for
+  const isPlayerMoving = movingCreature.type === "Player";
+  const targetType = isPlayerMoving ? "Enemy" : "Player";
+
+  // Find an opponent to fight (enemies don't fight each other)
   const enemy = objectsAtPosition.find(obj =>
     obj.id !== movingCreature.id &&
-    (obj.type === "Player" || obj.type === "Enemy") &&
+    obj.type === targetType &&
     obj.currentHP !== undefined &&
     obj.currentHP > 0
   );
