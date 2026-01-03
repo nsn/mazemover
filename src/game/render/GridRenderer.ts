@@ -1,7 +1,7 @@
 import { k } from "../../kaplayCtx";
 import { TileType, Direction, PlayerPhase, type TileInstance, type PlotPosition, type MapObject } from "../types";
 import { COLORS } from "../config";
-import { TileFrames } from "../assets";
+import { TileFrames, BrickFrames } from "../assets";
 
 function getTileFrame(type: TileType): number {
   switch (type) {
@@ -19,6 +19,68 @@ function orientationToAngle(orientation: number): number {
 
 function directionToAngle(direction: Direction): number {
   return direction * 90;
+}
+
+/**
+ * Gets the correct brick frame for a grid position based on its location
+ * @param row Grid row position
+ * @param col Grid column position
+ * @param rows Total number of rows
+ * @param cols Total number of columns
+ * @returns The brick animation frame index
+ */
+function getBrickFrame(row: number, col: number, rows: number, cols: number): number {
+  const isTopEdge = row === 0;
+  const isBottomEdge = row === rows - 1;
+  const isLeftEdge = col === 0;
+  const isRightEdge = col === cols - 1;
+
+  // Corners
+  if (isTopEdge && isLeftEdge) return BrickFrames.NW;
+  if (isTopEdge && isRightEdge) return BrickFrames.NE;
+  if (isBottomEdge && isLeftEdge) return BrickFrames.SW;
+  if (isBottomEdge && isRightEdge) return BrickFrames.SE;
+
+  // Edges
+  if (isTopEdge) return BrickFrames.N;
+  if (isBottomEdge) return BrickFrames.S;
+  if (isLeftEdge) return BrickFrames.W;
+  if (isRightEdge) return BrickFrames.E;
+
+  // Center/interior
+  return BrickFrames.C;
+}
+
+/**
+ * Draws the brick background layer for the entire grid
+ * @param rows Number of rows in the grid
+ * @param cols Number of columns in the grid
+ * @param gridOffsetX X offset of the grid in pixels
+ * @param gridOffsetY Y offset of the grid in pixels
+ * @param tileSize Size of each tile in pixels
+ */
+export function drawBrickLayer(
+  rows: number,
+  cols: number,
+  gridOffsetX: number,
+  gridOffsetY: number,
+  tileSize: number
+): void {
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      const frame = getBrickFrame(r, c, rows, cols);
+      const x = gridOffsetX + c * tileSize + tileSize / 2;
+      const y = gridOffsetY + r * tileSize + tileSize / 2;
+
+      k.add([
+        k.sprite("bricks", { frame }),
+        k.pos(x, y),
+        k.anchor("center"),
+        k.z(-1), // Below everything else
+        "brickLayer",
+      ]);
+    }
+  }
 }
 
 /**
@@ -206,6 +268,9 @@ export function drawGridWithOverlay(
   screenWidth: number,
   screenHeight: number
 ): void {
+  // Draw brick background layer first
+  drawBrickLayer(gridRows, gridCols, gridOffsetX, gridOffsetY, tileSize);
+
   const gridWidth = gridCols * tileSize;
   const gridHeight = gridRows * tileSize;
 
@@ -463,6 +528,7 @@ export async function animatePush(
  * Clears all grid-related visual elements
  */
 export function clearGrid(): void {
+  k.destroyAll("brickLayer");
   k.destroyAll("gridTile");
   k.destroyAll("plot");
   k.destroyAll("currentTile");

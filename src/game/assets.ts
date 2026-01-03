@@ -15,6 +15,22 @@ export async function loadAssets(): Promise<void> {
     },
   });
 
+  await k.loadSprite("bricks", "/bricks.png", {
+    sliceX: 3,
+    sliceY: 3,
+    anims: {
+      NW: 0,
+      N: 1,
+      NE: 2,
+      W: 3,
+      C: 4,
+      E: 5,
+      SW: 6,
+      S: 7,
+      SE: 8,
+    },
+  });
+  
   await k.loadFont("blocky", "/blocky.ttf", {size: 9} );
   
   await k.loadBitmapFont("bblocky", "/blocky.png", 5, 7, {
@@ -39,6 +55,18 @@ export const TileFrames = {
   T: 3,
   Cross: 4,
   Plot: 5,
+} as const;
+
+export const BrickFrames = {
+  NW: 0,
+  N: 1,
+  NE: 2,
+  W: 3,
+  C: 4,
+  E: 5,
+  SW: 6,
+  S: 7,
+  SE: 8,
 } as const;
 
 // Global enemy database instance
