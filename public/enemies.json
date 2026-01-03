@@ -17,7 +17,7 @@
       "stats": {
         "hp": 8,
         "atk": 4,
-        "def": 1,
+        "def": 0,
         "agi": 8
       },
       "movementSpeed": 2,
@@ -32,10 +32,10 @@
     "yellow_hunter": {
       "name": "Yellow Hunter",
       "stats": {
-        "hp": 15,
-        "atk": 2,
-        "def": 4,
-        "agi": 3
+        "hp": 7,
+        "atk": 1,
+        "def": 1,
+        "agi": 1
       },
       "movementSpeed": 0.5,
       "aiType": "Hunter",
@@ -49,10 +49,10 @@
     "green_hunter": {
       "name": "Green Hunter",
       "stats": {
-        "hp": 12,
-        "atk": 3,
-        "def": 3,
-        "agi": 6
+        "hp": 8,
+        "atk": 2,
+        "def": 0,
+        "agi": 1
       },
       "movementSpeed": 1,
       "aiType": "Hunter",
@@ -66,10 +66,10 @@
     "guardian": {
       "name": "Guardian",
       "stats": {
-        "hp": 20,
-        "atk": 5,
-        "def": 6,
-        "agi": 4
+        "hp": 5,
+        "atk": 1,
+        "def": 1,
+        "agi": 1
       },
       "movementSpeed": 1,
       "aiType": "Guardian",
@@ -84,10 +84,10 @@
   "player": {
     "name": "Player",
     "stats": {
-      "hp": 20,
-      "atk": 5,
-      "def": 3,
-      "agi": 5
+      "hp": 10,
+      "atk": 2,
+      "def": 1,
+      "agi": 1
     }
   }
 }
