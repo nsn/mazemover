@@ -3,22 +3,26 @@ import { TileType, Direction, PlayerPhase, type TileInstance, type PlotPosition,
 import { COLORS } from "../config";
 import { TileFrames, BrickFrames } from "../assets";
 
-function getTileFrame(type: TileType): number {
+/**
+ * Gets the sprite frame for a tile based on type and orientation
+ * @param type The tile type
+ * @param direction The tile's orientation (0=North/0°, 1=East/90°, 2=South/180°, 3=West/270°)
+ * @returns The frame index in the 6x4 sprite sheet
+ */
+function getTileFrame(type: TileType, direction: Direction): number {
+  // Get base column for tile type
+  let column: number;
   switch (type) {
-    case TileType.CulDeSac: return TileFrames.CulDeSac;
-    case TileType.Straight: return TileFrames.Straight;
-    case TileType.L: return TileFrames.L;
-    case TileType.T: return TileFrames.T;
-    case TileType.Cross: return TileFrames.Cross;
+    case TileType.CulDeSac: column = TileFrames.CulDeSac; break;
+    case TileType.Straight: column = TileFrames.Straight; break;
+    case TileType.L: column = TileFrames.L; break;
+    case TileType.T: column = TileFrames.T; break;
+    case TileType.Cross: column = TileFrames.Cross; break;
   }
-}
 
-function orientationToAngle(orientation: number): number {
-  return orientation * 90;
-}
-
-function directionToAngle(direction: Direction): number {
-  return direction * 90;
+  // Calculate frame: row (direction) * 6 + column (type)
+  // Row 0 = North (0°), Row 1 = East (90°), Row 2 = South (180°), Row 3 = West (270°)
+  return direction * 6 + column;
 }
 
 /**
@@ -133,14 +137,12 @@ export function drawTile(
   y: number,
   tag?: string
 ): ReturnType<typeof k.add> {
-  const frame = getTileFrame(tile.type);
-  const angle = orientationToAngle(tile.orientation);
+  const frame = getTileFrame(tile.type, tile.orientation);
 
   const tileObj = k.add([
     k.sprite("tiles", { frame }),
     k.pos(x, y),
     k.anchor("center"),
-    k.rotate(angle),
     tag ? tag : "tile",
   ]);
 
@@ -194,7 +196,7 @@ export function drawPlot(
   tileSize: number
 ): ReturnType<typeof k.add> {
   const { x, y } = getPlotScreenPos(plot, gridOffsetX, gridOffsetY, gridRows, gridCols, tileSize);
-  const angle = directionToAngle(plot.direction);
+  const frame = plot.direction * 6 + TileFrames.Plot;
 
   const isGreen = isSelected && playerPhase === PlayerPhase.TilePlacement;
   const tintColor = isGreen
@@ -202,10 +204,9 @@ export function drawPlot(
     : k.rgb(255, 100, 100);
 
   const plotObj = k.add([
-    k.sprite("tiles", { frame: TileFrames.Plot }),
+    k.sprite("tiles", { frame }),
     k.pos(x, y),
     k.anchor("center"),
-    k.rotate(angle),
     k.area(),
     k.color(tintColor),
     k.opacity(isSelected ? 1 : 0.7),
@@ -357,14 +358,12 @@ export function drawCurrentTile(
   tileSize: number
 ): ReturnType<typeof k.add> {
   const { x, y } = getPlotScreenPos(plot, gridOffsetX, gridOffsetY, gridRows, gridCols, tileSize);
-  const frame = getTileFrame(tile.type);
-  const angle = orientationToAngle(tile.orientation);
+  const frame = getTileFrame(tile.type, tile.orientation);
 
   const tileObj = k.add([
     k.sprite("tiles", { frame }),
     k.pos(x, y),
     k.anchor("center"),
-    k.rotate(angle),
     k.area(),
     "currentTile",
   ]);

@@ -1,19 +1,20 @@
 import { k } from "../../kaplayCtx";
-import { type TileInstance, type MapObject, TileType } from "../types";
+import { type TileInstance, type MapObject, TileType, Direction } from "../types";
 import { TileFrames } from "../assets";
 
-function getTileFrame(type: TileType): number {
+function getTileFrame(type: TileType, direction: Direction): number {
+  // Get base column for tile type
+  let column: number;
   switch (type) {
-    case TileType.CulDeSac: return TileFrames.CulDeSac;
-    case TileType.Straight: return TileFrames.Straight;
-    case TileType.L: return TileFrames.L;
-    case TileType.T: return TileFrames.T;
-    case TileType.Cross: return TileFrames.Cross;
+    case TileType.CulDeSac: column = TileFrames.CulDeSac; break;
+    case TileType.Straight: column = TileFrames.Straight; break;
+    case TileType.L: column = TileFrames.L; break;
+    case TileType.T: column = TileFrames.T; break;
+    case TileType.Cross: column = TileFrames.Cross; break;
   }
-}
 
-function orientationToAngle(orientation: number): number {
-  return orientation * 90;
+  // Calculate frame: row (direction) * 6 + column (type)
+  return direction * 6 + column;
 }
 
 /**
@@ -106,14 +107,12 @@ export function drawPreviewTile(
     ]);
   }
 
-  const frame = getTileFrame(tile.type);
-  const angle = orientationToAngle(tile.orientation);
+  const frame = getTileFrame(tile.type, tile.orientation);
 
   const tileObj = k.add([
     k.sprite("tiles", { frame }),
     k.pos(x, y),
     k.anchor("center"),
-    k.rotate(angle),
     k.scale(1.5),
     k.area(),
     "previewTile",

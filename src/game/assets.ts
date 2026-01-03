@@ -4,15 +4,7 @@ import { EnemyDatabase } from "./systems/EnemyDatabase";
 export async function loadAssets(): Promise<void> {
   await k.loadSprite("tiles", "/tiles.png", {
     sliceX: 6,
-    sliceY: 1,
-    anims: {
-      culdesac: 0,
-      straight: 1,
-      l: 2,
-      t: 3,
-      cross: 4,
-      plot: 5,
-    },
+    sliceY: 4,
   });
 
   await k.loadSprite("bricks", "/bricks.png", {
