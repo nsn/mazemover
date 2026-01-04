@@ -60,6 +60,52 @@ function handleClick(): void {
     }
   }
 
+  // Handle rotation mode clicks
+  if (turnManager.isRotatingTile()) {
+    const state = turnManager.getState();
+    if (!state.rotatingTilePosition) {
+      turnManager.cancelRotation();
+      render();
+      return;
+    }
+
+    const clickedGridCol = Math.floor((pos.x - GRID_OFFSET_X) / TILE_SIZE);
+    const clickedGridRow = Math.floor((pos.y - GRID_OFFSET_Y) / TILE_SIZE);
+
+    // Check if clicked on the rotating tile
+    if (clickedGridRow === state.rotatingTilePosition.row &&
+        clickedGridCol === state.rotatingTilePosition.col) {
+      console.log("Rotating player tile");
+      turnManager.rotatePlayerTile();
+      render();
+      return;
+    }
+
+    // Check if clicked on a reachable tile
+    const player = turnManager.getObjectManager().getPlayer();
+    if (player && clickedGridRow >= 0 && clickedGridRow < GRID_ROWS &&
+        clickedGridCol >= 0 && clickedGridCol < GRID_COLS) {
+      const moves = turnManager.getObjectManager().getAvailableMoves(player);
+      const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves);
+      const target = reachable.find(
+        (t) => t.position.row === clickedGridRow && t.position.col === clickedGridCol
+      );
+
+      if (target && target.path.length > 1) {
+        console.log("Confirming rotation and moving to:", target.position);
+        turnManager.confirmRotation();
+        movePlayerAlongPath(player, target.path);
+        return;
+      }
+    }
+
+    // Clicked outside reachable tiles - cancel rotation
+    console.log("Canceling rotation");
+    turnManager.cancelRotation();
+    render();
+    return;
+  }
+
   if (isMovementMode && selectedPlayer) {
     const reachableHighlights = k.get("reachableHighlight");
     for (const highlight of reachableHighlights) {
@@ -87,8 +133,9 @@ function handleClick(): void {
     if ((obj as any).hasPoint && (obj as any).hasPoint(pos)) {
       const objData = (obj as any).objectData as MapObject;
       if (objData.type === "Player" && objData.movesRemaining > 0) {
-        console.log("Player clicked - entering movement mode");
-        enterMovementMode(objData);
+        console.log("Player clicked - entering rotation mode");
+        turnManager.enterRotationMode();
+        render();
         return;
       }
     }
@@ -171,16 +218,6 @@ function handleClick(): void {
     console.log("Background hit - canceling");
     turnManager.cancelPlacement();
   }
-}
-
-function enterMovementMode(player: MapObject): void {
-  selectedPlayer = player;
-  isMovementMode = true;
-  const state = turnManager.getState();
-  const moves = turnManager.getObjectManager().getAvailableMoves(player);
-  reachableTiles = findReachableTiles(state.grid, player.gridPosition, moves);
-  console.log("Reachable tiles:", reachableTiles.length);
-  render();
 }
 
 function exitMovementMode(): void {
@@ -554,6 +591,14 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
 function handleRightClick(): void {
   if (isAnimating) return;
 
+  // Cancel rotation mode on right-click
+  if (turnManager.isRotatingTile()) {
+    console.log("Right-click - canceling rotation");
+    turnManager.cancelRotation();
+    render();
+    return;
+  }
+
   const pos = k.mousePos();
 
   const currentTiles = k.get("currentTile");
@@ -707,6 +752,7 @@ function clearAll(): void {
   clearGrid();
   clearMapObjects();
   clearUI();
+  k.destroyAll("rotationOverlay");
 }
 
 async function executePushWithAnimation(): Promise<void> {
@@ -735,6 +781,45 @@ async function executePushWithAnimation(): Promise<void> {
   );
 }
 
+function drawRotationOverlay(
+  rotatingPos: GridPosition,
+  reachableTiles: ReachableTile[],
+  gridOffsetX: number,
+  gridOffsetY: number,
+  tileSize: number
+): void {
+  // Create a set of positions that should NOT be darkened
+  const activeTiles = new Set<string>();
+
+  // Add rotating tile position
+  activeTiles.add(`${rotatingPos.row},${rotatingPos.col}`);
+
+  // Add reachable tile positions
+  for (const tile of reachableTiles) {
+    activeTiles.add(`${tile.position.row},${tile.position.col}`);
+  }
+
+  // Draw dark overlay on all non-active tiles
+  for (let r = 0; r < GRID_ROWS; r++) {
+    for (let c = 0; c < GRID_COLS; c++) {
+      const key = `${r},${c}`;
+      if (!activeTiles.has(key)) {
+        const x = gridOffsetX + c * tileSize;
+        const y = gridOffsetY + r * tileSize;
+
+        k.add([
+          k.rect(tileSize, tileSize),
+          k.pos(x, y),
+          k.color(0, 0, 0),
+          k.opacity(0.6),
+          k.z(5),
+          "rotationOverlay",
+        ]);
+      }
+    }
+  }
+}
+
 function render(): void {
   if (isAnimating) return;
 
@@ -756,7 +841,23 @@ function render(): void {
   }
 
   if (state.turnOwner === TurnOwner.Player) {
-    if (state.playerPhase === PlayerPhase.TilePlacement && state.currentTile) {
+    if (state.playerPhase === PlayerPhase.RotatingTile) {
+      // Rotation mode rendering
+      drawGridWithOverlay(state.grid, null, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360);
+
+      // Draw darkening overlay on non-active tiles
+      if (state.rotatingTilePosition && player) {
+        const moves = turnManager.getObjectManager().getAvailableMoves(player);
+        const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves);
+        drawRotationOverlay(state.rotatingTilePosition, reachable, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
+      }
+
+      drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
+      if (state.currentTile) {
+        drawPreviewTile(state.currentTile, PREVIEW_X, PREVIEW_Y, "The quick brown fox jumps over the lazy dog");
+      }
+      drawSkipButton(skipButtonX, skipButtonY);
+    } else if (state.playerPhase === PlayerPhase.TilePlacement && state.currentTile) {
       drawGridWithOverlay(state.grid, state.selectedPlot, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360);
       drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
       const plots = turnManager.getPlots();

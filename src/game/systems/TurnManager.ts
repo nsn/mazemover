@@ -27,6 +27,8 @@ export class TurnManager {
       turnOwner: TurnOwner.Player,
       playerPhase: PlayerPhase.AwaitingAction,
       hasPlacedTile: false,
+      rotatingTilePosition: null,
+      originalTileOrientation: null,
     };
   }
 
@@ -207,5 +209,73 @@ export class TurnManager {
       this.state.playerPhase = PlayerPhase.AwaitingAction;
       this.onStateChange();
     }
+  }
+
+  // === Tile Rotation ===
+
+  isRotatingTile(): boolean {
+    return this.isPlayerTurn() && this.state.playerPhase === PlayerPhase.RotatingTile;
+  }
+
+  enterRotationMode(): void {
+    if (!this.isPlayerTurn()) return;
+
+    const player = this.objectManager.getPlayer();
+    if (!player) return;
+
+    const { row, col } = player.gridPosition;
+    const tile = this.state.grid[row][col];
+
+    console.log("[TurnManager] enterRotationMode at position:", { row, col });
+
+    this.state.rotatingTilePosition = { row, col };
+    this.state.originalTileOrientation = tile.orientation;
+    this.state.playerPhase = PlayerPhase.RotatingTile;
+    this.onStateChange();
+  }
+
+  rotatePlayerTile(): void {
+    if (!this.isRotatingTile() || !this.state.rotatingTilePosition) return;
+
+    const { row, col } = this.state.rotatingTilePosition;
+    const tile = this.state.grid[row][col];
+
+    console.log("[TurnManager] rotatePlayerTile - current orientation:", tile.orientation);
+
+    this.state.grid[row][col] = {
+      ...tile,
+      orientation: rotateTile(tile.orientation),
+    };
+    this.onStateChange();
+  }
+
+  confirmRotation(): void {
+    if (!this.isRotatingTile()) return;
+
+    console.log("[TurnManager] confirmRotation - rotation confirmed");
+
+    this.state.rotatingTilePosition = null;
+    this.state.originalTileOrientation = null;
+    this.state.playerPhase = PlayerPhase.AwaitingAction;
+    this.onStateChange();
+  }
+
+  cancelRotation(): void {
+    if (!this.isRotatingTile() || !this.state.rotatingTilePosition || this.state.originalTileOrientation === null) return;
+
+    const { row, col } = this.state.rotatingTilePosition;
+
+    console.log("[TurnManager] cancelRotation - restoring original orientation:", this.state.originalTileOrientation);
+
+    // Restore original orientation
+    this.state.grid[row][col] = {
+      ...this.state.grid[row][col],
+      orientation: this.state.originalTileOrientation,
+    };
+
+    this.state.rotatingTilePosition = null;
+    this.state.originalTileOrientation = null;
+    this.state.playerPhase = PlayerPhase.AwaitingAction;
+    this.onStateChange();
   }
 }

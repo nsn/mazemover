@@ -14,6 +14,8 @@ const CURSORS = {
   push_up: "url('/cursors/navigation_n.png'), auto",
   push_down: "url('/cursors/navigation_s.png'), auto",
   place: "url('/cursors/cursor_copy.png'), auto",
+  confirm: "url('/cursors/cursor_confirm.png'), auto",
+  cancel: "url('/cursors/cursor_disabled.png'), auto",
   move_left: "url('/cursors/arrow_w.png'), auto",
   move_right: "url('/cursors/arrow_e.png'), auto",
   move_up: "url('/cursors/arrow_n.png'), auto",
@@ -48,6 +50,11 @@ export class CursorManager {
   }
 
   private determineCursorType(state: any, mousePos: any, turnManager: TurnManager): CursorType {
+    // Check if in rotation mode
+    if (state.playerPhase === PlayerPhase.RotatingTile) {
+      return this.getRotationModeCursor(mousePos, state, turnManager);
+    }
+
     // Check if hovering over currentTile (rotation)
     if (this.shouldShowRotateCursor(state, mousePos)) {
       return "rotate";
@@ -217,6 +224,40 @@ export class CursorManager {
     } else {
       return colDiff < 0 ? "move_left" : "move_right";
     }
+  }
+
+  private getRotationModeCursor(mousePos: any, state: any, turnManager: TurnManager): CursorType {
+    if (!state.rotatingTilePosition) {
+      return "cancel";
+    }
+
+    const gridCol = Math.floor((mousePos.x - GRID_OFFSET_X) / TILE_SIZE);
+    const gridRow = Math.floor((mousePos.y - GRID_OFFSET_Y) / TILE_SIZE);
+
+    // Check if within grid bounds
+    if (gridRow < 0 || gridRow >= GRID_ROWS || gridCol < 0 || gridCol >= GRID_COLS) {
+      return "cancel";
+    }
+
+    // Check if hovering over the rotating tile
+    if (gridRow === state.rotatingTilePosition.row && gridCol === state.rotatingTilePosition.col) {
+      return "rotate";
+    }
+
+    // Check if hovering over a reachable tile
+    const player = turnManager.getObjectManager().getPlayer();
+    if (!player) {
+      return "cancel";
+    }
+
+    const moves = turnManager.getObjectManager().getAvailableMoves(player);
+    const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves);
+
+    const isReachable = reachable.some(
+      (t) => t.position.row === gridRow && t.position.col === gridCol && t.path.length > 1
+    );
+
+    return isReachable ? "confirm" : "cancel";
   }
 
   private changeCursorType(type: CursorType): void {

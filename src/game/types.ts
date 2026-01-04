@@ -53,6 +53,7 @@ export const PlayerPhase = {
   AwaitingAction: "AwaitingAction",
   TilePlacement: "TilePlacement",
   Moving: "Moving",
+  RotatingTile: "RotatingTile",
 } as const;
 
 export type PlayerPhase = (typeof PlayerPhase)[keyof typeof PlayerPhase];
@@ -64,6 +65,8 @@ export interface GameState {
   turnOwner: TurnOwner;
   playerPhase: PlayerPhase;
   hasPlacedTile: boolean;
+  rotatingTilePosition: GridPosition | null;
+  originalTileOrientation: Orientation | null;
 }
 
 export const ObjectType = {
