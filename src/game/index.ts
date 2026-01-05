@@ -21,18 +21,14 @@ import {
   drawDebugInfo,
   clearUI,
 } from "./render/UIRenderer";
-import { loadAssets, loadEnemyDatabase, enemyDatabase } from "./assets";
 import { TurnOwner, PlayerPhase, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y } from "./config";
 import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
-import { getImmovableEdgeTiles, getOppositeSide, getRandomTileOnSide } from "./core/Grid";
 import { executeCombat, checkForCombat } from "./systems/Combat";
 
 let turnManager: TurnManager;
-let inputController: InputController;
-let cursorManager: CursorManager;
 let isAnimating = false;
 let isMovementMode = false;
 let reachableTiles: ReachableTile[] = [];
@@ -669,83 +665,46 @@ function handleMoveRight(): void {
 }
 
 
-export async function initGame(): Promise<void> {
-  await loadAssets();
-  await loadEnemyDatabase();
+// Manager setters for scene initialization
+export function setTurnManager(tm: TurnManager): void {
+  turnManager = tm;
+}
 
-  cursorManager = new CursorManager();
-  cursorManager.initialize();
+export function setInputController(_ic: InputController): void {
+  // Stored in scene scope
+}
 
+export function setCursorManager(_cm: CursorManager): void {
+  // Stored in scene scope
+}
+
+// Initialize all game event handlers
+export function initializeGameHandlers(
+  tm: TurnManager,
+  ic: InputController,
+  cm: CursorManager
+): void {
+  // Set up mouse event handlers
   k.onMousePress("left", handleClick);
   k.onMousePress("right", handleRightClick);
 
-  // Keyboard movement using predefined buttons from kaplayCtx
+  // Set up keyboard event handlers using predefined buttons from kaplayCtx
   k.onButtonPress("up", handleMoveUp);
   k.onButtonPress("down", handleMoveDown);
   k.onButtonPress("left", handleMoveLeft);
   k.onButtonPress("right", handleMoveRight);
 
-  turnManager = new TurnManager(render, enemyDatabase);
-  inputController = new InputController(turnManager);
-  inputController.setOnPushRequested(() => {
-    if (!isAnimating && turnManager.canPush()) {
+  // Set up input controller callback
+  ic.setOnPushRequested(() => {
+    if (!isAnimating && tm.canPush()) {
       executePushWithAnimation();
     }
   });
 
   // Register cursor update callback
   k.onDraw(() => {
-    cursorManager.update(turnManager);
+    cm.update(tm);
   });
-
-  const objManager = turnManager.getObjectManager();
-  
-  const immovableEdges = getImmovableEdgeTiles(GRID_ROWS, GRID_COLS);
-  const exitTile = immovableEdges[Math.floor(Math.random() * immovableEdges.length)];
-  
-  objManager.createExit(
-    { row: exitTile.row, col: exitTile.col },
-    "Exit Stairs",
-    (_mob, isPlayer) => {
-      if (isPlayer) {
-        console.log("[Game] Player reached the exit! Victory!");
-        k.add([
-          k.rect(640, 360),
-          k.pos(0, 0),
-          k.color(0, 0, 0),
-          k.opacity(0.8),
-          k.z(1000),
-          "victoryOverlay",
-        ]);
-        k.add([
-          k.text("VICTORY!", { size: 48 }),
-          k.pos(320, 150),
-          k.anchor("center"),
-          k.color(255, 215, 0),
-          k.z(1001),
-          "victoryText",
-        ]);
-        k.add([
-          k.text("You escaped the maze!", { size: 24 }),
-          k.pos(320, 220),
-          k.anchor("center"),
-          k.color(255, 255, 255),
-          k.z(1001),
-          "victoryText",
-        ]);
-      }
-    }
-  );
-  
-  const oppositeSide = getOppositeSide(exitTile.side);
-  const playerTile = getRandomTileOnSide(oppositeSide, GRID_ROWS, GRID_COLS);
-  objManager.createPlayer({ row: playerTile.row, col: playerTile.col }, "Player1");
-  
-  objManager.createRedEnemy({ row: 3, col: 3 });
-  objManager.createYellowEnemy({ row: 3, col: 2 });
-  objManager.createGreenEnemy({ row: 2, col: 3 });
-
-  turnManager.startPlayerTurn();
 }
 
 function clearAll(): void {
@@ -820,7 +779,7 @@ function drawRotationOverlay(
   }
 }
 
-function render(): void {
+export function render(): void {
   if (isAnimating) return;
 
   clearAll();

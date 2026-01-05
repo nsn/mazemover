@@ -1,4 +1,4 @@
 import "./style.css";
-import { initGame } from "./game";
+import { startGame } from "./game/mainScene";
 
-initGame();
+startGame();
