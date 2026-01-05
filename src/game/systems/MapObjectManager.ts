@@ -29,6 +29,7 @@ export class MapObjectManager {
     renderOrder: number = 0,
     movementSpeed: number = 1,
     stats?: Stats,
+    spriteOffset: { x: number; y: number } = { x: 0, y: 0 },
     onEnter?: MapObjectCallback,
     onExit?: MapObjectCallback
   ): MapObject {
@@ -38,6 +39,9 @@ export class MapObjectManager {
       type,
       gridPosition: { ...gridPosition },
       pixelOffset: { x: 0, y: 0 },
+      spriteOffset: { ...spriteOffset },
+      flipX: false,  // Default facing right
+      playingDropAnimation: false,  // Only true for player on initial spawn
       renderOrder,
       sprite,
       movementSpeed,
@@ -58,11 +62,13 @@ export class MapObjectManager {
       ObjectType.Player,
       gridPosition,
       name || playerDef.name,
-      "player",
+      "mason",
       100,
       1,
-      playerDef.stats
+      playerDef.stats,
+      { x: 0, y: -4 }  // Sprite offset to lift player sprite up
     );
+    player.playingDropAnimation = true;  // Play drop animation on spawn
     console.log(`[MapObjectManager] Created player with stats:`, player.stats);
     return player;
   }
@@ -117,11 +123,11 @@ export class MapObjectManager {
   }
 
   createItem(gridPosition: GridPosition, name: string = "Item"): MapObject {
-    return this.createObject(ObjectType.Item, gridPosition, name, "item", 50, 1, undefined);
+    return this.createObject(ObjectType.Item, gridPosition, name, "item", 50, 1, undefined, { x: 0, y: 0 });
   }
 
   createExit(gridPosition: GridPosition, name: string = "Exit", onEnter?: MapObjectCallback): MapObject {
-    return this.createObject(ObjectType.Exit, gridPosition, name, "exit", 10, 0, undefined, onEnter);
+    return this.createObject(ObjectType.Exit, gridPosition, name, "exit", 10, 0, undefined, { x: 0, y: 0 }, onEnter);
   }
 
   getExit(): MapObject | undefined {

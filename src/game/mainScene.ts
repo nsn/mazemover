@@ -79,7 +79,23 @@ export function createMainScene(): void {
     // Create player on opposite side from exit
     const oppositeSide = getOppositeSide(exitTile.side);
     const playerTile = getRandomTileOnSide(oppositeSide, GRID_ROWS, GRID_COLS);
-    objManager.createPlayer({ row: playerTile.row, col: playerTile.col }, "Player1");
+    const player = objManager.createPlayer({ row: playerTile.row, col: playerTile.col }, "Player1");
+
+    // Set up drop animation completion handler
+    // We need to create a temporary sprite to detect when the drop animation ends
+    const dropAnimationSprite = k.add([
+      k.sprite("mason", { anim: "drop" }),
+      k.pos(-1000, -1000), // Off-screen
+      k.opacity(0),
+      "dropAnimationTracker",
+    ]);
+
+    dropAnimationSprite.onAnimEnd(() => {
+      console.log("[MainScene] Drop animation completed, switching to idle");
+      player.playingDropAnimation = false;
+      k.destroy(dropAnimationSprite);
+      render(); // Re-render to show idle animation
+    });
 
     // Create enemies
     objManager.createRedEnemy({ row: 3, col: 3 });

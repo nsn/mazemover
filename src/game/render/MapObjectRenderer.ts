@@ -1,5 +1,5 @@
 import { k } from "../../kaplayCtx";
-import { type MapObject } from "../types";
+import { type MapObject, ObjectType } from "../types";
 
 /**
  * Draws all map objects (player, enemies, items, exits) on the grid
@@ -17,11 +17,20 @@ export function drawMapObjects(
   const sorted = [...objects].sort((a, b) => a.renderOrder - b.renderOrder);
 
   for (const obj of sorted) {
-    const x = gridOffsetX + obj.gridPosition.col * tileSize + tileSize / 2 + obj.pixelOffset.x;
-    const y = gridOffsetY + obj.gridPosition.row * tileSize + tileSize / 2 + obj.pixelOffset.y;
+    const x = gridOffsetX + obj.gridPosition.col * tileSize + tileSize / 2 + obj.pixelOffset.x + obj.spriteOffset.x;
+    const y = gridOffsetY + obj.gridPosition.row * tileSize + tileSize / 2 + obj.pixelOffset.y + obj.spriteOffset.y;
+
+    // Player plays drop animation on spawn, idle when standing still, others use frame 0
+    let spriteConfig;
+    if (obj.type === ObjectType.Player) {
+      const anim = obj.playingDropAnimation ? "drop" : "idle";
+      spriteConfig = { anim, flipX: obj.flipX };
+    } else {
+      spriteConfig = { frame: 0, flipX: obj.flipX };
+    }
 
     const components: any[] = [
-      k.sprite(obj.sprite),
+      k.sprite(obj.sprite, spriteConfig),
       k.pos(x, y),
       k.anchor("center"),
       k.area(),

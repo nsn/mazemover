@@ -22,7 +22,17 @@ export async function loadAssets(): Promise<void> {
       SE: 8,
     },
   });
-  
+
+  await k.loadSprite("mason", "/mason.png", {
+    sliceX: 11,
+    sliceY: 118,
+    anims: {
+      idle: {from : 0, to: 3, loop: true},
+      walk: {from : 110, to: 113, loop: true},
+      drop: {from : 186, to: 197, loop: false},
+    }
+  });
+
   await k.loadFont("blocky", "/blocky.ttf", {size: 9} );
   
   await k.loadBitmapFont("bblocky", "/blocky.png", 5, 7, {

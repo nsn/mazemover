@@ -100,6 +100,9 @@ export interface MapObject {
   type: ObjectType;
   gridPosition: GridPosition;
   pixelOffset: { x: number; y: number };
+  spriteOffset: { x: number; y: number };  // Offset for sprite rendering (e.g., to lift sprite up)
+  flipX: boolean;  // True if sprite is flipped horizontally (facing left)
+  playingDropAnimation: boolean;  // True if player is playing the drop animation (on game start)
   renderOrder: number;
   sprite: string;
   movementSpeed: number;

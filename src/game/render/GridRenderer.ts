@@ -1,5 +1,5 @@
 import { k } from "../../kaplayCtx";
-import { TileType, Direction, PlayerPhase, type TileInstance, type PlotPosition, type MapObject } from "../types";
+import { TileType, Direction, PlayerPhase, ObjectType, type TileInstance, type PlotPosition, type MapObject } from "../types";
 import { COLORS } from "../config";
 import { TileFrames, BrickFrames } from "../assets";
 
@@ -469,10 +469,20 @@ export async function animatePush(
     const isAffected = (affectedRow !== -1 && obj.gridPosition.row === affectedRow) ||
                       (affectedCol !== -1 && obj.gridPosition.col === affectedCol);
     if (isAffected) {
-      const x = gridOffsetX + obj.gridPosition.col * tileSize + tileSize / 2;
-      const y = gridOffsetY + obj.gridPosition.row * tileSize + tileSize / 2;
+      const x = gridOffsetX + obj.gridPosition.col * tileSize + tileSize / 2 + obj.spriteOffset.x;
+      const y = gridOffsetY + obj.gridPosition.row * tileSize + tileSize / 2 + obj.spriteOffset.y;
+
+      // Player plays drop animation on spawn, idle when being pushed, others use frame 0
+      let spriteConfig;
+      if (obj.type === ObjectType.Player) {
+        const anim = obj.playingDropAnimation ? "drop" : "idle";
+        spriteConfig = { anim, flipX: obj.flipX };
+      } else {
+        spriteConfig = { frame: 0, flipX: obj.flipX };
+      }
+
       const objSprite = k.add([
-        k.sprite(obj.sprite),
+        k.sprite(obj.sprite, spriteConfig),
         k.pos(x, y),
         k.anchor("center"),
         "animatingObject",
@@ -486,10 +496,20 @@ export async function animatePush(
   // Draw static objects using simple rendering (not importing MapObjectRenderer to avoid circular deps)
   const sorted = [...staticObjects].sort((a, b) => a.renderOrder - b.renderOrder);
   for (const obj of sorted) {
-    const x = gridOffsetX + obj.gridPosition.col * tileSize + tileSize / 2 + obj.pixelOffset.x;
-    const y = gridOffsetY + obj.gridPosition.row * tileSize + tileSize / 2 + obj.pixelOffset.y;
+    const x = gridOffsetX + obj.gridPosition.col * tileSize + tileSize / 2 + obj.pixelOffset.x + obj.spriteOffset.x;
+    const y = gridOffsetY + obj.gridPosition.row * tileSize + tileSize / 2 + obj.pixelOffset.y + obj.spriteOffset.y;
+
+    // Player plays drop animation on spawn, idle when standing still, others use frame 0
+    let spriteConfig;
+    if (obj.type === ObjectType.Player) {
+      const anim = obj.playingDropAnimation ? "drop" : "idle";
+      spriteConfig = { anim, flipX: obj.flipX };
+    } else {
+      spriteConfig = { frame: 0, flipX: obj.flipX };
+    }
+
     const components: any[] = [
-      k.sprite(obj.sprite),
+      k.sprite(obj.sprite, spriteConfig),
       k.pos(x, y),
       k.anchor("center"),
       "mapObject",

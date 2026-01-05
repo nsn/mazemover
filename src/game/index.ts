@@ -244,11 +244,25 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
   }
 
   const from = path[0];
-  const startX = GRID_OFFSET_X + from.col * TILE_SIZE + TILE_SIZE / 2;
-  const startY = GRID_OFFSET_Y + from.row * TILE_SIZE + TILE_SIZE / 2;
+  const startX = GRID_OFFSET_X + from.col * TILE_SIZE + TILE_SIZE / 2 + player.spriteOffset.x;
+  const startY = GRID_OFFSET_Y + from.row * TILE_SIZE + TILE_SIZE / 2 + player.spriteOffset.y;
+
+  // Determine facing direction from first move
+  let shouldFlip = player.flipX;
+  if (path.length > 1) {
+    const firstMove = path[1];
+    if (firstMove.col < from.col) {
+      shouldFlip = true;  // Moving left
+      player.flipX = true;
+    } else if (firstMove.col > from.col) {
+      shouldFlip = false;  // Moving right
+      player.flipX = false;
+    }
+    // If moving only vertically, keep current facing
+  }
 
   const movingSprite = k.add([
-    k.sprite(player.sprite),
+    k.sprite(player.sprite, { anim: "walk", flipX: shouldFlip }),
     k.pos(startX, startY),
     k.anchor("center"),
     "movingPlayer",
@@ -264,8 +278,8 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
     const objectsAtPosition = objectManager.getObjectsAtPosition(to.row, to.col);
     const enemy = checkForCombat(player, objectsAtPosition);
 
-    const tileCenterX = GRID_OFFSET_X + to.col * TILE_SIZE + TILE_SIZE / 2;
-    const tileCenterY = GRID_OFFSET_Y + to.row * TILE_SIZE + TILE_SIZE / 2;
+    const tileCenterX = GRID_OFFSET_X + to.col * TILE_SIZE + TILE_SIZE / 2 + player.spriteOffset.x;
+    const tileCenterY = GRID_OFFSET_Y + to.row * TILE_SIZE + TILE_SIZE / 2 + player.spriteOffset.y;
 
     let endX = tileCenterX;
     let endY = tileCenterY;
@@ -305,8 +319,8 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
       const combatResult = executeCombat(player, enemy);
 
       // Spawn SCT for attacker's damage on defender
-      const defenderX = GRID_OFFSET_X + enemy.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
-      const defenderY = GRID_OFFSET_Y + enemy.gridPosition.row * TILE_SIZE + TILE_SIZE / 2;
+      const defenderX = GRID_OFFSET_X + enemy.gridPosition.col * TILE_SIZE + TILE_SIZE / 2 + enemy.spriteOffset.x;
+      const defenderY = GRID_OFFSET_Y + enemy.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 + enemy.spriteOffset.y;
 
       if (combatResult.attackerAttack.hit) {
         const damageText = combatResult.attackerAttack.critical
@@ -437,12 +451,26 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
   }
 
   const from = path[0];
-  const startX = GRID_OFFSET_X + from.col * TILE_SIZE + TILE_SIZE / 2;
-  const startY = GRID_OFFSET_Y + from.row * TILE_SIZE + TILE_SIZE / 2;
+  const startX = GRID_OFFSET_X + from.col * TILE_SIZE + TILE_SIZE / 2 + enemy.spriteOffset.x;
+  const startY = GRID_OFFSET_Y + from.row * TILE_SIZE + TILE_SIZE / 2 + enemy.spriteOffset.y;
+
+  // Determine facing direction from first move
+  let shouldFlip = enemy.flipX;
+  if (path.length > 1) {
+    const firstMove = path[1];
+    if (firstMove.col < from.col) {
+      shouldFlip = true;  // Moving left
+      enemy.flipX = true;
+    } else if (firstMove.col > from.col) {
+      shouldFlip = false;  // Moving right
+      enemy.flipX = false;
+    }
+    // If moving only vertically, keep current facing
+  }
 
   const color = (enemy as any).color;
   const spriteComponents: any[] = [
-    k.sprite(enemy.sprite),
+    k.sprite(enemy.sprite, { frame: 0, flipX: shouldFlip }),
     k.pos(startX, startY),
     k.anchor("center"),
     "movingEnemy",
@@ -462,8 +490,8 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
     const objectsAtPosition = objectManager.getObjectsAtPosition(to.row, to.col);
     const target = checkForCombat(enemy, objectsAtPosition);
 
-    const tileCenterX = GRID_OFFSET_X + to.col * TILE_SIZE + TILE_SIZE / 2;
-    const tileCenterY = GRID_OFFSET_Y + to.row * TILE_SIZE + TILE_SIZE / 2;
+    const tileCenterX = GRID_OFFSET_X + to.col * TILE_SIZE + TILE_SIZE / 2 + enemy.spriteOffset.x;
+    const tileCenterY = GRID_OFFSET_Y + to.row * TILE_SIZE + TILE_SIZE / 2 + enemy.spriteOffset.y;
 
     let endX = tileCenterX;
     let endY = tileCenterY;
@@ -503,8 +531,8 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
       const combatResult = executeCombat(enemy, target);
 
       // Spawn SCT for attacker's damage on defender
-      const defenderX = GRID_OFFSET_X + target.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
-      const defenderY = GRID_OFFSET_Y + target.gridPosition.row * TILE_SIZE + TILE_SIZE / 2;
+      const defenderX = GRID_OFFSET_X + target.gridPosition.col * TILE_SIZE + TILE_SIZE / 2 + target.spriteOffset.x;
+      const defenderY = GRID_OFFSET_Y + target.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 + target.spriteOffset.y;
 
       if (combatResult.attackerAttack.hit) {
         const damageText = combatResult.attackerAttack.critical
@@ -841,8 +869,16 @@ export function render(): void {
       drawSkipButton(skipButtonX, skipButtonY);
     }
   } else {
+    // Enemy turn - still show plots and tile preview
     drawGridWithOverlay(state.grid, null, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360);
     drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
+
+    // Keep showing the tile preview and plots during enemy turn
+    if (state.currentTile) {
+      drawPreviewTile(state.currentTile, PREVIEW_X, PREVIEW_Y, "The quick brown fox jumps over the lazy dog");
+      const plots = turnManager.getPlots();
+      drawPlots(plots, null, state.playerPhase, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE);
+    }
   }
 
   // Draw debug info
