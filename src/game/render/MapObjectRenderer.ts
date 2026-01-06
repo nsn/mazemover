@@ -7,23 +7,36 @@ import { type MapObject, ObjectType } from "../types";
  * @param gridOffsetX X offset of the grid in pixels
  * @param gridOffsetY Y offset of the grid in pixels
  * @param tileSize Size of each tile in pixels
+ * @param isInStartLevelSequence Whether the game is in the start level sequence
+ * @param revealedTiles Set of revealed tiles during start level sequence
  */
 export function drawMapObjects(
   objects: MapObject[],
   gridOffsetX: number,
   gridOffsetY: number,
-  tileSize: number
+  tileSize: number,
+  isInStartLevelSequence: boolean = false,
+  revealedTiles: Set<string> = new Set()
 ): void {
   const sorted = [...objects].sort((a, b) => a.renderOrder - b.renderOrder);
 
   for (const obj of sorted) {
+    // Skip objects that are still in the start level sequence (not yet spawned)
+    if (obj.isInStartLevelSequence) {
+      continue;
+    }
+
+    // Skip objects whose tiles haven't been revealed yet during start level sequence
+    if (isInStartLevelSequence && !revealedTiles.has(`${obj.gridPosition.row},${obj.gridPosition.col}`)) {
+      continue;
+    }
     const x = gridOffsetX + obj.gridPosition.col * tileSize + tileSize / 2 + obj.pixelOffset.x + obj.spriteOffset.x;
     const y = gridOffsetY + obj.gridPosition.row * tileSize + tileSize / 2 + obj.pixelOffset.y + obj.spriteOffset.y;
 
-    // Player plays drop animation on spawn, idle when standing still, others use frame 0
+    // Player plays drop animation during start, idle when standing still, others use frame 0
     let spriteConfig;
     if (obj.type === ObjectType.Player) {
-      const anim = obj.playingDropAnimation ? "drop" : "idle";
+      const anim = obj.isPlayingDropAnimation ? "drop" : "idle";
       spriteConfig = { anim, flipX: obj.flipX };
     } else {
       spriteConfig = { frame: 0, flipX: obj.flipX };

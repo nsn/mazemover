@@ -38,3 +38,11 @@ export const COMBAT = {
   CRIT_CHANCE: 95,        // Threshold for critical hit (toHitRoll must be >= this)
   CRIT_MULT: 2,           // Critical hit damage multiplier
 } as const;
+
+// Start Level Sequence Configuration
+export const START_LEVEL = {
+  GRID_REVEAL_DURATION: 1.1,     // Duration in seconds to reveal the grid
+  OBJECT_SPAWN_DELAY: 0.1,       // Delay in seconds between spawning each object
+  PLAYER_DROP_DELAY: 0.2,        // Delay before player drop animation starts
+  FADE_IN_DURATION: 0.15,         // Duration of fade-in for each tile/object
+} as const;

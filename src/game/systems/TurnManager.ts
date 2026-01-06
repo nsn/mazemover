@@ -92,6 +92,8 @@ export class TurnManager {
       hasPlacedTile: false,
       rotatingTilePosition: null,
       originalTileOrientation: null,
+      isInStartLevelSequence: true,  // Start in sequence, will be set to false when complete
+      revealedTiles: new Set<string>(),  // Empty initially, tiles revealed during start sequence
     };
 
     // Initialize state pattern

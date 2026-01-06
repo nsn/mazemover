@@ -41,7 +41,8 @@ export class MapObjectManager {
       pixelOffset: { x: 0, y: 0 },
       spriteOffset: { ...spriteOffset },
       flipX: false,  // Default facing right
-      playingDropAnimation: false,  // Only true for player on initial spawn
+      isInStartLevelSequence: false,  // Set to true for objects during start level animation
+      isPlayingDropAnimation: false,  // Only used for player during start sequence
       renderOrder,
       sprite,
       movementSpeed,
@@ -68,7 +69,7 @@ export class MapObjectManager {
       playerDef.stats,
       { x: 0, y: -4 }  // Sprite offset to lift player sprite up
     );
-    player.playingDropAnimation = true;  // Play drop animation on spawn
+    player.isInStartLevelSequence = true;  // Will be managed by StartLevelSequence
     console.log(`[MapObjectManager] Created player with stats:`, player.stats);
     return player;
   }

@@ -68,10 +68,17 @@ export function drawBrickLayer(
   cols: number,
   gridOffsetX: number,
   gridOffsetY: number,
-  tileSize: number
+  tileSize: number,
+  isInStartLevelSequence: boolean = false,
+  revealedTiles: Set<string> = new Set()
 ): void {
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
+      // Skip unrevealed tiles during start level sequence
+      if (isInStartLevelSequence && !revealedTiles.has(`${r},${c}`)) {
+        continue;
+      }
+
       const frame = getBrickFrame(r, c, rows, cols);
       const x = gridOffsetX + c * tileSize + tileSize / 2;
       const y = gridOffsetY + r * tileSize + tileSize / 2;
@@ -267,10 +274,12 @@ export function drawGridWithOverlay(
   gridCols: number,
   tileSize: number,
   screenWidth: number,
-  screenHeight: number
+  screenHeight: number,
+  isInStartLevelSequence: boolean = false,
+  revealedTiles: Set<string> = new Set()
 ): void {
   // Draw brick background layer first
-  drawBrickLayer(gridRows, gridCols, gridOffsetX, gridOffsetY, tileSize);
+  drawBrickLayer(gridRows, gridCols, gridOffsetX, gridOffsetY, tileSize, isInStartLevelSequence, revealedTiles);
 
   const gridWidth = gridCols * tileSize;
   const gridHeight = gridRows * tileSize;
@@ -292,6 +301,11 @@ export function drawGridWithOverlay(
       for (let c = 0; c < grid[r].length; c++) {
         const tile = grid[r][c];
         if (tile) {
+          // Skip unrevealed tiles during start level sequence
+          if (isInStartLevelSequence && !revealedTiles.has(`${r},${c}`)) {
+            continue;
+          }
+
           const x = gridOffsetX + c * tileSize + tileSize / 2;
           const y = gridOffsetY + r * tileSize + tileSize / 2;
           const isDarkened = (highlightRow !== -1 && r !== highlightRow) ||
@@ -329,6 +343,11 @@ export function drawGridWithOverlay(
       for (let c = 0; c < grid[r].length; c++) {
         const tile = grid[r][c];
         if (tile) {
+          // Skip unrevealed tiles during start level sequence
+          if (isInStartLevelSequence && !revealedTiles.has(`${r},${c}`)) {
+            continue;
+          }
+
           const x = gridOffsetX + c * tileSize + tileSize / 2;
           const y = gridOffsetY + r * tileSize + tileSize / 2;
           drawTile(tile, x, y, "gridTile");
@@ -394,7 +413,9 @@ export async function animatePush(
   gridRows: number,
   gridCols: number,
   tileSize: number,
-  onComplete: () => void
+  onComplete: () => void,
+  isInStartLevelSequence: boolean = false,
+  revealedTiles: Set<string> = new Set()
 ): Promise<void> {
   const duration = 0.2;
   const { x: startX, y: startY } = getPlotScreenPos(plot, gridOffsetX, gridOffsetY, gridRows, gridCols, tileSize);
@@ -423,6 +444,11 @@ export async function animatePush(
     for (let c = 0; c < grid[r].length; c++) {
       const tile = grid[r][c];
       if (tile) {
+        // Skip unrevealed tiles during start level sequence
+        if (isInStartLevelSequence && !revealedTiles.has(`${r},${c}`)) {
+          continue;
+        }
+
         const isAffected = (affectedRow !== -1 && r === affectedRow) ||
                           (affectedCol !== -1 && c === affectedCol);
         if (!isAffected) {
@@ -443,6 +469,11 @@ export async function animatePush(
     for (let r = 0; r < grid.length; r++) {
       const tile = grid[r][col];
       if (tile) {
+        // Skip unrevealed tiles during start level sequence
+        if (isInStartLevelSequence && !revealedTiles.has(`${r},${col}`)) {
+          continue;
+        }
+
         const x = gridOffsetX + col * tileSize + tileSize / 2;
         const y = gridOffsetY + r * tileSize + tileSize / 2;
         const tileObj = drawTile(tile, x, y, "animatingTile");
@@ -454,6 +485,11 @@ export async function animatePush(
     for (let c = 0; c < grid[row].length; c++) {
       const tile = grid[row][c];
       if (tile) {
+        // Skip unrevealed tiles during start level sequence
+        if (isInStartLevelSequence && !revealedTiles.has(`${row},${c}`)) {
+          continue;
+        }
+
         const x = gridOffsetX + c * tileSize + tileSize / 2;
         const y = gridOffsetY + row * tileSize + tileSize / 2;
         const tileObj = drawTile(tile, x, y, "animatingTile");
@@ -466,20 +502,21 @@ export async function animatePush(
   const staticObjects: MapObject[] = [];
 
   for (const obj of objects) {
+    // Skip objects in start level sequence
+    if (obj.isInStartLevelSequence) {
+      continue;
+    }
+
     const isAffected = (affectedRow !== -1 && obj.gridPosition.row === affectedRow) ||
                       (affectedCol !== -1 && obj.gridPosition.col === affectedCol);
     if (isAffected) {
       const x = gridOffsetX + obj.gridPosition.col * tileSize + tileSize / 2 + obj.spriteOffset.x;
       const y = gridOffsetY + obj.gridPosition.row * tileSize + tileSize / 2 + obj.spriteOffset.y;
 
-      // Player plays drop animation on spawn, idle when being pushed, others use frame 0
-      let spriteConfig;
-      if (obj.type === ObjectType.Player) {
-        const anim = obj.playingDropAnimation ? "drop" : "idle";
-        spriteConfig = { anim, flipX: obj.flipX };
-      } else {
-        spriteConfig = { frame: 0, flipX: obj.flipX };
-      }
+      // Player plays idle animation when being pushed, others use frame 0
+      const spriteConfig = obj.type === ObjectType.Player
+        ? { anim: "idle", flipX: obj.flipX }
+        : { frame: 0, flipX: obj.flipX };
 
       const objSprite = k.add([
         k.sprite(obj.sprite, spriteConfig),
@@ -496,14 +533,18 @@ export async function animatePush(
   // Draw static objects using simple rendering (not importing MapObjectRenderer to avoid circular deps)
   const sorted = [...staticObjects].sort((a, b) => a.renderOrder - b.renderOrder);
   for (const obj of sorted) {
+    // Skip objects in start level sequence
+    if (obj.isInStartLevelSequence) {
+      continue;
+    }
+
     const x = gridOffsetX + obj.gridPosition.col * tileSize + tileSize / 2 + obj.pixelOffset.x + obj.spriteOffset.x;
     const y = gridOffsetY + obj.gridPosition.row * tileSize + tileSize / 2 + obj.pixelOffset.y + obj.spriteOffset.y;
 
-    // Player plays drop animation on spawn, idle when standing still, others use frame 0
+    // Player plays idle animation when standing still, others use frame 0
     let spriteConfig;
     if (obj.type === ObjectType.Player) {
-      const anim = obj.playingDropAnimation ? "drop" : "idle";
-      spriteConfig = { anim, flipX: obj.flipX };
+      spriteConfig = { anim: "idle", flipX: obj.flipX };
     } else {
       spriteConfig = { frame: 0, flipX: obj.flipX };
     }

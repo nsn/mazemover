@@ -67,6 +67,8 @@ export interface GameState {
   hasPlacedTile: boolean;
   rotatingTilePosition: GridPosition | null;
   originalTileOrientation: Orientation | null;
+  isInStartLevelSequence: boolean;  // True during the start level animation sequence
+  revealedTiles: Set<string>;  // Set of "row,col" strings for revealed tiles during start sequence
 }
 
 export const ObjectType = {
@@ -102,7 +104,8 @@ export interface MapObject {
   pixelOffset: { x: number; y: number };
   spriteOffset: { x: number; y: number };  // Offset for sprite rendering (e.g., to lift sprite up)
   flipX: boolean;  // True if sprite is flipped horizontally (facing left)
-  playingDropAnimation: boolean;  // True if player is playing the drop animation (on game start)
+  isInStartLevelSequence: boolean;  // True if object is part of start level sequence
+  isPlayingDropAnimation: boolean;  // True if player is currently playing drop animation
   renderOrder: number;
   sprite: string;
   movementSpeed: number;

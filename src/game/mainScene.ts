@@ -3,6 +3,7 @@ import { loadAssets, loadEnemyDatabase, enemyDatabase } from "./assets";
 import { TurnManager } from "./systems/TurnManager";
 import { InputController } from "./systems/InputController";
 import { CursorManager } from "./systems/CursorManager";
+import { StartLevelSequence } from "./systems/StartLevelSequence";
 import { GRID_ROWS, GRID_COLS } from "./config";
 import { getImmovableEdgeTiles, getOppositeSide, getRandomTileOnSide } from "./core/Grid";
 import {
@@ -79,31 +80,32 @@ export function createMainScene(): void {
     // Create player on opposite side from exit
     const oppositeSide = getOppositeSide(exitTile.side);
     const playerTile = getRandomTileOnSide(oppositeSide, GRID_ROWS, GRID_COLS);
-    const player = objManager.createPlayer({ row: playerTile.row, col: playerTile.col }, "Player1");
+    objManager.createPlayer({ row: playerTile.row, col: playerTile.col }, "Player1");
 
-    // Set up drop animation completion handler
-    // We need to create a temporary sprite to detect when the drop animation ends
-    const dropAnimationSprite = k.add([
-      k.sprite("mason", { anim: "drop" }),
-      k.pos(-1000, -1000), // Off-screen
-      k.opacity(0),
-      "dropAnimationTracker",
-    ]);
+    // Create enemies (will be spawned by StartLevelSequence)
+    const redEnemy = objManager.createRedEnemy({ row: 3, col: 3 });
+    const yellowEnemy = objManager.createYellowEnemy({ row: 3, col: 2 });
+    const greenEnemy = objManager.createGreenEnemy({ row: 2, col: 3 });
 
-    dropAnimationSprite.onAnimEnd(() => {
-      console.log("[MainScene] Drop animation completed, switching to idle");
-      player.playingDropAnimation = false;
-      k.destroy(dropAnimationSprite);
-      render(); // Re-render to show idle animation
-    });
+    // Mark all objects as part of start level sequence
+    redEnemy.isInStartLevelSequence = true;
+    yellowEnemy.isInStartLevelSequence = true;
+    greenEnemy.isInStartLevelSequence = true;
 
-    // Create enemies
-    objManager.createRedEnemy({ row: 3, col: 3 });
-    objManager.createYellowEnemy({ row: 3, col: 2 });
-    objManager.createGreenEnemy({ row: 2, col: 3 });
+    // Create and start the level sequence
+    console.log("[MainScene] Starting level sequence...");
+    const startSequence = new StartLevelSequence(
+      turnManager.getState(),
+      objManager,
+      render, // Render callback
+      () => {
+        console.log("[MainScene] Level sequence complete, starting player turn");
+        turnManager.startPlayerTurn();
+      }
+    );
 
-    console.log("[MainScene] Starting player turn...");
-    turnManager.startPlayerTurn();
+    // Start the sequence (async, but we don't await)
+    startSequence.start();
   });
 }
 

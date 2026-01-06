@@ -18,10 +18,18 @@ export class InputController {
 
   setupKeyboardControls(): void {
     k.onKeyPress("r", () => {
+      // Block input during start level sequence
+      if (this.turnManager.getState().isInStartLevelSequence) {
+        return;
+      }
       this.turnManager.rotateTile();
     });
 
     k.onKeyPress("space", () => {
+      // Block input during start level sequence
+      if (this.turnManager.getState().isInStartLevelSequence) {
+        return;
+      }
       if (this.turnManager.canPush() && this.onPushRequested) {
         this.onPushRequested();
       }

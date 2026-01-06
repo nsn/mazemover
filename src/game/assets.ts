@@ -29,7 +29,7 @@ export async function loadAssets(): Promise<void> {
     anims: {
       idle: {from : 0, to: 3, loop: true},
       walk: {from : 110, to: 113, loop: true},
-      drop: {from : 186, to: 197, loop: false},
+      drop: {from : 186, to: 197, loop: false, speed: 10},
     }
   });
 
