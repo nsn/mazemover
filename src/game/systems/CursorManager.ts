@@ -4,6 +4,7 @@ import type { TurnManager } from "./TurnManager";
 import type { PlotPosition } from "../types";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS } from "../config";
 import { findReachableTiles } from "./Pathfinding";
+import { isWallBlocking } from "./WallBump";
 
 // Centralized cursor definitions - easy to extend with new cursor types
 const CURSORS = {
@@ -71,6 +72,12 @@ export class CursorManager {
     const moveCursor = this.getMoveCursor(mousePos, state, turnManager);
     if (moveCursor) {
       return moveCursor;
+    }
+
+    // Check if hovering over a wall that can be demolished
+    const demolishCursor = this.getDemolishCursor(mousePos, state, turnManager);
+    if (demolishCursor) {
+      return demolishCursor;
     }
 
     // Default cursor
@@ -259,6 +266,46 @@ export class CursorManager {
     );
 
     return isReachable ? "confirm" : "cancel";
+  }
+
+  private getDemolishCursor(mousePos: any, state: any, turnManager: TurnManager): CursorType | null {
+    // Only show demolish cursor during player turn and not in tile placement
+    if (state.turnOwner !== TurnOwner.Player || state.playerPhase === PlayerPhase.TilePlacement) {
+      return null;
+    }
+
+    // Get player
+    const player = turnManager.getObjectManager().getPlayer();
+    if (!player || player.movesRemaining <= 0) {
+      return null;
+    }
+
+    // Calculate which grid cell the mouse is over
+    const gridCol = Math.floor((mousePos.x - GRID_OFFSET_X) / TILE_SIZE);
+    const gridRow = Math.floor((mousePos.y - GRID_OFFSET_Y) / TILE_SIZE);
+
+    // Check if mouse is within grid bounds
+    if (gridRow < 0 || gridRow >= GRID_ROWS || gridCol < 0 || gridCol >= GRID_COLS) {
+      return null;
+    }
+
+    const targetPos = { row: gridRow, col: gridCol };
+
+    // Check if this is an adjacent tile blocked by a wall
+    const dRow = Math.abs(targetPos.row - player.gridPosition.row);
+    const dCol = Math.abs(targetPos.col - player.gridPosition.col);
+    const isAdjacent = (dRow === 1 && dCol === 0) || (dRow === 0 && dCol === 1);
+
+    if (!isAdjacent) {
+      return null;
+    }
+
+    // Check if there's a wall blocking the move
+    if (isWallBlocking(state.grid, player.gridPosition, targetPos)) {
+      return "demolish";
+    }
+
+    return null;
   }
 
   private changeCursorType(type: CursorType): void {

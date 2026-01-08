@@ -94,6 +94,8 @@ export class TurnManager {
       originalTileOrientation: null,
       isInStartLevelSequence: true,  // Start in sequence, will be set to false when complete
       revealedTiles: new Set<string>(),  // Empty initially, tiles revealed during start sequence
+      wallBumpCount: 0,
+      wallBumpTarget: null,
     };
 
     // Initialize state pattern
@@ -281,6 +283,7 @@ export class TurnManager {
   }
 
   rotateTile(): void {
+    this.resetWallBumpCounter();
     if (this.useStatePattern) {
       if (this.currentTurnState instanceof PlayerTurnState) {
         this.currentTurnState.rotateTile(this.stateContext);
@@ -310,6 +313,7 @@ export class TurnManager {
   }
 
   executePush(): void {
+    this.resetWallBumpCounter();
     if (this.useStatePattern) {
       console.log("[TurnManager] executePush (state pattern) - tile:", this.state.currentTile?.type, "plot:", this.state.selectedPlot);
       if (this.currentTurnState instanceof PlayerTurnState) {
@@ -430,6 +434,7 @@ export class TurnManager {
   }
 
   enterRotationMode(): void {
+    this.resetWallBumpCounter();
     if (this.useStatePattern) {
       if (!this.isPlayerTurn() || !(this.currentTurnState instanceof PlayerTurnState)) return;
 
@@ -523,5 +528,14 @@ export class TurnManager {
       this.state.playerPhase = PlayerPhase.AwaitingAction;
       this.onStateChange();
     }
+  }
+
+  /**
+   * Resets the wall bump counter
+   * Should be called when player performs any action other than wall bumping
+   */
+  resetWallBumpCounter(): void {
+    this.state.wallBumpCount = 0;
+    this.state.wallBumpTarget = null;
   }
 }

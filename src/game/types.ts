@@ -69,6 +69,8 @@ export interface GameState {
   originalTileOrientation: Orientation | null;
   isInStartLevelSequence: boolean;  // True during the start level animation sequence
   revealedTiles: Set<string>;  // Set of "row,col" strings for revealed tiles during start sequence
+  wallBumpCount: number;  // Number of consecutive wall bumps
+  wallBumpTarget: GridPosition | null;  // Target tile of current wall bump sequence
 }
 
 export const ObjectType = {

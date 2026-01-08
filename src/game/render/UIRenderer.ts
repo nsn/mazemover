@@ -1,5 +1,5 @@
 import { k } from "../../kaplayCtx";
-import { type TileInstance, type MapObject, TileType, Direction } from "../types";
+import { type TileInstance, type MapObject, type GameState, TileType, Direction } from "../types";
 import { TileFrames } from "../assets";
 
 function getTileFrame(type: TileType, direction: Direction): number {
@@ -26,20 +26,12 @@ function getTileFrame(type: TileType, direction: Direction): number {
 export function drawPlayerStats(player: MapObject, x: number, y: number): void {
   if (!player.stats || player.currentHP === undefined) return;
 
-  const lineHeight = 8;
-
-  // Display player name
-  k.add([
-    k.text(player.name, { font: "3x5", size: 12 }),
-    k.pos(x, y),
-    k.color(255, 255, 255),
-    "playerStats",
-  ]);
+  const lineHeight = 12;
 
   // Display HP with current/max format
   k.add([
     k.text(`HP: ${player.currentHP}/${player.stats.hp}`, { font: "3x5", size: 12 }),
-    k.pos(x, y + lineHeight),
+    k.pos(x, y),
     k.color(255, 100, 100),
     "playerStats",
   ]);
@@ -47,7 +39,7 @@ export function drawPlayerStats(player: MapObject, x: number, y: number): void {
   // Display ATK
   k.add([
     k.text(`ATK: ${player.stats.atk}`, { font: "3x5", size: 12 }),
-    k.pos(x, y + lineHeight * 2),
+    k.pos(x, y + lineHeight),
     k.color(255, 200, 100),
     "playerStats",
   ]);
@@ -55,7 +47,7 @@ export function drawPlayerStats(player: MapObject, x: number, y: number): void {
   // Display DEF
   k.add([
     k.text(`DEF: ${player.stats.def}`, { font: "3x5", size: 12 }),
-    k.pos(x, y + lineHeight * 3),
+    k.pos(x, y + lineHeight * 2),
     k.color(100, 200, 255),
     "playerStats",
   ]);
@@ -63,7 +55,7 @@ export function drawPlayerStats(player: MapObject, x: number, y: number): void {
   // Display AGI
   k.add([
     k.text(`AGI: ${player.stats.agi}`, { font: "3x5", size: 12 }),
-    k.pos(x, y + lineHeight * 4),
+    k.pos(x, y + lineHeight * 3),
     k.color(100, 255, 100),
     "playerStats",
   ]);
@@ -136,6 +128,60 @@ export function drawDebugInfo(): void {
 }
 
 /**
+ * Draws state machine information at the bottom center of the canvas
+ */
+export function drawStateMachineInfo(state: GameState, player: MapObject | null): void {
+  const lines: string[] = [];
+
+  // Turn owner and phase
+  lines.push(`Turn: ${state.turnOwner} | Phase: ${state.playerPhase}`);
+
+  // Player moves
+  if (player) {
+    lines.push(`Moves: ${player.movesRemaining}`);
+  }
+
+  // Wall bump info
+  if (state.wallBumpCount > 0) {
+    const target = state.wallBumpTarget ? `(${state.wallBumpTarget.row},${state.wallBumpTarget.col})` : "none";
+    lines.push(`Wall Bumps: ${state.wallBumpCount}/3 Target: ${target}`);
+  }
+
+  // Animation state (from external)
+  // We'll pass this as a parameter
+
+  const text = lines.join(" | ");
+  const textObj = k.make([
+    k.text(text, { font: "3x5", size: 10 }),
+    k.color(200, 200, 100),
+  ]);
+
+  const textWidth = textObj.width;
+
+  k.add([
+    k.text(text, { font: "3x5", size: 10 }),
+    k.pos(320 - textWidth / 2, 350),
+    k.color(200, 200, 100),
+    k.z(2000),
+    "stateMachineInfo",
+  ]);
+}
+
+/**
+ * Draws the inventory background sprite
+ * @param x X coordinate for inventory center
+ * @param y Y coordinate for inventory center
+ */
+export function drawInventoryBackground(x: number, y: number): void {
+  k.add([
+    k.sprite("inventory"),
+    k.pos(x, y),
+    k.anchor("center"),
+    "inventoryBackground",
+  ]);
+}
+
+/**
  * Clears all UI elements
  */
 export function clearUI(): void {
@@ -144,4 +190,6 @@ export function clearUI(): void {
   k.destroyAll("previewTile");
   k.destroyAll("previewLabel");
   k.destroyAll("debugInfo");
+  k.destroyAll("stateMachineInfo");
+  k.destroyAll("inventoryBackground");
 }
