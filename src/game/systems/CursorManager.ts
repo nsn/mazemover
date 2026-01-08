@@ -20,6 +20,7 @@ const CURSORS = {
   move_right: "url('/cursors/arrow_e.png'), auto",
   move_up: "url('/cursors/arrow_n.png'), auto",
   move_down: "url('/cursors/arrow_s.png'), auto",
+  demolish: "url('/cursors/tool_pickaxe.png'), auto",
 } as const;
 
 type CursorType = keyof typeof CURSORS;
