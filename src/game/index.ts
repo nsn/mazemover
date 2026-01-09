@@ -301,6 +301,7 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
     k.sprite(player.sprite, { anim: "walk", flipX: shouldFlip }),
     k.pos(startX, startY),
     k.anchor("center"),
+    k.z(2), // Above decay overlay and tiles
     "movingPlayer",
   ]);
 
@@ -493,6 +494,7 @@ async function animateWallBump(player: MapObject, targetPos: GridPosition): Prom
     k.sprite(player.sprite, { anim: "walk", flipX: player.flipX }),
     k.pos(startX, startY),
     k.anchor("center"),
+    k.z(2), // Above decay overlay and tiles
     "movingPlayer",
   ]);
 
@@ -637,6 +639,7 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
     k.sprite(enemy.sprite, { frame: 0, flipX: shouldFlip }),
     k.pos(startX, startY),
     k.anchor("center"),
+    k.z(2), // Above decay overlay and tiles
     "movingEnemy",
   ];
   if (color) {

@@ -522,6 +522,7 @@ export async function animatePush(
         k.sprite(obj.sprite, spriteConfig),
         k.pos(x, y),
         k.anchor("center"),
+        k.z(2), // Above decay overlay and tiles
         "animatingObject",
       ]);
       animatingObjectObjs.push(objSprite);
@@ -608,7 +609,7 @@ export function drawDecayOverlay(
           k.sprite("decay", { frame: tile.decay }),
           k.pos(x, y),
           k.anchor("center"),
-          k.z(5), // Above tiles (z=1) but below objects
+          k.z(1), // Above tiles (z=0) but below objects (z=2)
           "decayOverlay",
         ]);
       }

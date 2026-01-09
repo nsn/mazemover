@@ -47,6 +47,7 @@ export function drawMapObjects(
       k.pos(x, y),
       k.anchor("center"),
       k.area(),
+      k.z(2), // Above decay overlay (z=1) and tiles (z=0)
       "mapObject",
       { objectData: obj },
     ];
