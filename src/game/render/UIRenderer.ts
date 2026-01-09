@@ -188,4 +188,5 @@ export function clearUI(): void {
   k.destroyAll("debugInfo");
   k.destroyAll("stateMachineInfo");
   k.destroyAll("inventoryBackground");
+  k.destroyAll("sagaText");
 }

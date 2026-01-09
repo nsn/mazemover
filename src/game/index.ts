@@ -1003,6 +1003,15 @@ export function render(): void {
   // Draw inventory background
   drawInventoryBackground(inventoryX, inventoryY);
 
+  // Draw saga font sample text
+  k.add([
+    k.text("The quick brown Fox jumps over the lazy Dog.", { font: "saga", size: 16 }),
+    k.pos(GRID_OFFSET_X, 10),
+    k.color(255, 255, 255),
+    k.z(100),
+    "sagaText",
+  ]);
+
   // Draw player stats UI
   if (player) {
     drawPlayerStats(player, statsX, statsY);

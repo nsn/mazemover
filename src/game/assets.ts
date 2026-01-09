@@ -39,6 +39,10 @@ export async function loadAssets(): Promise<void> {
     chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=:.,()/\\?!'% `,
   });
 
+  await k.loadBitmapFont("saga", "/saga_8.png", 16, 16, {
+    chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,;:?!"'+-=*%_()[]{}~#&@©®™°^\`|/\\<>…€$£¢¿¡“”‘’«»‹›„‚·•ÀÁÂÄÃÅĄÆÇĆÐÈÉÊËĘĞÌÍÎÏİŁÑŃÒÓÔÖÕŐØŒŚŞẞÞÙÚÛÜŰÝŸŹŻàáâäãåąæçćðèéêëęğìíîïıłñńòóôöõőøœśşßþùúûüűýÿźżАБВГҐДЕЁЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгґдеёєжзиіїйклмнопрстуфхцчшщъыьэюяČĎĚŇŘŠŤŮŽčďěňřšťůž `,
+  });
+
   await k.loadSprite("player", "/player.png");
   await k.loadSprite("enemy", "/enemy.png");
   await k.loadSprite("exit", "/exit.png");
