@@ -82,22 +82,18 @@ export function drawSkipButton(x: number, y: number): void {
  * @param tile The tile to preview
  * @param x X coordinate for tile center
  * @param y Y coordinate for tile center
- * @param labelText Optional label text to display above the tile
  */
 export function drawPreviewTile(
   tile: TileInstance,
   x: number,
-  y: number,
-  labelText?: string
+  y: number
 ): ReturnType<typeof k.add> {
-  if (labelText) {
-    k.add([
-      k.text(labelText, { font: "3x5", size: 12 }),
-      k.pos(x, y - 40),
-      k.color(200, 200, 200),
-      "previewLabel",
-    ]);
-  }
+  k.add([
+    k.text("next tile", { font: "3x5", size: 12 }),
+    k.pos(x, y - 40),
+    k.color(200, 200, 200),
+    "previewLabel",
+  ]);
 
   const frame = getTileFrame(tile.type, tile.orientation);
 

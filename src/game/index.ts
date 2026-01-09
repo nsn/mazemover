@@ -1022,7 +1022,7 @@ export function render(): void {
 
       drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
       if (state.currentTile) {
-        drawPreviewTile(state.currentTile, PREVIEW_X, PREVIEW_Y, "The quick brown fox jumps over the lazy dog");
+        drawPreviewTile(state.currentTile, PREVIEW_X, PREVIEW_Y);
       }
       drawSkipButton(skipButtonX, skipButtonY);
     } else if (state.playerPhase === PlayerPhase.TilePlacement && state.currentTile) {
@@ -1033,7 +1033,7 @@ export function render(): void {
       if (state.selectedPlot) {
         drawCurrentTile(state.currentTile, state.selectedPlot, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE);
       } else {
-        drawPreviewTile(state.currentTile, PREVIEW_X, PREVIEW_Y, "The quick brown fox jumps over the lazy dog");
+        drawPreviewTile(state.currentTile, PREVIEW_X, PREVIEW_Y);
       }
       drawSkipButton(skipButtonX, skipButtonY);
     } else {
@@ -1043,7 +1043,7 @@ export function render(): void {
       }
       drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
       if (state.currentTile) {
-        drawPreviewTile(state.currentTile, PREVIEW_X, PREVIEW_Y, "The quick brown fox jumps over the lazy dog");
+        drawPreviewTile(state.currentTile, PREVIEW_X, PREVIEW_Y);
         const plots = turnManager.getPlots();
         drawPlots(plots, null, state.playerPhase, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE);
       }
@@ -1056,7 +1056,7 @@ export function render(): void {
 
     // Keep showing the tile preview and plots during enemy turn
     if (state.currentTile) {
-      drawPreviewTile(state.currentTile, PREVIEW_X, PREVIEW_Y, "The quick brown fox jumps over the lazy dog");
+      drawPreviewTile(state.currentTile, PREVIEW_X, PREVIEW_Y);
       const plots = turnManager.getPlots();
       drawPlots(plots, null, state.playerPhase, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE);
     }
