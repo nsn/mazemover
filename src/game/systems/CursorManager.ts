@@ -22,6 +22,7 @@ const CURSORS = {
   move_up: "url('/cursors/arrow_n.png'), auto",
   move_down: "url('/cursors/arrow_s.png'), auto",
   demolish: "url('/cursors/tool_pickaxe.png'), auto",
+  attack: "url('/cursors/tool_sword_a.png'), auto",
 } as const;
 
 type CursorType = keyof typeof CURSORS;
@@ -66,6 +67,12 @@ export class CursorManager {
     const plotCursor = this.getPlotCursor(state, mousePos);
     if (plotCursor) {
       return plotCursor;
+    }
+
+    // Check if hovering over an enemy (attack)
+    const attackCursor = this.getAttackCursor(mousePos, state, turnManager);
+    if (attackCursor) {
+      return attackCursor;
     }
 
     // Check if hovering over a reachable tile (movement)
@@ -266,6 +273,53 @@ export class CursorManager {
     );
 
     return isReachable ? "confirm" : "cancel";
+  }
+
+  private getAttackCursor(mousePos: any, state: any, turnManager: TurnManager): CursorType | null {
+    // Only show attack cursor during player turn and not in tile placement
+    if (state.turnOwner !== TurnOwner.Player || state.playerPhase === PlayerPhase.TilePlacement) {
+      return null;
+    }
+
+    // Get player
+    const player = turnManager.getObjectManager().getPlayer();
+    if (!player || player.movesRemaining <= 0) {
+      return null;
+    }
+
+    // Calculate which grid cell the mouse is over
+    const gridCol = Math.floor((mousePos.x - GRID_OFFSET_X) / TILE_SIZE);
+    const gridRow = Math.floor((mousePos.y - GRID_OFFSET_Y) / TILE_SIZE);
+
+    // Check if mouse is within grid bounds
+    if (gridRow < 0 || gridRow >= GRID_ROWS || gridCol < 0 || gridCol >= GRID_COLS) {
+      return null;
+    }
+
+    // Calculate reachable tiles
+    const moves = turnManager.getObjectManager().getAvailableMoves(player);
+    const reachable = findReachableTiles(state.grid, player.gridPosition, moves);
+
+    // Check if the hovered tile is reachable
+    const target = reachable.find(
+      (t) => t.position.row === gridRow && t.position.col === gridCol
+    );
+
+    if (!target || target.path.length <= 1) {
+      return null;
+    }
+
+    // Check if there's an enemy at this position
+    const enemies = turnManager.getObjectManager().getEnemies();
+    const enemyAtPosition = enemies.find(
+      (enemy) => enemy.gridPosition.row === gridRow && enemy.gridPosition.col === gridCol
+    );
+
+    if (enemyAtPosition) {
+      return "attack";
+    }
+
+    return null;
   }
 
   private getDemolishCursor(mousePos: any, state: any, turnManager: TurnManager): CursorType | null {
