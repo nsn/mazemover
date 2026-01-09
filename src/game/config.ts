@@ -46,3 +46,11 @@ export const START_LEVEL = {
   PLAYER_DROP_DELAY: 0.2,        // Delay before player drop animation starts
   FADE_IN_DURATION: 0.15,         // Duration of fade-in for each tile/object
 } as const;
+
+// Inventory Configuration
+export const INVENTORY = {
+  SLOTS_X: 5,
+  SLOTS_Y: 2,
+  SLOT_SIZE: 26,
+  SLOT_SPACING: 2,
+}

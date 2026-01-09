@@ -1,6 +1,7 @@
 import { k } from "../../kaplayCtx";
 import { type TileInstance, type MapObject, type GameState, TileType, Direction } from "../types";
 import { TileFrames } from "../assets";
+import { INVENTORY } from "../config";
 
 function getTileFrame(type: TileType, direction: Direction): number {
   // Get base column for tile type
@@ -26,11 +27,11 @@ function getTileFrame(type: TileType, direction: Direction): number {
 export function drawPlayerStats(player: MapObject, x: number, y: number): void {
   if (!player.stats || player.currentHP === undefined) return;
 
-  const lineHeight = 12;
+  const lineHeight = 16;
 
   // Display HP with current/max format
   k.add([
-    k.text(`HP: ${player.currentHP}/${player.stats.hp}`, { font: "3x5", size: 12 }),
+    k.text(`HP: ${player.currentHP}/${player.stats.hp}`, { font: "saga", size: 16 }),
     k.pos(x, y),
     k.color(255, 100, 100),
     "playerStats",
@@ -38,7 +39,7 @@ export function drawPlayerStats(player: MapObject, x: number, y: number): void {
 
   // Display ATK
   k.add([
-    k.text(`ATK: ${player.stats.atk}`, { font: "3x5", size: 12 }),
+    k.text(`ATK: ${player.stats.atk}`, { font: "saga", size: 16 }),
     k.pos(x, y + lineHeight),
     k.color(255, 200, 100),
     "playerStats",
@@ -46,7 +47,7 @@ export function drawPlayerStats(player: MapObject, x: number, y: number): void {
 
   // Display DEF
   k.add([
-    k.text(`DEF: ${player.stats.def}`, { font: "3x5", size: 12 }),
+    k.text(`DEF: ${player.stats.def}`, { font: "saga", size: 16 }),
     k.pos(x, y + lineHeight * 2),
     k.color(100, 200, 255),
     "playerStats",
@@ -54,7 +55,7 @@ export function drawPlayerStats(player: MapObject, x: number, y: number): void {
 
   // Display AGI
   k.add([
-    k.text(`AGI: ${player.stats.agi}`, { font: "3x5", size: 12 }),
+    k.text(`AGI: ${player.stats.agi}`, { font: "saga", size: 16 }),
     k.pos(x, y + lineHeight * 3),
     k.color(100, 255, 100),
     "playerStats",
@@ -164,17 +165,55 @@ export function drawStateMachineInfo(state: GameState, player: MapObject | null)
 }
 
 /**
+ * Calculates the position of an inventory slot
+ * @param inventoryX X coordinate of inventory top-left
+ * @param inventoryY Y coordinate of inventory top-left
+ * @param slotCol Slot column index (0-based)
+ * @param slotRow Slot row index (0-based)
+ * @param padding Border padding (e.g., 9-patch border size)
+ * @returns Object with x and y coordinates for the slot
+ */
+export function slotPos(
+  inventoryX: number,
+  inventoryY: number,
+  slotCol: number,
+  slotRow: number,
+  padding: number = 8
+): { x: number; y: number } {
+  return {
+    x: inventoryX + slotCol * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) + padding,
+    y: inventoryY + slotRow * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) + padding,
+  };
+}
+
+/**
  * Draws the inventory background sprite
  * @param x X coordinate for inventory center
  * @param y Y coordinate for inventory center
  */
 export function drawInventoryBackground(x: number, y: number): void {
+  const pathsize = 8
+  const width = INVENTORY.SLOTS_X * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING + 2 * pathsize
+  const height = INVENTORY.SLOTS_Y * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING + 2 * pathsize
   k.add([
-    k.sprite("inventory"),
+    k.sprite("9patch", {
+      width: width,
+      height: height,
+    }),
     k.pos(x, y),
-    k.anchor("center"),
     "inventoryBackground",
   ]);
+
+  for (let i = 0; i < INVENTORY.SLOTS_X; i++) {
+    for (let j = 0; j < INVENTORY.SLOTS_Y; j++) {
+      const pos = slotPos(x, y, i, j, pathsize);
+      k.add([
+        k.sprite("inventoryslot"),
+        k.pos(pos.x, pos.y),
+        "inventorySlot",
+      ]);
+    }
+  }
 }
 
 /**
@@ -188,5 +227,6 @@ export function clearUI(): void {
   k.destroyAll("debugInfo");
   k.destroyAll("stateMachineInfo");
   k.destroyAll("inventoryBackground");
+  k.destroyAll("inventorySlot");
   k.destroyAll("sagaText");
 }

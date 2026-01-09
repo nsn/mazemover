@@ -23,7 +23,16 @@ export async function loadAssets(): Promise<void> {
     },
   });
 
-  await k.loadSprite("inventory", "/inventory.png")
+  await k.loadSprite("inventoryslot", "/inventoryslot.png")
+
+  await k.loadSprite("9patch", "/9patch.png", {
+    slice9: {
+        left: 8,
+        right: 8,
+        top: 8,
+        bottom: 8,
+    },
+  });
 
   await k.loadSprite("mason", "/mason.png", {
     sliceX: 11,
@@ -39,9 +48,11 @@ export async function loadAssets(): Promise<void> {
     chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=:.,()/\\?!'% `,
   });
 
-  await k.loadBitmapFont("saga", "/saga_8.png", 16, 16, {
+  await k.loadBitmapFont("bitmapsaga", "/saga_8.png", 16, 16, {
     chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,;:?!"'+-=*%_()[]{}~#&@©®™°^\`|/\\<>…€$£¢¿¡“”‘’«»‹›„‚·•ÀÁÂÄÃÅĄÆÇĆÐÈÉÊËĘĞÌÍÎÏİŁÑŃÒÓÔÖÕŐØŒŚŞẞÞÙÚÛÜŰÝŸŹŻàáâäãåąæçćðèéêëęğìíîïıłñńòóôöõőøœśşßþùúûüűýÿźżАБВГҐДЕЁЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгґдеёєжзиіїйклмнопрстуфхцчшщъыьэюяČĎĚŇŘŠŤŮŽčďěňřšťůž `,
   });
+
+  await k.loadFont("saga","saga_8.ttf", {size: 16});
 
   await k.loadSprite("player", "/player.png");
   await k.loadSprite("enemy", "/enemy.png");
