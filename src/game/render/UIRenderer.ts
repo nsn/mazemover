@@ -166,32 +166,26 @@ export function drawStateMachineInfo(state: GameState, player: MapObject | null)
 
 /**
  * Calculates the position of an inventory slot
- * @param inventoryX X coordinate of inventory top-left
- * @param inventoryY Y coordinate of inventory top-left
  * @param slotCol Slot column index (0-based)
  * @param slotRow Slot row index (0-based)
  * @param padding Border padding (e.g., 9-patch border size)
  * @returns Object with x and y coordinates for the slot
  */
 export function slotPos(
-  inventoryX: number,
-  inventoryY: number,
   slotCol: number,
   slotRow: number,
   padding: number = 8
 ): { x: number; y: number } {
   return {
-    x: inventoryX + slotCol * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) + padding,
-    y: inventoryY + slotRow * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) + padding,
+    x: INVENTORY.X + slotCol * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) + padding,
+    y: INVENTORY.Y + slotRow * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) + padding,
   };
 }
 
 /**
  * Draws the inventory background sprite
- * @param x X coordinate for inventory center
- * @param y Y coordinate for inventory center
  */
-export function drawInventoryBackground(x: number, y: number): void {
+export function drawInventoryBackground(): void {
   const pathsize = 8
   const width = INVENTORY.SLOTS_X * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING + 2 * pathsize
   const height = INVENTORY.SLOTS_Y * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING + 2 * pathsize
@@ -200,13 +194,13 @@ export function drawInventoryBackground(x: number, y: number): void {
       width: width,
       height: height,
     }),
-    k.pos(x, y),
+    k.pos(INVENTORY.X, INVENTORY.Y),
     "inventoryBackground",
   ]);
 
   for (let i = 0; i < INVENTORY.SLOTS_X; i++) {
     for (let j = 0; j < INVENTORY.SLOTS_Y; j++) {
-      const pos = slotPos(x, y, i, j, pathsize);
+      const pos = slotPos(i, j, pathsize);
       k.add([
         k.sprite("inventoryslot"),
         k.pos(pos.x, pos.y),

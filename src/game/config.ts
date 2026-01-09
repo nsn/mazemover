@@ -49,6 +49,8 @@ export const START_LEVEL = {
 
 // Inventory Configuration
 export const INVENTORY = {
+  X: GRID_OFFSET_X + GRID_COLS * TILE_SIZE + (640 - (GRID_OFFSET_X + GRID_COLS * TILE_SIZE)) / 2,
+  Y: 180,
   SLOTS_X: 5,
   SLOTS_Y: 2,
   SLOT_SIZE: 26,

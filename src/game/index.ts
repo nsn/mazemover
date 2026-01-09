@@ -997,11 +997,9 @@ export function render(): void {
   const statsY = 8;
   const skipButtonX = GRID_OFFSET_X + GRID_COLS * TILE_SIZE + TILE_SIZE * 3;
   const skipButtonY = 360 / 2 + 80;
-  const inventoryX = GRID_OFFSET_X + GRID_COLS * TILE_SIZE + (640 - (GRID_OFFSET_X + GRID_COLS * TILE_SIZE)) / 2;
-  const inventoryY = 180;
 
   // Draw inventory background
-  drawInventoryBackground(inventoryX, inventoryY);
+  drawInventoryBackground();
 
   // Draw saga font sample text
   k.add([
