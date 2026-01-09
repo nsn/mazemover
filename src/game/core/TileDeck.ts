@@ -14,6 +14,7 @@ function createRandomTileInstance(): TileInstance {
       return {
         type,
         orientation: getRandomOrientation(),
+        decay: 0,
       };
     }
   }
@@ -21,6 +22,7 @@ function createRandomTileInstance(): TileInstance {
   return {
     type: TileType.Straight,
     orientation: getRandomOrientation(),
+    decay: 0,
   };
 }
 

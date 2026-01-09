@@ -35,6 +35,23 @@ export async function loadAssets(): Promise<void> {
     },
   });
 
+  await k.loadSprite("items", "/items.png", {
+    sliceX: 1,
+    sliceY: 20,
+    anims: {
+      punch: 0,
+      putch: 1,
+      spatula: 2,
+      trowel: 3,
+      level: 4,
+      mell: 5,
+      mallet: 6,
+      hammer: 7,
+      pick: 8,
+      pickaxe: 9,
+    }
+  });
+
   await k.loadSprite("mason", "/mason.png", {
     sliceX: 11,
     sliceY: 118,

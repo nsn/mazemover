@@ -164,14 +164,16 @@ export function openWall(
   console.log(`[openWall] From tile: ${fromTile.type} → ${fromUpgrade.type}, orientation ${fromUpgrade.orientation}`);
   console.log(`[openWall] To tile: ${toTile.type} → ${toUpgrade.type}, orientation ${toUpgrade.orientation}`);
 
-  // Update grid with new tile types and orientations
+  // Update grid with new tile types and orientations, preserving decay
   grid[from.row][from.col] = {
     type: fromUpgrade.type,
     orientation: fromUpgrade.orientation,
+    decay: fromTile.decay,
   };
   grid[to.row][to.col] = {
     type: toUpgrade.type,
     orientation: toUpgrade.orientation,
+    decay: toTile.decay,
   };
 
   console.log(`[WallBump] Opened wall from ${from.row},${from.col} to ${to.row},${to.col}`);

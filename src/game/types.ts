@@ -29,6 +29,7 @@ export type Orientation = 0 | 1 | 2 | 3;
 export interface TileInstance {
   type: TileType;
   orientation: Orientation;
+  decay: number;  // Decay level: 0 = no decay, higher values = worse condition
 }
 
 export interface GridPosition {
