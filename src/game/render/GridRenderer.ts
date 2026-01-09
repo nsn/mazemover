@@ -585,6 +585,38 @@ export async function animatePush(
 }
 
 /**
+ * Draws decay overlays for all tiles in the grid
+ * @param grid The game grid
+ * @param offsetX X offset for the grid
+ * @param offsetY Y offset for the grid
+ * @param tileSize Size of each tile
+ */
+export function drawDecayOverlay(
+  grid: TileInstance[][],
+  offsetX: number,
+  offsetY: number,
+  tileSize: number
+): void {
+  for (let row = 0; row < grid.length; row++) {
+    for (let col = 0; col < grid[row].length; col++) {
+      const tile = grid[row][col];
+      if (tile && tile.decay > 0) {
+        const x = offsetX + col * tileSize + tileSize / 2;
+        const y = offsetY + row * tileSize + tileSize / 2;
+
+        k.add([
+          k.sprite("decay", { frame: tile.decay }),
+          k.pos(x, y),
+          k.anchor("center"),
+          k.z(5), // Above tiles (z=1) but below objects
+          "decayOverlay",
+        ]);
+      }
+    }
+  }
+}
+
+/**
  * Clears all grid-related visual elements
  */
 export function clearGrid(): void {
@@ -594,4 +626,5 @@ export function clearGrid(): void {
   k.destroyAll("currentTile");
   k.destroyAll("overlay");
   k.destroyAll("highlightArea");
+  k.destroyAll("decayOverlay");
 }
