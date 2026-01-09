@@ -462,6 +462,7 @@ async function animateWallBump(player: MapObject, targetPos: GridPosition): Prom
   console.log(`[WallBump] Animating bump from ${player.gridPosition.row},${player.gridPosition.col} toward ${targetPos.row},${targetPos.col}`);
 
   isAnimating = true;
+  console.log("[WallBump] isAnimating set to true");
 
   // Remove player from map objects (will be rendered as moving sprite)
   const mapObjs = k.get("mapObject");
@@ -472,6 +473,7 @@ async function animateWallBump(player: MapObject, targetPos: GridPosition): Prom
       break;
     }
   }
+  console.log("[WallBump] Player removed from mapObjects");
 
   const from = player.gridPosition;
   const startX = GRID_OFFSET_X + from.col * TILE_SIZE + TILE_SIZE / 2 + player.spriteOffset.x;
@@ -497,6 +499,7 @@ async function animateWallBump(player: MapObject, targetPos: GridPosition): Prom
     k.z(2), // Above decay overlay and tiles
     "movingPlayer",
   ]);
+  console.log("[WallBump] Moving sprite created");
 
   const bumpDuration = 0.08;
 
@@ -511,8 +514,10 @@ async function animateWallBump(player: MapObject, targetPos: GridPosition): Prom
     },
     k.easings.easeOutQuad
   );
+  console.log("[WallBump] Forward tween started, waiting...");
 
   await k.wait(bumpDuration);
+  console.log("[WallBump] Forward tween complete");
 
   // Bounce back
   const backPos = movingSprite.pos.clone();
@@ -525,12 +530,17 @@ async function animateWallBump(player: MapObject, targetPos: GridPosition): Prom
     },
     k.easings.easeInQuad
   );
+  console.log("[WallBump] Back tween started, waiting...");
 
   await k.wait(bumpDuration);
+  console.log("[WallBump] Back tween complete");
 
   k.destroyAll("movingPlayer");
+  console.log("[WallBump] Moving sprite destroyed");
   isAnimating = false;
+  console.log("[WallBump] isAnimating set to false");
   render();
+  console.log("[WallBump] Render called");
 }
 
 async function handleWallBump(player: MapObject, targetPos: GridPosition): Promise<void> {
