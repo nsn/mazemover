@@ -256,6 +256,8 @@ function exitMovementMode(): void {
 }
 
 async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Promise<void> {
+  console.log("[movePlayerAlongPath] START - path length:", path.length, "isAnimating before:", isAnimating);
+
   if (path.length <= 1) {
     exitMovementMode();
     render();
@@ -266,6 +268,7 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
   turnManager.resetWallBumpCounter();
 
   isAnimating = true;
+  console.log("[movePlayerAlongPath] isAnimating set to true");
   const stepDuration = 0.15;
 
   k.destroyAll("reachableHighlight");
@@ -432,14 +435,21 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
   }
 
   k.destroyAll("movingPlayer");
+  console.log("[movePlayerAlongPath] Movement sprite destroyed");
   turnManager.getObjectManager().spendMovement(player, path.length - 1);
+  console.log("[movePlayerAlongPath] Movement spent");
 
   isAnimating = false;
+  console.log("[movePlayerAlongPath] isAnimating set to false");
   exitMovementMode();
+  console.log("[movePlayerAlongPath] Exited movement mode");
 
   turnManager.completeMove();
+  console.log("[movePlayerAlongPath] Move completed, executing enemy turns");
   await executeEnemyTurns();
+  console.log("[movePlayerAlongPath] Enemy turns complete");
   // startPlayerTurn() is now called inside executeEnemyTurns()
+  console.log("[movePlayerAlongPath] END");
 }
 
 async function skipPlayerTurn(_player: MapObject): Promise<void> {
