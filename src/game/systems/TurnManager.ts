@@ -7,6 +7,7 @@ import { MapObjectManager } from "./MapObjectManager";
 import type { EnemyDatabase } from "./EnemyDatabase";
 import type { TurnState, StateContext } from "./states/interfaces";
 import { PlayerTurnState, AwaitingActionState } from "./states";
+import { logger } from "../utils/logger";
 
 export type TurnManagerCallback = () => void;
 
@@ -142,6 +143,7 @@ export class TurnManager {
    * - Calls onStateChange() to trigger render
    */
   startPlayerTurn(): void {
+    this.resetWallBumpCounter(); // Reset wall bump counter at start of new turn
     if (this.useStatePattern) {
       console.log("[TurnManager] startPlayerTurn (state pattern)");
       this.objectManager.resetAllTurnMovement();
@@ -535,6 +537,9 @@ export class TurnManager {
    * Should be called when player performs any action other than wall bumping
    */
   resetWallBumpCounter(): void {
+    if (this.state.wallBumpCount > 0) {
+      logger.debug(`[TurnManager] Resetting wall bump counter from ${this.state.wallBumpCount} to 0`);
+    }
     this.state.wallBumpCount = 0;
     this.state.wallBumpTarget = null;
   }
