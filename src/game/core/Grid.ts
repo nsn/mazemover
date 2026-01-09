@@ -1,6 +1,25 @@
 import { Direction, TileType, type TileInstance, type PlotPosition, type Orientation } from "../types";
-import { GRID_COLS, GRID_ROWS, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE } from "../config";
+import { GRID_COLS, GRID_ROWS, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, DECAY_WEIGHTS } from "../config";
 import { TileDeck } from "./TileDeck";
+
+/**
+ * Generates a random decay value based on configured weights.
+ */
+function getRandomDecay(): number {
+  const entries = Object.entries(DECAY_WEIGHTS) as [string, number][];
+  const totalWeight = entries.reduce((sum, [, weight]) => sum + weight, 0);
+
+  let random = Math.random() * totalWeight;
+
+  for (const [decayStr, weight] of entries) {
+    random -= weight;
+    if (random <= 0) {
+      return parseInt(decayStr, 10);
+    }
+  }
+
+  return 0; // Fallback
+}
 
 /**
  * Returns the appropriate L-shaped corner tile for grid corners.
@@ -13,13 +32,13 @@ function getCornerTile(row: number, col: number, rows: number, cols: number): Ti
   const isBottomRight = row === rows - 1 && col === cols - 1;
 
   if (isTopLeft) {
-    return { type: TileType.L, orientation: 1 as Orientation, decay: 0 };
+    return { type: TileType.L, orientation: 1 as Orientation, decay: getRandomDecay() };
   } else if (isTopRight) {
-    return { type: TileType.L, orientation: 2 as Orientation, decay: 0 };
+    return { type: TileType.L, orientation: 2 as Orientation, decay: getRandomDecay() };
   } else if (isBottomLeft) {
-    return { type: TileType.L, orientation: 0 as Orientation, decay: 0 };
+    return { type: TileType.L, orientation: 0 as Orientation, decay: getRandomDecay() };
   } else if (isBottomRight) {
-    return { type: TileType.L, orientation: 3 as Orientation, decay: 0 };
+    return { type: TileType.L, orientation: 3 as Orientation, decay: getRandomDecay() };
   }
 
   return null;
@@ -46,20 +65,20 @@ function getEdgeTTile(row: number, col: number, rows: number, cols: number): Til
   // Determine which edge and set orientation so closed side faces outward
   if (row === 0) {
     // Top edge: closed side should face north (outward)
-    return { type: TileType.T, orientation: 2 as Orientation, decay: 0 };
+    return { type: TileType.T, orientation: 2 as Orientation, decay: getRandomDecay() };
   } else if (row === rows - 1) {
     // Bottom edge: closed side should face south (outward)
-    return { type: TileType.T, orientation: 0 as Orientation, decay: 0 };
+    return { type: TileType.T, orientation: 0 as Orientation, decay: getRandomDecay() };
   } else if (col === 0) {
     // Left edge: closed side should face west (outward)
-    return { type: TileType.T, orientation: 1 as Orientation, decay: 0 };
+    return { type: TileType.T, orientation: 1 as Orientation, decay: getRandomDecay() };
   } else if (col === cols - 1) {
     // Right edge: closed side should face east (outward)
-    return { type: TileType.T, orientation: 3 as Orientation, decay: 0 };
+    return { type: TileType.T, orientation: 3 as Orientation, decay: getRandomDecay() };
   }
 
   // Fallback (should never reach here for valid edge positions)
-  return { type: TileType.T, orientation: 0 as Orientation, decay: 0 };
+  return { type: TileType.T, orientation: 0 as Orientation, decay: getRandomDecay() };
 }
 
 export type EdgeSide = "top" | "bottom" | "left" | "right";
@@ -165,10 +184,13 @@ export function createGrid(rows: number, cols: number, deck: TileDeck): TileInst
           deck.discard(tile);
           tile = deck.draw();
         }
+        tile.decay = getRandomDecay();
         row.push(tile);
       } else {
         // Movable position (odd row OR odd col): draw any random tile from deck
-        row.push(deck.draw());
+        const tile = deck.draw();
+        tile.decay = getRandomDecay();
+        row.push(tile);
       }
     }
     grid.push(row);

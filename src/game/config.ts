@@ -30,6 +30,15 @@ export const TILE_WEIGHTS = {
   Cross: 5,
 } as const;
 
+export const DECAY_WEIGHTS = {
+  0: 30,
+  1: 10,
+  2: 5,
+  3: 0,
+  4: 0,
+  5: 0,
+} as const;
+
 // Combat Configuration
 export const COMBAT = {
   BASE_HIT: 75,           // Base hit chance percentage
