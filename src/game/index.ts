@@ -2,6 +2,7 @@ import { k } from "../kaplayCtx";
 import { TurnManager } from "./systems/TurnManager";
 import { InputController } from "./systems/InputController";
 import { CursorManager } from "./systems/CursorManager";
+import { logger } from "./utils/logger";
 import {
   drawPlots,
   drawCurrentTile,
@@ -39,27 +40,27 @@ let reachableTiles: ReachableTile[] = [];
 let selectedPlayer: MapObject | null = null;
 
 async function handleClick(): Promise<void> {
-  console.log("[handleClick] Called - isAnimating:", isAnimating);
+  logger.debug("[handleClick] Called - isAnimating:", isAnimating);
 
   if (isAnimating) {
-    console.log("Click ignored - animating");
+    logger.debug("Click ignored - animating");
     return;
   }
 
   // Block input during start level sequence
   if (turnManager.getState().isInStartLevelSequence) {
-    console.log("Click ignored - start level sequence playing");
+    logger.debug("Click ignored - start level sequence playing");
     return;
   }
 
   const pos = k.mousePos();
-  console.log("Click at:", pos);
+  logger.debug("Click at:", pos);
 
   // Check for skip button click
   const skipButtons = k.get("skipButton");
   for (const button of skipButtons) {
     if ((button as any).hasPoint && (button as any).hasPoint(pos)) {
-      console.log("Skip button clicked");
+      logger.debug("Skip button clicked");
       const player = turnManager.getObjectManager().getPlayer();
       if (player) {
         skipPlayerTurn(player);
@@ -83,7 +84,7 @@ async function handleClick(): Promise<void> {
     // Check if clicked on the rotating tile
     if (clickedGridRow === state.rotatingTilePosition.row &&
         clickedGridCol === state.rotatingTilePosition.col) {
-      console.log("Rotating player tile");
+      logger.debug("Rotating player tile");
       turnManager.rotatePlayerTile();
       render();
       return;
@@ -100,7 +101,7 @@ async function handleClick(): Promise<void> {
       );
 
       if (target && target.path.length > 1) {
-        console.log("Confirming rotation and moving to:", target.position);
+        logger.debug("Confirming rotation and moving to:", target.position);
         turnManager.confirmRotation();
         movePlayerAlongPath(player, target.path);
         return;
@@ -108,7 +109,7 @@ async function handleClick(): Promise<void> {
     }
 
     // Clicked outside reachable tiles - cancel rotation
-    console.log("Canceling rotation");
+    logger.debug("Canceling rotation");
     turnManager.cancelRotation();
     render();
     return;
@@ -119,7 +120,7 @@ async function handleClick(): Promise<void> {
     for (const highlight of reachableHighlights) {
       if ((highlight as any).hasPoint && (highlight as any).hasPoint(pos)) {
         const targetPos = (highlight as any).gridPos as GridPosition;
-        console.log("Reachable tile hit - moving to:", targetPos);
+        logger.debug("Reachable tile hit - moving to:", targetPos);
         const target = reachableTiles.find(
           (t) => t.position.row === targetPos.row && t.position.col === targetPos.col
         );
@@ -130,7 +131,7 @@ async function handleClick(): Promise<void> {
       }
     }
 
-    console.log("Click outside reachable - canceling movement mode");
+    logger.debug("Click outside reachable - canceling movement mode");
     exitMovementMode();
     render();
     return;
@@ -141,7 +142,7 @@ async function handleClick(): Promise<void> {
     if ((obj as any).hasPoint && (obj as any).hasPoint(pos)) {
       const objData = (obj as any).objectData as MapObject;
       if (objData.type === "Player" && objData.movesRemaining > 0) {
-        console.log("Player clicked - entering rotation mode");
+        logger.debug("Player clicked - entering rotation mode");
         turnManager.enterRotationMode();
         render();
         return;
@@ -150,14 +151,14 @@ async function handleClick(): Promise<void> {
   }
 
   // Check if clicked on a reachable grid tile (direct move without entering movement mode first)
-  console.log("[handleClick] Checking tile click - isPlayerTurn:", turnManager.isPlayerTurn(), "isTilePlacement:", turnManager.isTilePlacement());
+  logger.debug("[handleClick] Checking tile click - isPlayerTurn:", turnManager.isPlayerTurn(), "isTilePlacement:", turnManager.isTilePlacement());
   if (turnManager.isPlayerTurn() && !turnManager.isTilePlacement()) {
     const player = turnManager.getObjectManager().getPlayer();
-    console.log("[handleClick] Player found:", !!player, "moves:", player?.movesRemaining);
+    logger.debug("[handleClick] Player found:", !!player, "moves:", player?.movesRemaining);
     if (player && player.movesRemaining > 0) {
       const clickedGridCol = Math.floor((pos.x - GRID_OFFSET_X) / TILE_SIZE);
       const clickedGridRow = Math.floor((pos.y - GRID_OFFSET_Y) / TILE_SIZE);
-      console.log("[handleClick] Grid click at:", clickedGridRow, clickedGridCol);
+      logger.debug("[handleClick] Grid click at:", clickedGridRow, clickedGridCol);
 
       if (clickedGridRow >= 0 && clickedGridRow < GRID_ROWS &&
           clickedGridCol >= 0 && clickedGridCol < GRID_COLS) {
@@ -169,7 +170,7 @@ async function handleClick(): Promise<void> {
           (t) => t.position.row === clickedGridRow && t.position.col === clickedGridCol
         );
         if (target && target.path.length > 1) {
-          console.log("Direct move to reachable tile:", target.position);
+          logger.debug("Direct move to reachable tile:", target.position);
           movePlayerAlongPath(player, target.path);
           return;
         }
@@ -178,15 +179,15 @@ async function handleClick(): Promise<void> {
         const dRow = Math.abs(targetPos.row - player.gridPosition.row);
         const dCol = Math.abs(targetPos.col - player.gridPosition.col);
         const isAdjacent = (dRow === 1 && dCol === 0) || (dRow === 0 && dCol === 1);
-        console.log("[handleClick] isAdjacent:", isAdjacent);
+        logger.debug("[handleClick] isAdjacent:", isAdjacent);
 
         if (isAdjacent) {
           const wallBlocking = isWallBlocking(state.grid, player.gridPosition, targetPos);
-          console.log("[handleClick] Wall blocking:", wallBlocking);
+          logger.debug("[handleClick] Wall blocking:", wallBlocking);
           if (wallBlocking) {
-            console.log("Wall bump detected - calling handleWallBump");
+            logger.debug("Wall bump detected - calling handleWallBump");
             await handleWallBump(player, targetPos);
-            console.log("Wall bump completed - returning from handleClick");
+            logger.debug("Wall bump completed - returning from handleClick");
             return;
           }
         }
@@ -197,7 +198,7 @@ async function handleClick(): Promise<void> {
   const currentTiles = k.get("currentTile");
   for (const tile of currentTiles) {
     if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
-      console.log("Current tile hit - rotating");
+      logger.debug("Current tile hit - rotating");
       turnManager.rotateTile();
       return;
     }
@@ -207,10 +208,10 @@ async function handleClick(): Promise<void> {
   for (const tile of previewTiles) {
     if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
       if (turnManager.isPlayerTurn() && turnManager.canPlaceTile()) {
-        console.log("Preview tile hit - entering tile placement");
+        logger.debug("Preview tile hit - entering tile placement");
         turnManager.enterTilePlacement();
       } else if (turnManager.isTilePlacement()) {
-        console.log("Preview tile hit - rotating");
+        logger.debug("Preview tile hit - rotating");
         turnManager.rotateTile();
       }
       return;
@@ -220,7 +221,7 @@ async function handleClick(): Promise<void> {
   const highlightAreas = k.get("highlightArea");
   for (const area of highlightAreas) {
     if ((area as any).hasPoint && (area as any).hasPoint(pos)) {
-      console.log("Highlight area hit - pushing");
+      logger.debug("Highlight area hit - pushing");
       if (turnManager.canPush()) {
         executePushWithAnimation();
       }
@@ -232,7 +233,7 @@ async function handleClick(): Promise<void> {
   for (const plot of plots) {
     if ((plot as any).hasPoint && (plot as any).hasPoint(pos)) {
       const plotData = (plot as any).plotData as PlotPosition;
-      console.log("Plot hit:", plotData);
+      logger.debug("Plot hit:", plotData);
       if (turnManager.isPlayerTurn() && turnManager.canPlaceTile()) {
         turnManager.enterTilePlacement();
         turnManager.selectPlot(plotData);
@@ -244,7 +245,7 @@ async function handleClick(): Promise<void> {
   }
 
   if (turnManager.isTilePlacement()) {
-    console.log("Background hit - canceling");
+    logger.debug("Background hit - canceling");
     turnManager.cancelPlacement();
   }
 }
@@ -256,7 +257,7 @@ function exitMovementMode(): void {
 }
 
 async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Promise<void> {
-  console.log("[movePlayerAlongPath] START - path length:", path.length, "isAnimating before:", isAnimating);
+  logger.debug("[movePlayerAlongPath] START - path length:", path.length, "isAnimating before:", isAnimating);
 
   if (path.length <= 1) {
     exitMovementMode();
@@ -268,7 +269,7 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
   turnManager.resetWallBumpCounter();
 
   isAnimating = true;
-  console.log("[movePlayerAlongPath] isAnimating set to true");
+  logger.debug("[movePlayerAlongPath] isAnimating set to true");
   const stepDuration = 0.15;
 
   k.destroyAll("reachableHighlight");
@@ -406,7 +407,7 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
         await k.wait(stepDuration * 0.3);
       } else {
         // Defender survived - bounce player back to previous position
-        console.log("[Game] Defender survived - bouncing player back");
+        logger.debug("[Game] Defender survived - bouncing player back");
         const bounceX = GRID_OFFSET_X + previousPosition.col * TILE_SIZE + TILE_SIZE / 2;
         const bounceY = GRID_OFFSET_Y + previousPosition.row * TILE_SIZE + TILE_SIZE / 2;
 
@@ -435,25 +436,25 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
   }
 
   k.destroyAll("movingPlayer");
-  console.log("[movePlayerAlongPath] Movement sprite destroyed");
+  logger.debug("[movePlayerAlongPath] Movement sprite destroyed");
   turnManager.getObjectManager().spendMovement(player, path.length - 1);
-  console.log("[movePlayerAlongPath] Movement spent");
+  logger.debug("[movePlayerAlongPath] Movement spent");
 
   isAnimating = false;
-  console.log("[movePlayerAlongPath] isAnimating set to false");
+  logger.debug("[movePlayerAlongPath] isAnimating set to false");
   exitMovementMode();
-  console.log("[movePlayerAlongPath] Exited movement mode");
+  logger.debug("[movePlayerAlongPath] Exited movement mode");
 
   turnManager.completeMove();
-  console.log("[movePlayerAlongPath] Move completed, executing enemy turns");
+  logger.debug("[movePlayerAlongPath] Move completed, executing enemy turns");
   await executeEnemyTurns();
-  console.log("[movePlayerAlongPath] Enemy turns complete");
+  logger.debug("[movePlayerAlongPath] Enemy turns complete");
   // startPlayerTurn() is now called inside executeEnemyTurns()
-  console.log("[movePlayerAlongPath] END");
+  logger.debug("[movePlayerAlongPath] END");
 }
 
 async function skipPlayerTurn(_player: MapObject): Promise<void> {
-  console.log("Skipping player turn - passing to enemies");
+  logger.debug("Skipping player turn - passing to enemies");
 
   isAnimating = true;
 
@@ -469,7 +470,7 @@ async function skipPlayerTurn(_player: MapObject): Promise<void> {
 }
 
 async function animateWallBump(player: MapObject, targetPos: GridPosition): Promise<void> {
-  console.log(`[WallBump] Animating bump from ${player.gridPosition.row},${player.gridPosition.col} toward ${targetPos.row},${targetPos.col}`);
+  logger.debug(`[WallBump] Animating bump from ${player.gridPosition.row},${player.gridPosition.col} toward ${targetPos.row},${targetPos.col}`);
 
   isAnimating = true;
 
@@ -544,7 +545,7 @@ async function animateWallBump(player: MapObject, targetPos: GridPosition): Prom
 }
 
 async function handleWallBump(player: MapObject, targetPos: GridPosition): Promise<void> {
-  console.log("[handleWallBump] START - player moves:", player.movesRemaining);
+  logger.debug("[handleWallBump] START - player moves:", player.movesRemaining);
   const state = turnManager.getState();
 
   // Check if this is the same wall as before
@@ -559,16 +560,16 @@ async function handleWallBump(player: MapObject, targetPos: GridPosition): Promi
     state.wallBumpTarget = { ...targetPos };
   }
 
-  console.log(`[WallBump] Count: ${state.wallBumpCount}/3`);
+  logger.debug(`[WallBump] Count: ${state.wallBumpCount}/3`);
 
   // Animate the bump
-  console.log("[handleWallBump] Starting animation...");
+  logger.debug("[handleWallBump] Starting animation...");
   await animateWallBump(player, targetPos);
-  console.log("[handleWallBump] Animation complete");
+  logger.debug("[handleWallBump] Animation complete");
 
   // Check if we've reached 3 bumps
   if (state.wallBumpCount >= 3) {
-    console.log("[WallBump] Breaking wall!");
+    logger.debug("[WallBump] Breaking wall!");
     openWall(state.grid, player.gridPosition, targetPos);
     state.wallBumpCount = 0;
     state.wallBumpTarget = null;
@@ -576,22 +577,22 @@ async function handleWallBump(player: MapObject, targetPos: GridPosition): Promi
   }
 
   // Spend movement point
-  console.log("[handleWallBump] Spending movement - before:", player.movesRemaining);
+  logger.debug("[handleWallBump] Spending movement - before:", player.movesRemaining);
   turnManager.getObjectManager().spendMovement(player, 1);
-  console.log("[handleWallBump] Spending movement - after:", player.movesRemaining);
+  logger.debug("[handleWallBump] Spending movement - after:", player.movesRemaining);
   render();  // Update UI to show remaining moves
 
   // Check if player has moves remaining, otherwise trigger enemy turn
   if (player.movesRemaining <= 0) {
-    console.log("[handleWallBump] No moves remaining, executing enemy turns...");
+    logger.debug("[handleWallBump] No moves remaining, executing enemy turns...");
     await executeEnemyTurns();
-    console.log("[handleWallBump] Enemy turns complete");
+    logger.debug("[handleWallBump] Enemy turns complete");
   }
-  console.log("[handleWallBump] END");
+  logger.debug("[handleWallBump] END");
 }
 
 async function executeEnemyTurns(): Promise<void> {
-  console.log("[executeEnemyTurns] START");
+  logger.debug("[executeEnemyTurns] START");
   const state = turnManager.getState();
   const objectManager = turnManager.getObjectManager();
   const player = objectManager.getPlayer();
@@ -603,11 +604,11 @@ async function executeEnemyTurns(): Promise<void> {
     await animateEnemyMove(move);
   }
 
-  console.log("[executeEnemyTurns] Starting new player turn...");
+  logger.debug("[executeEnemyTurns] Starting new player turn...");
   turnManager.startPlayerTurn();
   render();
-  console.log("[executeEnemyTurns] END");
-  console.log("################ TURN COMPLETE ################");
+  logger.debug("[executeEnemyTurns] END");
+  logger.debug("################ TURN COMPLETE ################");
 }
 
 async function animateEnemyMove(move: EnemyMove): Promise<void> {
@@ -739,7 +740,7 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
       // Remove dead target (player) and complete movement to tile center
       if (combatResult.attackerAttack.defenderDied) {
         objectManager.destroyObject(target);
-        console.log("[Game] Player was killed by enemy!");
+        logger.debug("[Game] Player was killed by enemy!");
 
         // Complete movement to tile center (was stopped 16 pixels before)
         const finalPos = movingSprite.pos.clone();
@@ -756,7 +757,7 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
         await k.wait(stepDuration * 0.3);
       } else {
         // Defender survived - bounce enemy back to previous position
-        console.log("[Game] Defender survived - bouncing enemy back");
+        logger.debug("[Game] Defender survived - bouncing enemy back");
         const bounceX = GRID_OFFSET_X + previousPos.col * TILE_SIZE + TILE_SIZE / 2;
         const bounceY = GRID_OFFSET_Y + previousPos.row * TILE_SIZE + TILE_SIZE / 2;
 
@@ -794,7 +795,7 @@ function handleRightClick(): void {
 
   // Cancel rotation mode on right-click
   if (turnManager.isRotatingTile()) {
-    console.log("Right-click - canceling rotation");
+    logger.debug("Right-click - canceling rotation");
     turnManager.cancelRotation();
     render();
     return;
@@ -805,7 +806,7 @@ function handleRightClick(): void {
   const currentTiles = k.get("currentTile");
   for (const tile of currentTiles) {
     if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
-      console.log("Current tile right-click - rotating CCW");
+      logger.debug("Current tile right-click - rotating CCW");
       turnManager.rotateTileCounterClockwise();
       return;
     }
@@ -814,7 +815,7 @@ function handleRightClick(): void {
   const previewTiles = k.get("previewTile");
   for (const tile of previewTiles) {
     if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
-      console.log("Preview tile right-click - rotating CCW");
+      logger.debug("Preview tile right-click - rotating CCW");
       turnManager.rotateTileCounterClockwise();
       return;
     }
@@ -833,7 +834,7 @@ async function tryMovePlayerInDirection(rowDelta: number, colDelta: number): Pro
 
   // Check if target is within grid bounds
   if (targetRow < 0 || targetRow >= GRID_ROWS || targetCol < 0 || targetCol >= GRID_COLS) {
-    console.log("Target out of bounds");
+    logger.debug("Target out of bounds");
     return;
   }
 
@@ -847,7 +848,7 @@ async function tryMovePlayerInDirection(rowDelta: number, colDelta: number): Pro
   );
 
   if (target && target.path.length > 1) {
-    console.log(`Keyboard move to (${targetRow}, ${targetCol})`);
+    logger.debug(`Keyboard move to (${targetRow}, ${targetCol})`);
     movePlayerAlongPath(player, target.path);
   } else {
     // Check if this is a wall bump (adjacent tile blocked by wall)
@@ -856,10 +857,10 @@ async function tryMovePlayerInDirection(rowDelta: number, colDelta: number): Pro
     const isAdjacent = (dRow === 1 && dCol === 0) || (dRow === 0 && dCol === 1);
 
     if (isAdjacent && isWallBlocking(state.grid, player.gridPosition, targetPos)) {
-      console.log("Keyboard wall bump detected");
+      logger.debug("Keyboard wall bump detected");
       await handleWallBump(player, targetPos);
     } else {
-      console.log("Target tile not reachable");
+      logger.debug("Target tile not reachable");
     }
   }
 }

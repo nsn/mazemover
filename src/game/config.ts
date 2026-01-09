@@ -66,3 +66,14 @@ export const INVENTORY = {
   SLOT_SPACING: 2,
   PATCH_SIZE: 8,  // 9-patch border size
 }
+
+// Logging Configuration
+export const LOG_LEVEL = {
+  NONE: 0,
+  ERROR: 1,
+  WARN: 2,
+  INFO: 3,
+  DEBUG: 4,
+} as const;
+
+export const CURRENT_LOG_LEVEL = LOG_LEVEL.DEBUG; // Change to LOG_LEVEL.NONE to disable all logging
