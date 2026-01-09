@@ -591,15 +591,24 @@ export async function animatePush(
  * @param offsetX X offset for the grid
  * @param offsetY Y offset for the grid
  * @param tileSize Size of each tile
+ * @param isInStartLevelSequence Whether the game is in the start level sequence
+ * @param revealedTiles Set of revealed tiles during start level sequence
  */
 export function drawDecayOverlay(
   grid: TileInstance[][],
   offsetX: number,
   offsetY: number,
-  tileSize: number
+  tileSize: number,
+  isInStartLevelSequence: boolean = false,
+  revealedTiles: Set<string> = new Set()
 ): void {
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[row].length; col++) {
+      // Skip tiles that haven't been revealed yet during start level sequence
+      if (isInStartLevelSequence && !revealedTiles.has(`${row},${col}`)) {
+        continue;
+      }
+
       const tile = grid[row][col];
       if (tile && tile.decay > 0) {
         const x = offsetX + col * tileSize + tileSize / 2;
