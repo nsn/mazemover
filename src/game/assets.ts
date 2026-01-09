@@ -35,11 +35,6 @@ export async function loadAssets(): Promise<void> {
     }
   });
 
-  await k.loadBitmapFont("bblocky", "/blocky.png", 5, 7, {
-    //chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZ      abcdefghijklmnopqrstuvwxyz      01234567890      !"#$%&'()*+,-./:;<=>?[]\\^_\`{}|~@∎`,
-    chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz01234567890!"#$%&'()*+,-./:;<=>?[]\\^_\`{}|~@∎ `,
-  });
-
   await k.loadBitmapFont("3x5", "/font_3x5.png", 4, 6, {
     chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=:.,()/\\?!'% `,
   });
