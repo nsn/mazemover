@@ -55,4 +55,5 @@ export const INVENTORY = {
   SLOTS_Y: 2,
   SLOT_SIZE: 26,
   SLOT_SPACING: 2,
+  PATCH_SIZE: 8,  // 9-patch border size
 }

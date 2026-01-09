@@ -168,13 +168,13 @@ export function drawStateMachineInfo(state: GameState, player: MapObject | null)
  * Calculates the position of an inventory slot
  * @param slotCol Slot column index (0-based)
  * @param slotRow Slot row index (0-based)
- * @param padding Border padding (e.g., 9-patch border size)
+ * @param padding Border padding (defaults to PATCH_SIZE)
  * @returns Object with x and y coordinates for the slot
  */
 export function slotPos(
   slotCol: number,
   slotRow: number,
-  padding: number = 8
+  padding: number = INVENTORY.PATCH_SIZE
 ): { x: number; y: number } {
   return {
     x: INVENTORY.X + slotCol * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) + padding,
@@ -186,9 +186,8 @@ export function slotPos(
  * Draws the inventory background sprite
  */
 export function drawInventoryBackground(): void {
-  const pathsize = 8
-  const width = INVENTORY.SLOTS_X * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING + 2 * pathsize
-  const height = INVENTORY.SLOTS_Y * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING + 2 * pathsize
+  const width = INVENTORY.SLOTS_X * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING + 2 * INVENTORY.PATCH_SIZE
+  const height = INVENTORY.SLOTS_Y * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING + 2 * INVENTORY.PATCH_SIZE
   k.add([
     k.sprite("9patch", {
       width: width,
@@ -200,7 +199,7 @@ export function drawInventoryBackground(): void {
 
   for (let i = 0; i < INVENTORY.SLOTS_X; i++) {
     for (let j = 0; j < INVENTORY.SLOTS_Y; j++) {
-      const pos = slotPos(i, j, pathsize);
+      const pos = slotPos(i, j, INVENTORY.PATCH_SIZE);
       k.add([
         k.sprite("inventoryslot"),
         k.pos(pos.x, pos.y),

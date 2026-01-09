@@ -1,5 +1,6 @@
 import { k } from "../kaplayCtx";
 import { EnemyDatabase } from "./systems/EnemyDatabase";
+import { INVENTORY } from "./config";
 
 export async function loadAssets(): Promise<void> {
   await k.loadSprite("tiles", "/tiles.png", {
@@ -27,10 +28,10 @@ export async function loadAssets(): Promise<void> {
 
   await k.loadSprite("9patch", "/9patch.png", {
     slice9: {
-        left: 8,
-        right: 8,
-        top: 8,
-        bottom: 8,
+        left: INVENTORY.PATCH_SIZE,
+        right: INVENTORY.PATCH_SIZE,
+        top: INVENTORY.PATCH_SIZE,
+        bottom: INVENTORY.PATCH_SIZE,
     },
   });
 
