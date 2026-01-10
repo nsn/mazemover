@@ -39,6 +39,14 @@ export const DECAY_WEIGHTS = {
   5: 0,
 } as const;
 
+// Decay Progression Configuration
+export const DECAY_PROGRESSION = {
+  MAX_DECAY: 5,                    // Maximum decay level a tile can reach
+  ON_TILE_PLACEMENT: 5,            // Number of tiles to decay when placing a tile
+  ON_WALL_BREAK: 5,                // Number of tiles to decay when breaking a wall
+  ON_TILE_ROTATION: 5,             // Number of tiles to decay when rotating player's tile
+} as const;
+
 // Combat Configuration
 export const COMBAT = {
   BASE_HIT: 75,           // Base hit chance percentage

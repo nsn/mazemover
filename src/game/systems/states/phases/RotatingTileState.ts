@@ -2,7 +2,9 @@ import type { PlayerPhaseState, StateContext } from "../interfaces";
 import type { PlotPosition, GridPosition } from "../../../types";
 import { PlayerPhase } from "../../../types";
 import { rotateTile } from "../../../core/Tile";
+import { increaseRandomDecay } from "../../../core/Grid";
 import { AwaitingActionState } from "./AwaitingActionState";
+import { DECAY_PROGRESSION } from "../../../config";
 
 /**
  * RotatingTileState - Handles rotation of tile at player's position
@@ -272,6 +274,12 @@ export class RotatingTileState implements PlayerPhaseState {
    */
   confirmRotation(context: StateContext): PlayerPhaseState | null {
     console.log("[RotatingTileState] Confirming rotation");
+
+    // Increase decay on random tiles due to tile rotation
+    for (let i = 0; i < DECAY_PROGRESSION.ON_TILE_ROTATION; i++) {
+      increaseRandomDecay(context.state.grid);
+    }
+
     context.onStateChange();
 
     // Return to AwaitingAction

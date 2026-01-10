@@ -1,6 +1,7 @@
 import { Direction, TileType, type TileInstance, type PlotPosition, type Orientation } from "../types";
-import { GRID_COLS, GRID_ROWS, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, DECAY_WEIGHTS } from "../config";
+import { GRID_COLS, GRID_ROWS, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, DECAY_WEIGHTS, DECAY_PROGRESSION } from "../config";
 import { TileDeck } from "./TileDeck";
+import { logger } from "../utils/logger";
 
 /**
  * Generates a random decay value based on configured weights.
@@ -19,6 +20,40 @@ function getRandomDecay(): number {
   }
 
   return 0; // Fallback
+}
+
+/**
+ * Increases the decay level of a random tile in the grid.
+ * The decay level will not exceed DECAY_PROGRESSION.MAX_DECAY.
+ *
+ * @param grid The game grid
+ */
+export function increaseRandomDecay(grid: TileInstance[][]): void {
+  // Collect all tiles that can have their decay increased
+  const tiles: { row: number; col: number }[] = [];
+
+  for (let row = 0; row < grid.length; row++) {
+    for (let col = 0; col < grid[row].length; col++) {
+      const tile = grid[row][col];
+      if (tile && tile.decay < DECAY_PROGRESSION.MAX_DECAY) {
+        tiles.push({ row, col });
+      }
+    }
+  }
+
+  // If there are no tiles that can decay further, return
+  if (tiles.length === 0) {
+    logger.debug("[increaseRandomDecay] No tiles available to increase decay");
+    return;
+  }
+
+  // Pick a random tile and increase its decay
+  const randomIndex = Math.floor(Math.random() * tiles.length);
+  const { row, col } = tiles[randomIndex];
+  const oldDecay = grid[row][col].decay;
+  grid[row][col].decay = Math.min(grid[row][col].decay + 1, DECAY_PROGRESSION.MAX_DECAY);
+
+  logger.debug(`[increaseRandomDecay] Increased decay at (${row},${col}) from ${oldDecay} to ${grid[row][col].decay}`);
 }
 
 /**
