@@ -308,10 +308,13 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
     k.z(2), // Above decay overlay and tiles
     "movingPlayer",
   ]);
+  logger.debug("[movePlayerAlongPath] Moving sprite created");
 
   const objectManager = turnManager.getObjectManager();
 
+  logger.debug("[movePlayerAlongPath] Starting path loop, path.length:", path.length);
   for (let i = 1; i < path.length; i++) {
+    logger.debug(`[movePlayerAlongPath] Step ${i}/${path.length - 1} - moving to:`, path[i]);
     const previousPosition = { ...player.gridPosition };
     const to = path[i];
 
@@ -340,6 +343,7 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
     }
 
     const currentPos = movingSprite.pos.clone();
+    logger.debug(`[movePlayerAlongPath] Starting tween to (${endX}, ${endY})`);
 
     k.tween(
       currentPos,
@@ -351,10 +355,13 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
       k.easings.easeOutQuad
     );
 
+    logger.debug(`[movePlayerAlongPath] Waiting ${stepDuration}s for tween...`);
     await k.wait(stepDuration);
+    logger.debug(`[movePlayerAlongPath] Tween complete`);
 
     player.gridPosition.row = to.row;
     player.gridPosition.col = to.col;
+    logger.debug(`[movePlayerAlongPath] Updated player position to (${to.row}, ${to.col})`);
 
     if (enemy) {
       const combatResult = executeCombat(player, enemy);
@@ -433,8 +440,10 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
     }
 
     objectManager.checkInteractions(player, previousPosition);
+    logger.debug(`[movePlayerAlongPath] Step ${i} complete`);
   }
 
+  logger.debug("[movePlayerAlongPath] Path loop complete");
   k.destroyAll("movingPlayer");
   logger.debug("[movePlayerAlongPath] Movement sprite destroyed");
   turnManager.getObjectManager().spendMovement(player, path.length - 1);
