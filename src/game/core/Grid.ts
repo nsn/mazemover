@@ -86,20 +86,20 @@ export function increaseDecayInPushedLine(
   maxIncrease: number,
   objectManager?: { getObjectsAtPosition(row: number, col: number): any[] }
 ): void {
-  const isRow = plot.direction === Direction.North || plot.direction === Direction.South;
-  const lineIndex = isRow ? plot.row : plot.col;
+  // North/South pushes affect a column, East/West pushes affect a row
+  const isColumn = plot.direction === Direction.North || plot.direction === Direction.South;
 
-  logger.debug(`[increaseDecayInPushedLine] Applying decay to ${isRow ? 'row' : 'column'} ${lineIndex}`);
+  logger.debug(`[increaseDecayInPushedLine] Applying decay to ${isColumn ? 'column' : 'row'} ${isColumn ? plot.col : plot.row}`);
 
-  if (isRow) {
-    // Apply decay to all tiles in the row
-    for (let col = 0; col < GRID_COLS; col++) {
-      applyRandomDecayToTile(grid, lineIndex, col, maxIncrease, objectManager);
-    }
-  } else {
+  if (isColumn) {
     // Apply decay to all tiles in the column
     for (let row = 0; row < GRID_ROWS; row++) {
-      applyRandomDecayToTile(grid, row, lineIndex, maxIncrease, objectManager);
+      applyRandomDecayToTile(grid, row, plot.col, maxIncrease, objectManager);
+    }
+  } else {
+    // Apply decay to all tiles in the row
+    for (let col = 0; col < GRID_COLS; col++) {
+      applyRandomDecayToTile(grid, plot.row, col, maxIncrease, objectManager);
     }
   }
 }
