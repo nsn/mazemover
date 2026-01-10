@@ -1,6 +1,6 @@
 import { type TileInstance, type GridPosition, type Orientation, Direction, TileType } from "../types";
 import { getTileEdges } from "../core/Tile";
-import { increaseRandomDecay } from "../core/Grid";
+import { applyRandomDecayToTile } from "../core/Grid";
 import { DECAY_PROGRESSION } from "../config";
 
 /**
@@ -179,10 +179,10 @@ export function openWall(
     decay: toTile.decay,
   };
 
-  // Increase decay on random tiles due to wall breaking
-  for (let i = 0; i < DECAY_PROGRESSION.ON_WALL_BREAK; i++) {
-    increaseRandomDecay(grid, objectManager);
-  }
+  // Increase decay on both tiles involved in the wall break
+  // Each gets a random decay increase from 0 to ON_WALL_BREAK
+  applyRandomDecayToTile(grid, from.row, from.col, DECAY_PROGRESSION.ON_WALL_BREAK, objectManager);
+  applyRandomDecayToTile(grid, to.row, to.col, DECAY_PROGRESSION.ON_WALL_BREAK, objectManager);
 
   console.log(`[WallBump] Opened wall from ${from.row},${from.col} to ${to.row},${to.col}`);
   return true;

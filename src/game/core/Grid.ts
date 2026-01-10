@@ -113,7 +113,7 @@ export function increaseDecayInPushedLine(
  * @param maxIncrease Maximum random decay value to add (0 to this value)
  * @param objectManager Optional MapObjectManager to check for objects on tiles
  */
-function applyRandomDecayToTile(
+export function applyRandomDecayToTile(
   grid: TileInstance[][],
   row: number,
   col: number,
