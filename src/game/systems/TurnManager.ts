@@ -143,7 +143,6 @@ export class TurnManager {
    * - Calls onStateChange() to trigger render
    */
   startPlayerTurn(): void {
-    this.resetWallBumpCounter(); // Reset wall bump counter at start of new turn
     if (this.useStatePattern) {
       console.log("[TurnManager] startPlayerTurn (state pattern)");
       this.objectManager.resetAllTurnMovement();
