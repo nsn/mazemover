@@ -277,7 +277,7 @@ export class RotatingTileState implements PlayerPhaseState {
 
     // Increase decay on random tiles due to tile rotation
     for (let i = 0; i < DECAY_PROGRESSION.ON_TILE_ROTATION; i++) {
-      increaseRandomDecay(context.state.grid);
+      increaseRandomDecay(context.state.grid, context.objectManager);
     }
 
     context.onStateChange();

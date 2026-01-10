@@ -579,7 +579,7 @@ async function handleWallBump(player: MapObject, targetPos: GridPosition): Promi
   // Check if we've reached 3 bumps
   if (state.wallBumpCount >= 3) {
     logger.debug("[WallBump] Breaking wall!");
-    openWall(state.grid, player.gridPosition, targetPos);
+    openWall(state.grid, player.gridPosition, targetPos, turnManager.getObjectManager());
     state.wallBumpCount = 0;
     state.wallBumpTarget = null;
     render();  // Re-render to show opened wall

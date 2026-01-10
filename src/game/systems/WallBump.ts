@@ -135,7 +135,8 @@ function findBestTileUpgrade(
 export function openWall(
   grid: TileInstance[][],
   from: GridPosition,
-  to: GridPosition
+  to: GridPosition,
+  objectManager?: { getObjectsAtPosition(row: number, col: number): any[] }
 ): boolean {
   console.log(`[openWall] START - from: ${from.row},${from.col} to: ${to.row},${to.col}`);
 
@@ -180,7 +181,7 @@ export function openWall(
 
   // Increase decay on random tiles due to wall breaking
   for (let i = 0; i < DECAY_PROGRESSION.ON_WALL_BREAK; i++) {
-    increaseRandomDecay(grid);
+    increaseRandomDecay(grid, objectManager);
   }
 
   console.log(`[WallBump] Opened wall from ${from.row},${from.col} to ${to.row},${to.col}`);

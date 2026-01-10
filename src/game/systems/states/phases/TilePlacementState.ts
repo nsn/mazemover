@@ -222,7 +222,7 @@ export class TilePlacementState implements PlayerPhaseState {
 
     // Increase decay on random tiles due to tile placement
     for (let i = 0; i < DECAY_PROGRESSION.ON_TILE_PLACEMENT; i++) {
-      increaseRandomDecay(context.state.grid);
+      increaseRandomDecay(context.state.grid, context.objectManager);
     }
 
     // Auto-draw new tile for continuous placement

@@ -25,19 +25,33 @@ function getRandomDecay(): number {
 /**
  * Increases the decay level of a random tile in the grid.
  * The decay level will not exceed DECAY_PROGRESSION.MAX_DECAY.
+ * Tiles with map objects (player, enemies, items, exits) are excluded from decay.
  *
  * @param grid The game grid
+ * @param objectManager Optional MapObjectManager to check for objects on tiles
  */
-export function increaseRandomDecay(grid: TileInstance[][]): void {
+export function increaseRandomDecay(grid: TileInstance[][], objectManager?: { getObjectsAtPosition(row: number, col: number): any[] }): void {
   // Collect all tiles that can have their decay increased
   const tiles: { row: number; col: number }[] = [];
 
   for (let row = 0; row < grid.length; row++) {
     for (let col = 0; col < grid[row].length; col++) {
       const tile = grid[row][col];
-      if (tile && tile.decay < DECAY_PROGRESSION.MAX_DECAY) {
-        tiles.push({ row, col });
+
+      // Skip tiles at max decay
+      if (!tile || tile.decay >= DECAY_PROGRESSION.MAX_DECAY) {
+        continue;
       }
+
+      // Skip tiles with map objects (exit, player, enemies, items)
+      if (objectManager) {
+        const objectsAtPosition = objectManager.getObjectsAtPosition(row, col);
+        if (objectsAtPosition.length > 0) {
+          continue;
+        }
+      }
+
+      tiles.push({ row, col });
     }
   }
 
