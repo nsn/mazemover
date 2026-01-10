@@ -67,6 +67,10 @@ export async function loadAssets(): Promise<void> {
     }
   });
 
+  await k.loadSpriteAtlas("/enemies.png", {
+    goblin: {x: 0, y: 0, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
+  });
+
   await k.loadBitmapFont("3x5", "/font_3x5.png", 4, 6, {
     chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=:.,()/\\?!'% `,
   });

@@ -1,4 +1,4 @@
-import { ObjectType, type MapObject, type GridPosition, type PlotPosition, Direction, type MapObjectCallback, AIType, type TileInstance, type Stats } from "../types";
+import { ObjectType, type MapObject, type GridPosition, type PlotPosition, Direction, type MapObjectCallback, AIType, type Stats } from "../types";
 import { GRID_ROWS, GRID_COLS } from "../config";
 import { EnemyDatabase } from "./EnemyDatabase";
 
@@ -7,7 +7,6 @@ export interface EnemyConfig {
   movementSpeed?: number;
   color?: { r: number; g: number; b: number };
   aiType?: AIType;
-  protectedTile?: TileInstance;
   stats?: Stats;
 }
 
@@ -74,7 +73,7 @@ export class MapObjectManager {
     return player;
   }
 
-  createEnemy(gridPosition: GridPosition, enemyId: string, protectedTile?: TileInstance): MapObject {
+  createEnemy(gridPosition: GridPosition, enemyId: string): MapObject {
     const enemyDef = this.enemyDatabase.getEnemyDefinition(enemyId);
     if (!enemyDef) {
       console.error(`[MapObjectManager] Enemy definition not found: ${enemyId}`);
@@ -92,31 +91,11 @@ export class MapObjectManager {
     );
 
     enemy.aiType = enemyDef.aiType;
-    if (protectedTile) {
-      enemy.protectedTile = protectedTile;
-    }
     if (enemyDef.color) {
       (enemy as any).color = enemyDef.color;
     }
     console.log(`[MapObjectManager] Created ${enemyDef.name} with stats:`, enemy.stats);
     return enemy;
-  }
-
-  // Convenience methods for creating specific enemy types
-  createRedEnemy(gridPosition: GridPosition): MapObject {
-    return this.createEnemy(gridPosition, "red_hunter");
-  }
-
-  createYellowEnemy(gridPosition: GridPosition): MapObject {
-    return this.createEnemy(gridPosition, "yellow_hunter");
-  }
-
-  createGreenEnemy(gridPosition: GridPosition): MapObject {
-    return this.createEnemy(gridPosition, "green_hunter");
-  }
-
-  createGuardian(gridPosition: GridPosition, protectedTile: TileInstance): MapObject {
-    return this.createEnemy(gridPosition, "guardian", protectedTile);
   }
 
   getEnemies(): MapObject[] {

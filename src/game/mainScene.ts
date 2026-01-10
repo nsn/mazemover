@@ -83,14 +83,14 @@ export function createMainScene(): void {
     objManager.createPlayer({ row: playerTile.row, col: playerTile.col }, "Player1");
 
     // Create enemies (will be spawned by StartLevelSequence)
-    const redEnemy = objManager.createRedEnemy({ row: 3, col: 3 });
-    const yellowEnemy = objManager.createYellowEnemy({ row: 3, col: 2 });
-    const greenEnemy = objManager.createGreenEnemy({ row: 2, col: 3 });
+    const goblin1 = objManager.createEnemy({ row: 3, col: 3 }, "goblin");
+    const goblin2 = objManager.createEnemy({ row: 3, col: 2 }, "goblin");
+    const goblin3 = objManager.createEnemy({ row: 2, col: 3 }, "goblin");
 
     // Mark all objects as part of start level sequence
-    redEnemy.isInStartLevelSequence = true;
-    yellowEnemy.isInStartLevelSequence = true;
-    greenEnemy.isInStartLevelSequence = true;
+    goblin1.isInStartLevelSequence = true;
+    goblin2.isInStartLevelSequence = true;
+    goblin3.isInStartLevelSequence = true;
 
     // Create and start the level sequence
     console.log("[MainScene] Starting level sequence...");

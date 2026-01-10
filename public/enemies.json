@@ -10,75 +10,7 @@
       },
       "movementSpeed": 1,
       "aiType": "Hunter",
-      "sprite": "enemy"
-    },
-    "red_hunter": {
-      "name": "Red Hunter",
-      "stats": {
-        "hp": 8,
-        "atk": 4,
-        "def": 0,
-        "agi": 8
-      },
-      "movementSpeed": 2,
-      "aiType": "Hunter",
-      "sprite": "enemy",
-      "color": {
-        "r": 255,
-        "g": 80,
-        "b": 80
-      }
-    },
-    "yellow_hunter": {
-      "name": "Yellow Hunter",
-      "stats": {
-        "hp": 7,
-        "atk": 1,
-        "def": 1,
-        "agi": 1
-      },
-      "movementSpeed": 0.5,
-      "aiType": "Hunter",
-      "sprite": "enemy",
-      "color": {
-        "r": 255,
-        "g": 220,
-        "b": 80
-      }
-    },
-    "green_hunter": {
-      "name": "Green Hunter",
-      "stats": {
-        "hp": 8,
-        "atk": 2,
-        "def": 0,
-        "agi": 1
-      },
-      "movementSpeed": 1,
-      "aiType": "Hunter",
-      "sprite": "enemy",
-      "color": {
-        "r": 80,
-        "g": 220,
-        "b": 80
-      }
-    },
-    "guardian": {
-      "name": "Guardian",
-      "stats": {
-        "hp": 5,
-        "atk": 1,
-        "def": 1,
-        "agi": 1
-      },
-      "movementSpeed": 1,
-      "aiType": "Guardian",
-      "sprite": "enemy",
-      "color": {
-        "r": 100,
-        "g": 100,
-        "b": 255
-      }
+      "sprite": "goblin"
     }
   },
   "player": {
