@@ -2,9 +2,9 @@ import type { PlayerPhaseState, StateContext } from "../interfaces";
 import type { PlotPosition, GridPosition } from "../../../types";
 import { PlayerPhase } from "../../../types";
 import { rotateTile } from "../../../core/Tile";
-import { increaseRandomDecay } from "../../../core/Grid";
+import { applyRandomDecayToTile } from "../../../core/Grid";
 import { AwaitingActionState } from "./AwaitingActionState";
-import { DECAY_PROGRESSION } from "../../../config";
+import { DECAY_PROGRESSION, GRID_ROWS, GRID_COLS } from "../../../config";
 
 /**
  * RotatingTileState - Handles rotation of tile at player's position
@@ -275,9 +275,32 @@ export class RotatingTileState implements PlayerPhaseState {
   confirmRotation(context: StateContext): PlayerPhaseState | null {
     console.log("[RotatingTileState] Confirming rotation");
 
-    // Increase decay on random tiles due to tile rotation
-    for (let i = 0; i < DECAY_PROGRESSION.ON_TILE_ROTATION; i++) {
-      increaseRandomDecay(context.state.grid, context.objectManager);
+    if (!context.state.rotatingTilePosition) {
+      return new AwaitingActionState();
+    }
+
+    const { row, col } = context.state.rotatingTilePosition;
+
+    // Apply decay to all surrounding tiles (north, south, east, west)
+    // Each gets a random decay increase from 0 to ON_TILE_ROTATION
+    const neighbors = [
+      { row: row - 1, col }, // North
+      { row: row + 1, col }, // South
+      { row, col: col + 1 }, // East
+      { row, col: col - 1 }, // West
+    ];
+
+    for (const neighbor of neighbors) {
+      // Check if neighbor is within grid bounds
+      if (neighbor.row >= 0 && neighbor.row < GRID_ROWS && neighbor.col >= 0 && neighbor.col < GRID_COLS) {
+        applyRandomDecayToTile(
+          context.state.grid,
+          neighbor.row,
+          neighbor.col,
+          DECAY_PROGRESSION.ON_TILE_ROTATION,
+          context.objectManager
+        );
+      }
     }
 
     context.onStateChange();
