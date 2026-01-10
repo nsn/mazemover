@@ -71,6 +71,85 @@ export function increaseRandomDecay(grid: TileInstance[][], objectManager?: { ge
 }
 
 /**
+ * Increases decay on all tiles in the pushed row or column.
+ * Each tile gets a random decay increase from 0 to maxIncrease.
+ * Tiles with map objects are excluded from decay.
+ *
+ * @param grid The game grid
+ * @param plot The plot position that was pushed (determines which row/column)
+ * @param maxIncrease Maximum random decay value to add (0 to this value)
+ * @param objectManager Optional MapObjectManager to check for objects on tiles
+ */
+export function increaseDecayInPushedLine(
+  grid: TileInstance[][],
+  plot: PlotPosition,
+  maxIncrease: number,
+  objectManager?: { getObjectsAtPosition(row: number, col: number): any[] }
+): void {
+  const isRow = plot.direction === Direction.North || plot.direction === Direction.South;
+  const lineIndex = isRow ? plot.row : plot.col;
+
+  logger.debug(`[increaseDecayInPushedLine] Applying decay to ${isRow ? 'row' : 'column'} ${lineIndex}`);
+
+  if (isRow) {
+    // Apply decay to all tiles in the row
+    for (let col = 0; col < GRID_COLS; col++) {
+      applyRandomDecayToTile(grid, lineIndex, col, maxIncrease, objectManager);
+    }
+  } else {
+    // Apply decay to all tiles in the column
+    for (let row = 0; row < GRID_ROWS; row++) {
+      applyRandomDecayToTile(grid, row, lineIndex, maxIncrease, objectManager);
+    }
+  }
+}
+
+/**
+ * Helper function to apply random decay to a single tile.
+ *
+ * @param grid The game grid
+ * @param row Row of the tile
+ * @param col Column of the tile
+ * @param maxIncrease Maximum random decay value to add (0 to this value)
+ * @param objectManager Optional MapObjectManager to check for objects on tiles
+ */
+function applyRandomDecayToTile(
+  grid: TileInstance[][],
+  row: number,
+  col: number,
+  maxIncrease: number,
+  objectManager?: { getObjectsAtPosition(row: number, col: number): any[] }
+): void {
+  const tile = grid[row][col];
+
+  if (!tile) {
+    return;
+  }
+
+  // Skip tiles with map objects
+  if (objectManager) {
+    const objectsAtPosition = objectManager.getObjectsAtPosition(row, col);
+    if (objectsAtPosition.length > 0) {
+      logger.debug(`[applyRandomDecayToTile] Skipping (${row},${col}) - has map object`);
+      return;
+    }
+  }
+
+  // Random decay increase from 0 to maxIncrease (inclusive)
+  const decayIncrease = Math.floor(Math.random() * (maxIncrease + 1));
+
+  if (decayIncrease === 0) {
+    logger.debug(`[applyRandomDecayToTile] No decay added to (${row},${col})`);
+    return;
+  }
+
+  const oldDecay = tile.decay;
+  tile.decay = Math.min(tile.decay + decayIncrease, DECAY_PROGRESSION.MAX_DECAY);
+
+  logger.debug(`[applyRandomDecayToTile] Increased decay at (${row},${col}) from ${oldDecay} to ${tile.decay} (+${decayIncrease})`);
+}
+
+/**
  * Returns the appropriate L-shaped corner tile for grid corners.
  * Each corner has a specific orientation to form the grid perimeter.
  */

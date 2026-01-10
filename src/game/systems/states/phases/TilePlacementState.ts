@@ -2,7 +2,7 @@ import type { PlayerPhaseState, StateContext } from "../interfaces";
 import type { PlotPosition } from "../../../types";
 import { PlayerPhase } from "../../../types";
 import { rotateTile } from "../../../core/Tile";
-import { pushTileIntoGrid, increaseRandomDecay } from "../../../core/Grid";
+import { pushTileIntoGrid, increaseDecayInPushedLine } from "../../../core/Grid";
 import { AwaitingActionState } from "./AwaitingActionState";
 import { DECAY_PROGRESSION } from "../../../config";
 
@@ -218,12 +218,17 @@ export class TilePlacementState implements PlayerPhaseState {
     // Update grid and discard ejected tile
     context.deck.discard(ejectedTile);
     context.state.grid = newGrid;
-    context.state.selectedPlot = null;
 
-    // Increase decay on random tiles due to tile placement
-    for (let i = 0; i < DECAY_PROGRESSION.ON_TILE_PLACEMENT; i++) {
-      increaseRandomDecay(context.state.grid, context.objectManager);
-    }
+    // Increase decay on all tiles in the pushed row/column
+    // Each tile gets a random decay increase from 0 to ON_TILE_PLACEMENT
+    increaseDecayInPushedLine(
+      context.state.grid,
+      context.state.selectedPlot,
+      DECAY_PROGRESSION.ON_TILE_PLACEMENT,
+      context.objectManager
+    );
+
+    context.state.selectedPlot = null;
 
     // Auto-draw new tile for continuous placement
     context.state.currentTile = context.deck.draw();
