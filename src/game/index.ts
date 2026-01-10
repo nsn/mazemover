@@ -662,7 +662,7 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
 
   const color = (enemy as any).color;
   const spriteComponents: any[] = [
-    k.sprite(enemy.sprite, { frame: 0, flipX: shouldFlip }),
+    k.sprite(enemy.sprite, { anim: "idle", flipX: shouldFlip }),
     k.pos(startX, startY),
     k.anchor("center"),
     k.z(2), // Above decay overlay and tiles
