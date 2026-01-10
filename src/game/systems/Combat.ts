@@ -26,9 +26,10 @@ function calculateToHit(attacker: MapObject, defender: MapObject): { hit: boolea
   }
 
   const agiDiff = attacker.stats.agi - defender.stats.agi;
-  const toHitRoll = (COMBAT.BASE_HIT + agiDiff * COMBAT.HIT_MODIFIER) + Math.random() * 100;
+  const toHitRoll = Math.random() * 100;
+  const hitThreshold = COMBAT.BASE_HIT + agiDiff * COMBAT.HIT_MODIFIER;
 
-  const hit = toHitRoll <= COMBAT.TO_HIT;
+  const hit = toHitRoll <= hitThreshold;
   const critical = toHitRoll >= COMBAT.CRIT_CHANCE;
 
   return { hit, critical };
