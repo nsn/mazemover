@@ -1,7 +1,5 @@
 import { type TileInstance, type GridPosition, type Orientation, Direction, TileType } from "../types";
 import { getTileEdges } from "../core/Tile";
-import { applyRandomDecayToTile } from "../core/Grid";
-import { DECAY_PROGRESSION } from "../config";
 
 /**
  * Checks if a move from one position to another is blocked by a wall
@@ -135,8 +133,7 @@ function findBestTileUpgrade(
 export function openWall(
   grid: TileInstance[][],
   from: GridPosition,
-  to: GridPosition,
-  objectManager?: { getObjectsAtPosition(row: number, col: number): any[] }
+  to: GridPosition
 ): boolean {
   console.log(`[openWall] START - from: ${from.row},${from.col} to: ${to.row},${to.col}`);
 
@@ -178,11 +175,6 @@ export function openWall(
     orientation: toUpgrade.orientation,
     decay: toTile.decay,
   };
-
-  // Increase decay on both tiles involved in the wall break
-  // Each gets a random decay increase from 0 to ON_WALL_BREAK
-  applyRandomDecayToTile(grid, from.row, from.col, DECAY_PROGRESSION.ON_WALL_BREAK, objectManager);
-  applyRandomDecayToTile(grid, to.row, to.col, DECAY_PROGRESSION.ON_WALL_BREAK, objectManager);
 
   console.log(`[WallBump] Opened wall from ${from.row},${from.col} to ${to.row},${to.col}`);
   return true;

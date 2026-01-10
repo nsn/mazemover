@@ -28,10 +28,11 @@ import {
 import { TurnOwner, PlayerPhase, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
-import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y } from "./config";
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION } from "./config";
 import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
 import { executeCombat, checkForCombat } from "./systems/Combat";
 import { isWallBlocking, openWall } from "./systems/WallBump";
+import { applyRandomDecayToTile } from "./core/Grid";
 
 let turnManager: TurnManager;
 let isAnimating = false;
@@ -576,10 +577,15 @@ async function handleWallBump(player: MapObject, targetPos: GridPosition): Promi
   await animateWallBump(player, targetPos);
   logger.debug("[handleWallBump] Animation complete");
 
+  // Apply decay to both tiles involved in the wall bump
+  // Each gets a random decay increase from 0 to ON_WALL_BREAK
+  applyRandomDecayToTile(state.grid, player.gridPosition.row, player.gridPosition.col, DECAY_PROGRESSION.ON_WALL_BREAK, turnManager.getObjectManager());
+  applyRandomDecayToTile(state.grid, targetPos.row, targetPos.col, DECAY_PROGRESSION.ON_WALL_BREAK, turnManager.getObjectManager());
+
   // Check if we've reached 3 bumps
   if (state.wallBumpCount >= 3) {
     logger.debug("[WallBump] Breaking wall!");
-    openWall(state.grid, player.gridPosition, targetPos, turnManager.getObjectManager());
+    openWall(state.grid, player.gridPosition, targetPos);
     state.wallBumpCount = 0;
     state.wallBumpTarget = null;
     render();  // Re-render to show opened wall
