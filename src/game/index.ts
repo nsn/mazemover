@@ -25,7 +25,7 @@ import {
   drawInventoryBackground,
   clearUI,
 } from "./render/UIRenderer";
-import { TurnOwner, PlayerPhase, type PlotPosition, type GridPosition, type MapObject } from "./types";
+import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION } from "./config";
@@ -682,6 +682,18 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
     // Check if there will be combat at this position
     const objectsAtPosition = objectManager.getObjectsAtPosition(to.row, to.col);
     const target = checkForCombat(enemy, objectsAtPosition);
+
+    // Check if another enemy is blocking this position
+    const blockingEnemy = objectsAtPosition.find(obj =>
+      obj.id !== enemy.id &&
+      obj.type === ObjectType.Enemy
+    );
+
+    // If blocked by another enemy, stop movement here
+    if (blockingEnemy) {
+      logger.debug(`[animateEnemyMove] Enemy ${enemy.id} blocked by enemy ${blockingEnemy.id} at (${to.row},${to.col})`);
+      break;
+    }
 
     const tileCenterX = GRID_OFFSET_X + to.col * TILE_SIZE + TILE_SIZE / 2 + enemy.spriteOffset.x;
     const tileCenterY = GRID_OFFSET_Y + to.row * TILE_SIZE + TILE_SIZE / 2 + enemy.spriteOffset.y;
