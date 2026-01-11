@@ -24,11 +24,11 @@ export function spawnScrollingText(options: ScrollingTextOptions): void {
     opacity = 1,
     duration = 1.0,
     riseSpeed = 30,
-    fontSize = 12,
+    fontSize = 16,
   } = options;
 
   const textObj = k.add([
-    k.text(text, { font: "3x5", size: fontSize }),
+    k.text(text, { font: "saga", size: fontSize }),
     k.pos(x, y),
     k.anchor("center"),
     k.color(color.r, color.g, color.b),
