@@ -72,6 +72,7 @@ export interface GameState {
   revealedTiles: Set<string>;  // Set of "row,col" strings for revealed tiles during start sequence
   wallBumpCount: number;  // Number of consecutive wall bumps
   wallBumpTarget: GridPosition | null;  // Target tile of current wall bump sequence
+  currentLevel: number;  // Current dungeon level (counts down from STARTING_LEVEL to 0)
 }
 
 export const ObjectType = {

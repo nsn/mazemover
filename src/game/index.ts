@@ -21,6 +21,7 @@ import {
   drawPreviewTile,
   drawSkipButton,
   drawDebugInfo,
+  drawLevelInfo,
   drawStateMachineInfo,
   drawInventoryBackground,
   clearUI,
@@ -1030,6 +1031,9 @@ export function render(): void {
 
   // Draw inventory background
   drawInventoryBackground();
+
+  // Draw level info
+  drawLevelInfo(state.currentLevel);
 
   // Draw saga font sample text
   k.add([

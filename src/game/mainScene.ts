@@ -4,7 +4,7 @@ import { TurnManager } from "./systems/TurnManager";
 import { InputController } from "./systems/InputController";
 import { CursorManager } from "./systems/CursorManager";
 import { StartLevelSequence } from "./systems/StartLevelSequence";
-import { GRID_ROWS, GRID_COLS } from "./config";
+import { GRID_ROWS, GRID_COLS, STARTING_LEVEL } from "./config";
 import { getImmovableEdgeTiles, getOppositeSide, getRandomTileOnSide } from "./core/Grid";
 import {
   initializeGameHandlers,
@@ -13,6 +13,13 @@ import {
   setCursorManager,
   render,
 } from "./index";
+
+// Global level counter that persists across scene reloads
+let globalCurrentLevel = STARTING_LEVEL;
+
+export function resetGlobalLevel(): void {
+  globalCurrentLevel = STARTING_LEVEL;
+}
 
 export function createMainScene(): void {
   k.scene("main", async () => {
@@ -29,6 +36,11 @@ export function createMainScene(): void {
 
     const turnManager = new TurnManager(render, enemyDatabase);
     setTurnManager(turnManager);
+
+    // Set current level from global counter
+    const state = turnManager.getState();
+    state.currentLevel = globalCurrentLevel;
+    console.log(`[MainScene] Starting at level ${globalCurrentLevel}`);
 
     const inputController = new InputController(turnManager);
     setInputController(inputController);
@@ -48,31 +60,42 @@ export function createMainScene(): void {
       "Exit Stairs",
       (_mob, isPlayer) => {
         if (isPlayer) {
-          console.log("[Game] Player reached the exit! Victory!");
-          k.add([
-            k.rect(640, 360),
-            k.pos(0, 0),
-            k.color(0, 0, 0),
-            k.opacity(0.8),
-            k.z(1000),
-            "victoryOverlay",
-          ]);
-          k.add([
-            k.text("VICTORY!", { size: 48 }),
-            k.pos(320, 150),
-            k.anchor("center"),
-            k.color(255, 215, 0),
-            k.z(1001),
-            "victoryText",
-          ]);
-          k.add([
-            k.text("You escaped the maze!", { size: 24 }),
-            k.pos(320, 220),
-            k.anchor("center"),
-            k.color(255, 255, 255),
-            k.z(1001),
-            "victoryText",
-          ]);
+          // Decrement global level counter
+          globalCurrentLevel--;
+          console.log(`[Game] Player reached the exit! Descending to level: ${globalCurrentLevel}`);
+
+          if (globalCurrentLevel === 0) {
+            // Victory - reached the surface!
+            console.log("[Game] VICTORY! Player escaped the dungeon!");
+            k.add([
+              k.rect(640, 360),
+              k.pos(0, 0),
+              k.color(0, 0, 0),
+              k.opacity(0.8),
+              k.z(1000),
+              "victoryOverlay",
+            ]);
+            k.add([
+              k.text("VICTORY!", { size: 48 }),
+              k.pos(320, 150),
+              k.anchor("center"),
+              k.color(255, 215, 0),
+              k.z(1001),
+              "victoryText",
+            ]);
+            k.add([
+              k.text("You escaped the dungeon!", { size: 24 }),
+              k.pos(320, 220),
+              k.anchor("center"),
+              k.color(255, 255, 255),
+              k.z(1001),
+              "victoryText",
+            ]);
+          } else {
+            // Generate new level
+            console.log(`[Game] Generating level ${globalCurrentLevel}...`);
+            k.go("main");
+          }
         }
       }
     );

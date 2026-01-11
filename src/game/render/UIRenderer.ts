@@ -111,6 +111,20 @@ export function drawPreviewTile(
 }
 
 /**
+ * Draws the current dungeon level display
+ * @param currentLevel The current level (counts down from STARTING_LEVEL to 0)
+ */
+export function drawLevelInfo(currentLevel: number): void {
+  k.add([
+    k.text(`Level: ${currentLevel}`, { font: "saga", size: 16 }),
+    k.pos(10, 10),
+    k.color(255, 255, 255),
+    k.z(2000),
+    "levelInfo",
+  ]);
+}
+
+/**
  * Draws debug object count in bottom left corner
  */
 export function drawDebugInfo(): void {
@@ -218,6 +232,7 @@ export function clearUI(): void {
   k.destroyAll("previewTile");
   k.destroyAll("previewLabel");
   k.destroyAll("debugInfo");
+  k.destroyAll("levelInfo");
   k.destroyAll("stateMachineInfo");
   k.destroyAll("inventoryBackground");
   k.destroyAll("inventorySlot");

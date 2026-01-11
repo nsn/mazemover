@@ -2,7 +2,7 @@ import { TurnOwner, PlayerPhase, type PlotPosition, type GameState, type MapObje
 import { createGrid, getPlotPositions, pushTileIntoGrid } from "../core/Grid";
 import { TileDeck } from "../core/TileDeck";
 import { rotateTile, rotateTileCounterClockwise } from "../core/Tile";
-import { GRID_COLS, GRID_ROWS } from "../config";
+import { GRID_COLS, GRID_ROWS, STARTING_LEVEL } from "../config";
 import { MapObjectManager } from "./MapObjectManager";
 import type { EnemyDatabase } from "./EnemyDatabase";
 import type { TurnState, StateContext } from "./states/interfaces";
@@ -97,6 +97,7 @@ export class TurnManager {
       revealedTiles: new Set<string>(),  // Empty initially, tiles revealed during start sequence
       wallBumpCount: 0,
       wallBumpTarget: null,
+      currentLevel: STARTING_LEVEL,
     };
 
     // Initialize state pattern

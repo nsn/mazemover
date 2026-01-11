@@ -75,6 +75,9 @@ export const INVENTORY = {
   PATCH_SIZE: 8,  // 9-patch border size
 }
 
+// Game Configuration
+export const STARTING_LEVEL = 10;  // Level the player starts at (counts down to 0)
+
 // Logging Configuration
 export const LOG_LEVEL = {
   NONE: 0,
