@@ -1,6 +1,6 @@
 import { k } from "../../kaplayCtx";
 import { type TileInstance, type MapObject, type GameState, TileType, Direction } from "../types";
-import { TileFrames } from "../assets";
+import { TileFrames, BrickFrames } from "../assets";
 import { INVENTORY } from "../config";
 
 function getTileFrame(type: TileType, direction: Direction): number {
@@ -94,6 +94,16 @@ export function drawPreviewTile(
     k.pos(x, y - 40),
     k.color(200, 200, 200),
     "previewLabel",
+  ]);
+
+  // Draw brick background (center frame)
+  k.add([
+    k.sprite("bricks", { frame: BrickFrames.C }),
+    k.pos(x, y),
+    k.anchor("center"),
+    k.scale(1.5),
+    k.z(-1),
+    "previewTile",
   ]);
 
   const frame = getTileFrame(tile.type, tile.orientation);
