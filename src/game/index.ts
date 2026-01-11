@@ -396,48 +396,36 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
         });
       }
 
-      // Remove dead enemy and complete movement to tile center
+      // Remove dead enemy and bounce player back to previous position
       if (combatResult.attackerAttack.defenderDied) {
         objectManager.destroyObject(enemy);
-
-        // Complete movement to tile center (was stopped 16 pixels before)
-        const finalPos = movingSprite.pos.clone();
-        k.tween(
-          finalPos,
-          k.vec2(tileCenterX, tileCenterY),
-          stepDuration * 0.3,
-          (val) => {
-            movingSprite.pos = val;
-          },
-          k.easings.easeOutQuad
-        );
-
-        await k.wait(stepDuration * 0.3);
+        logger.debug("[Game] Enemy defeated - bouncing player back");
       } else {
-        // Defender survived - bounce player back to previous position
-        logger.debug("[Game] Defender survived - bouncing player back");
-        const bounceX = GRID_OFFSET_X + previousPosition.col * TILE_SIZE + TILE_SIZE / 2;
-        const bounceY = GRID_OFFSET_Y + previousPosition.row * TILE_SIZE + TILE_SIZE / 2;
-
-        const bouncePos = movingSprite.pos.clone();
-        k.tween(
-          bouncePos,
-          k.vec2(bounceX, bounceY),
-          stepDuration,
-          (val) => {
-            movingSprite.pos = val;
-          },
-          k.easings.easeOutQuad
-        );
-
-        await k.wait(stepDuration);
-
-        player.gridPosition.row = previousPosition.row;
-        player.gridPosition.col = previousPosition.col;
-
-        // Stop movement after bounce
-        break;
+        logger.debug("[Game] Enemy survived - bouncing player back");
       }
+
+      // Always bounce player back to previous position after combat
+      const bounceX = GRID_OFFSET_X + previousPosition.col * TILE_SIZE + TILE_SIZE / 2;
+      const bounceY = GRID_OFFSET_Y + previousPosition.row * TILE_SIZE + TILE_SIZE / 2;
+
+      const bouncePos = movingSprite.pos.clone();
+      k.tween(
+        bouncePos,
+        k.vec2(bounceX, bounceY),
+        stepDuration,
+        (val) => {
+          movingSprite.pos = val;
+        },
+        k.easings.easeOutQuad
+      );
+
+      await k.wait(stepDuration);
+
+      player.gridPosition.row = previousPosition.row;
+      player.gridPosition.col = previousPosition.col;
+
+      // Stop movement after combat
+      break;
     }
 
     objectManager.checkInteractions(player, previousPosition);
