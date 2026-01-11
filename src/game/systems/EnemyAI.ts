@@ -62,23 +62,27 @@ export function calculateAllEnemyMoves(
   );
 
   const moves: EnemyMove[] = [];
-  const occupiedPositions: GridPosition[] = enemies.map(e => ({ ...e.gridPosition }));
-  
+  // Track positions by enemy ID for reliable updates
+  const occupiedPositions = new Map<number, GridPosition>();
   for (const enemy of enemies) {
-    const otherEnemyPositions = occupiedPositions.filter(
-      pos => !(pos.row === enemy.gridPosition.row && pos.col === enemy.gridPosition.col)
-    );
-    
+    occupiedPositions.set(enemy.id, { ...enemy.gridPosition });
+  }
+
+  for (const enemy of enemies) {
+    // Get all other enemy positions (excluding this enemy)
+    const otherEnemyPositions: GridPosition[] = [];
+    for (const [enemyId, pos] of occupiedPositions) {
+      if (enemyId !== enemy.id) {
+        otherEnemyPositions.push(pos);
+      }
+    }
+
     const move = calculateEnemyMove(grid, enemy, playerPos, otherEnemyPositions);
     if (move && move.path.length > 1) {
       moves.push(move);
-      const enemyIndex = occupiedPositions.findIndex(
-        pos => pos.row === enemy.gridPosition.row && pos.col === enemy.gridPosition.col
-      );
-      if (enemyIndex !== -1) {
-        const finalPos = move.path[move.path.length - 1];
-        occupiedPositions[enemyIndex] = { ...finalPos };
-      }
+      // Update this enemy's position in the map
+      const finalPos = move.path[move.path.length - 1];
+      occupiedPositions.set(enemy.id, { ...finalPos });
     }
   }
 
