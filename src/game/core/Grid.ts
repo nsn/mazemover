@@ -1,4 +1,4 @@
-import { Direction, TileType, type TileInstance, type PlotPosition, type Orientation } from "../types";
+import { Direction, TileType, ObjectType, type TileInstance, type PlotPosition, type Orientation } from "../types";
 import { GRID_COLS, GRID_ROWS, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, DECAY_WEIGHTS, DECAY_PROGRESSION } from "../config";
 import { TileDeck } from "./TileDeck";
 import { logger } from "../utils/logger";
@@ -43,10 +43,11 @@ export function increaseRandomDecay(grid: TileInstance[][], objectManager?: { ge
         continue;
       }
 
-      // Skip tiles with map objects (exit, player, enemies, items)
+      // Skip tiles with exit objects only
       if (objectManager) {
         const objectsAtPosition = objectManager.getObjectsAtPosition(row, col);
-        if (objectsAtPosition.length > 0) {
+        const hasExit = objectsAtPosition.some(obj => obj.type === ObjectType.Exit);
+        if (hasExit) {
           continue;
         }
       }
@@ -126,11 +127,12 @@ export function applyRandomDecayToTile(
     return;
   }
 
-  // Skip tiles with map objects
+  // Skip tiles with exit objects only
   if (objectManager) {
     const objectsAtPosition = objectManager.getObjectsAtPosition(row, col);
-    if (objectsAtPosition.length > 0) {
-      logger.debug(`[applyRandomDecayToTile] Skipping (${row},${col}) - has map object`);
+    const hasExit = objectsAtPosition.some(obj => obj.type === ObjectType.Exit);
+    if (hasExit) {
+      logger.debug(`[applyRandomDecayToTile] Skipping (${row},${col}) - has exit`);
       return;
     }
   }
