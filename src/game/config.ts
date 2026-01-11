@@ -43,14 +43,14 @@ export const DECAY_WEIGHTS = {
 export const DECAY_PROGRESSION = {
   MAX_DECAY: 5,                    // Maximum decay level a tile can reach
   ON_TILE_PLACEMENT: 2,            // Number of tiles to decay when placing a tile
-  ON_WALL_BREAK: 2,                // Number of tiles to decay when breaking a wall
+  ON_WALL_BREAK: 1,                // Number of tiles to decay when breaking a wall
   ON_TILE_ROTATION: 2,             // Number of tiles to decay when rotating player's tile
 } as const;
 
 // Combat Configuration
 export const COMBAT = {
-  BASE_HIT: 75,           // Base hit chance percentage
-  HIT_MODIFIER: 2,        // Multiplier for AGI difference
+  BASE_HIT: 70,           // Base hit chance percentage
+  HIT_MODIFIER: 5,        // Multiplier for AGI difference
   TO_HIT: 100,            // Threshold for successful hit (toHitRoll must be <= this)
   CRIT_CHANCE: 95,        // Threshold for critical hit (toHitRoll must be >= this)
   CRIT_MULT: 2,           // Critical hit damage multiplier

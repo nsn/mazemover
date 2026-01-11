@@ -3,10 +3,10 @@
     "goblin": {
       "name": "Goblin",
       "stats": {
-        "hp": 10,
-        "atk": 3,
-        "def": 2,
-        "agi": 5
+        "hp": 4,
+        "atk": 1,
+        "def": 1,
+        "agi": 1
       },
       "movementSpeed": 1,
       "aiType": "Hunter",
@@ -17,9 +17,9 @@
     "name": "Player",
     "stats": {
       "hp": 10,
-      "atk": 2,
+      "atk": 3,
       "def": 1,
-      "agi": 1
+      "agi": 2
     }
   }
 }

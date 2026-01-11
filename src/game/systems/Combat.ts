@@ -47,7 +47,14 @@ function calculateDamage(attacker: MapObject, defender: MapObject, critical: boo
     return 0;
   }
 
-  let damage = Math.max(1, attacker.stats.atk - defender.stats.def);
+  // base damage
+  let baseDamage = Math.max(1, attacker.stats.atk - defender.stats.def);
+
+  // random damage bonus
+  let variance = Math.max(1, defender.stats.agi - attacker.stats.agi * .1);
+  let bonus = Math.floor(Math.random() * (2 * variance) - variance);
+
+  let damage = Math.max(1, baseDamage + bonus);
 
   if (critical) {
     damage *= COMBAT.CRIT_MULT;
