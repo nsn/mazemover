@@ -386,6 +386,7 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
           y: defenderY,
           color: damageColor,
           fontSize: combatResult.attackerAttack.critical ? 32 : 16,
+          behavior: combatResult.attackerAttack.critical ? "bounce" : "static",
         });
       } else {
         spawnScrollingText({
@@ -394,6 +395,7 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
           y: defenderY,
           color: { r: 150, g: 150, b: 150 },
           fontSize: 16,
+          behavior: "fade",
         });
       }
 
@@ -742,6 +744,7 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
           y: defenderY,
           color: damageColor,
           fontSize: combatResult.attackerAttack.critical ? 32 : 16,
+          behavior: combatResult.attackerAttack.critical ? "bounce" : "static",
         });
       } else {
         spawnScrollingText({
@@ -750,6 +753,7 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
           y: defenderY,
           color: { r: 150, g: 150, b: 150 },
           fontSize: 16,
+          behavior: "fade",
         });
       }
 
