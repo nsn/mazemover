@@ -19,9 +19,9 @@ export interface ScrollingTextOptions {
  * @param options Configuration for the scrolling text
  *
  * Behaviors:
- * - "fade": Scrolls up continuously and fades out (for misses)
- * - "static": Scrolls up 16px, then stays in place and disappears (for normal hits)
- * - "bounce": Scrolls up 32px, bounces down 16px, stays and disappears (for crits)
+ * - "fade": Scrolls up slowly and fades out (for misses)
+ * - "static": Scrolls up 12px, then stays in place and disappears (for normal hits)
+ * - "bounce": Scrolls up 24px, bounces down to 12px, stays and disappears (for crits)
  */
 export function spawnScrollingText(options: ScrollingTextOptions): void {
   const {
@@ -66,13 +66,14 @@ export function spawnScrollingText(options: ScrollingTextOptions): void {
     obj.lifetime += dt;
 
     if (obj.behavior === "fade") {
-      // Original behavior: scroll up and fade
-      textObj.pos.y -= obj.riseSpeed * dt;
+      // Original behavior: scroll up and fade (slower speed)
+      const fadeSpeed = obj.riseSpeed * 0.4;  // 60% slower than default
+      textObj.pos.y -= fadeSpeed * dt;
       const lifeRatio = obj.lifetime / obj.maxLifetime;
       textObj.opacity = Math.max(0, 1 - lifeRatio);
     } else if (obj.behavior === "static") {
-      // Scroll up 16px, then stay in place
-      const targetY = obj.startY - 16;
+      // Scroll up 12px, then stay in place
+      const targetY = obj.startY - 12;
       if (obj.phase === "rising") {
         textObj.pos.y -= obj.riseSpeed * dt;
         if (textObj.pos.y <= targetY) {
@@ -82,9 +83,9 @@ export function spawnScrollingText(options: ScrollingTextOptions): void {
       }
       // Stay at position without fading
     } else if (obj.behavior === "bounce") {
-      // Scroll up 32px, then down 16px, then stay
-      const peakY = obj.startY - 32;
-      const restY = obj.startY - 16;
+      // Scroll up 24px, then down 12px, then stay
+      const peakY = obj.startY - 24;
+      const restY = obj.startY - 12;
 
       if (obj.phase === "rising") {
         textObj.pos.y -= obj.riseSpeed * dt;
