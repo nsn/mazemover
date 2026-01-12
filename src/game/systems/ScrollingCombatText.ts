@@ -28,11 +28,13 @@ export function spawnScrollingText(options: ScrollingTextOptions): void {
   } = options;
 
   const textObj = k.add([
-    k.text(text, { font: "saga", size: fontSize }),
+    k.text(text, {
+      font: "sctfont",
+      size: fontSize,
+    }),
     k.pos(x, y),
     k.anchor("center"),
     k.color(color.r, color.g, color.b),
-    k.outline(1, k.Color.fromArray([255, 255, 255])),
     k.opacity(opacity),
     k.z(1000),
     "scrollingText",
