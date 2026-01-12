@@ -385,7 +385,7 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
           x: defenderX,
           y: defenderY,
           color: damageColor,
-          fontSize: combatResult.attackerAttack.critical ? 32 : 16,
+          fontSize: combatResult.attackerAttack.critical ? 24 : 16,
           behavior: combatResult.attackerAttack.critical ? "bounce" : "static",
         });
       } else {
@@ -743,7 +743,7 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
           x: defenderX,
           y: defenderY,
           color: damageColor,
-          fontSize: combatResult.attackerAttack.critical ? 32 : 16,
+          fontSize: combatResult.attackerAttack.critical ? 24 : 16,
           behavior: combatResult.attackerAttack.critical ? "bounce" : "static",
         });
       } else {
