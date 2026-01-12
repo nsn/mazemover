@@ -75,11 +75,22 @@ export async function loadAssets(): Promise<void> {
     chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=:.,()/\\?!'% `,
   });
 
-  await k.loadBitmapFont("bitmapsaga", "/saga_8.png", 16, 16, {
-    chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,;:?!"'+-=*%_()[]{}~#&@©®™°^\`|/\\<>…€$£¢¿¡“”‘’«»‹›„‚·•ÀÁÂÄÃÅĄÆÇĆÐÈÉÊËĘĞÌÍÎÏİŁÑŃÒÓÔÖÕŐØŒŚŞẞÞÙÚÛÜŰÝŸŹŻàáâäãåąæçćðèéêëęğìíîïıłñńòóôöõőøœśşßþùúûüűýÿźżАБВГҐДЕЁЄЖЗИІЇЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯабвгґдеёєжзиіїйклмнопрстуфхцчшщъыьэюяČĎĚŇŘŠŤŮŽčďěňřšťůž `,
+  // await k.loadFont("saga","saga_8.ttf", {size: 16});
+  await k.loadFont("saga","saga_8.ttf", {
+    size: 16, 
+    outline: {
+      width: 0, 
+      color: k.Color.fromArray([64,64,64])
+    }
   });
 
-  await k.loadFont("saga","saga_8.ttf", {size: 16});
+  await k.loadFont("sctfont","saga_8.ttf", {
+    size: 16, 
+    outline: {
+      width: 2, 
+      color: k.Color.fromArray([0, 0, 0])
+    }
+  });
 
   await k.loadSprite("player", "/player.png");
   await k.loadSprite("enemy", "/enemy.png");
