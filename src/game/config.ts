@@ -52,7 +52,7 @@ export const COMBAT = {
   BASE_HIT: 70,           // Base hit chance percentage
   HIT_MODIFIER: 5,        // Multiplier for AGI difference
   TO_HIT: 100,            // Threshold for successful hit (toHitRoll must be <= this)
-  CRIT_CHANCE: 50,        // Threshold for critical hit (toHitRoll must be >= this) - TEMPORARY: set to 50 for testing SCT
+  CRIT_CHANCE: 75,        // Threshold for critical hit (toHitRoll must be >= this) - 25% crit chance
   CRIT_MULT: 2,           // Critical hit damage multiplier
 } as const;
 
