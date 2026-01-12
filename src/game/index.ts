@@ -385,7 +385,7 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
           x: defenderX,
           y: defenderY,
           color: damageColor,
-          fontSize: combatResult.attackerAttack.critical ? 16 : 12,
+          fontSize: combatResult.attackerAttack.critical ? 32 : 16,
         });
       } else {
         spawnScrollingText({
@@ -393,7 +393,7 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
           x: defenderX,
           y: defenderY,
           color: { r: 150, g: 150, b: 150 },
-          fontSize: 10,
+          fontSize: 16,
         });
       }
 
@@ -741,7 +741,7 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
           x: defenderX,
           y: defenderY,
           color: damageColor,
-          fontSize: combatResult.attackerAttack.critical ? 16 : 12,
+          fontSize: combatResult.attackerAttack.critical ? 32 : 16,
         });
       } else {
         spawnScrollingText({
@@ -749,7 +749,7 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
           x: defenderX,
           y: defenderY,
           color: { r: 150, g: 150, b: 150 },
-          fontSize: 10,
+          fontSize: 16,
         });
       }
 
