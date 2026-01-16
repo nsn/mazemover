@@ -29,7 +29,7 @@ import {
 import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
-import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION, LOG_LEVEL, CURRENT_LOG_LEVEL } from "./config";
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION } from "./config";
 import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
 import { executeCombat, checkForCombat } from "./systems/Combat";
 import { isWallBlocking, openWall } from "./systems/WallBump";
@@ -940,9 +940,9 @@ export function initializeGameHandlers(
 
   // Register cursor update callback
   k.onDraw(() => {
-    if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[Frame] CursorUpdate");
+    logger.time("[Frame] CursorUpdate");
     cm.update(tm);
-    if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[Frame] CursorUpdate");
+    logger.timeEnd("[Frame] CursorUpdate");
   });
 }
 
@@ -1024,12 +1024,12 @@ let renderCallCount = 0;
 export function render(): void {
   renderCallCount++;
   logger.debug(`[Render] Call #${renderCallCount}`);
-  if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[Render] Total");
+  logger.time("[Render] Total");
   if (isAnimating) return;
 
-  if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[Render] clearAll");
+  logger.time("[Render] clearAll");
   clearAll();
-  if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[Render] clearAll");
+  logger.timeEnd("[Render] clearAll");
 
   const state = turnManager.getState();
   const mapObjects = turnManager.getMapObjects();
@@ -1041,7 +1041,7 @@ export function render(): void {
   const skipButtonX = GRID_OFFSET_X + GRID_COLS * TILE_SIZE + TILE_SIZE * 3;
   const skipButtonY = 360 / 2 + 80;
 
-  if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[Render] UI Setup");
+  logger.time("[Render] UI Setup");
   // Draw inventory background
   drawInventoryBackground();
 
@@ -1061,27 +1061,27 @@ export function render(): void {
   if (player) {
     drawPlayerStats(player, statsX, statsY);
   }
-  if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[Render] UI Setup");
+  logger.timeEnd("[Render] UI Setup");
 
-  if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[Render] Main Scene");
+  logger.time("[Render] Main Scene");
   if (state.turnOwner === TurnOwner.Player) {
     if (state.playerPhase === PlayerPhase.RotatingTile) {
       // Rotation mode rendering
-      if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[Render] drawGrid");
+      logger.time("[Render] drawGrid");
       drawGridWithOverlay(state.grid, null, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360, state.isInStartLevelSequence, state.revealedTiles);
-      if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[Render] drawGrid");
+      logger.timeEnd("[Render] drawGrid");
 
-      if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[Render] drawDecay");
+      logger.time("[Render] drawDecay");
       drawDecayOverlay(state.grid, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
-      if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[Render] drawDecay");
+      logger.timeEnd("[Render] drawDecay");
 
       // Draw darkening overlay on non-active tiles
       if (state.rotatingTilePosition && player) {
-        if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[Render] rotationOverlay");
+        logger.time("[Render] rotationOverlay");
         const moves = turnManager.getObjectManager().getAvailableMoves(player);
         const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves);
         drawRotationOverlay(state.rotatingTilePosition, reachable, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
-        if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[Render] rotationOverlay");
+        logger.timeEnd("[Render] rotationOverlay");
       }
 
       drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
@@ -1090,13 +1090,13 @@ export function render(): void {
       }
       drawSkipButton(skipButtonX, skipButtonY);
     } else if (state.playerPhase === PlayerPhase.TilePlacement && state.currentTile) {
-      if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[Render] drawGrid");
+      logger.time("[Render] drawGrid");
       drawGridWithOverlay(state.grid, state.selectedPlot, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360, state.isInStartLevelSequence, state.revealedTiles);
-      if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[Render] drawGrid");
+      logger.timeEnd("[Render] drawGrid");
 
-      if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[Render] drawDecay");
+      logger.time("[Render] drawDecay");
       drawDecayOverlay(state.grid, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
-      if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[Render] drawDecay");
+      logger.timeEnd("[Render] drawDecay");
 
       drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
       const plots = turnManager.getPlots();
@@ -1108,13 +1108,13 @@ export function render(): void {
       }
       drawSkipButton(skipButtonX, skipButtonY);
     } else {
-      if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[Render] drawGrid");
+      logger.time("[Render] drawGrid");
       drawGridWithOverlay(state.grid, null, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360, state.isInStartLevelSequence, state.revealedTiles);
-      if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[Render] drawGrid");
+      logger.timeEnd("[Render] drawGrid");
 
-      if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[Render] drawDecay");
+      logger.time("[Render] drawDecay");
       drawDecayOverlay(state.grid, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
-      if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[Render] drawDecay");
+      logger.timeEnd("[Render] drawDecay");
 
       if (isMovementMode) {
         drawReachableTiles(reachableTiles, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
@@ -1129,13 +1129,13 @@ export function render(): void {
     }
   } else {
     // Enemy turn - still show plots and tile preview
-    if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[Render] drawGrid");
+    logger.time("[Render] drawGrid");
     drawGridWithOverlay(state.grid, null, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360, state.isInStartLevelSequence, state.revealedTiles);
-    if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[Render] drawGrid");
+    logger.timeEnd("[Render] drawGrid");
 
-    if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[Render] drawDecay");
+    logger.time("[Render] drawDecay");
     drawDecayOverlay(state.grid, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
-    if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[Render] drawDecay");
+    logger.timeEnd("[Render] drawDecay");
 
     drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
 
@@ -1146,13 +1146,13 @@ export function render(): void {
       drawPlots(plots, null, state.playerPhase, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE);
     }
   }
-  if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[Render] Main Scene");
+  logger.timeEnd("[Render] Main Scene");
 
   // Draw debug info
   drawDebugInfo();
   drawStateMachineInfo(state, player || null);
 
-  if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[Render] Total");
+  logger.timeEnd("[Render] Total");
 }
 
 export function getGameState() {

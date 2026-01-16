@@ -39,4 +39,22 @@ export const logger = {
       console.error(...args);
     }
   },
+
+  /**
+   * Start a performance timer (only outputs if log level is DEBUG)
+   */
+  time(label: string): void {
+    if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) {
+      console.time(label);
+    }
+  },
+
+  /**
+   * End a performance timer (only outputs if log level is DEBUG)
+   */
+  timeEnd(label: string): void {
+    if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) {
+      console.timeEnd(label);
+    }
+  },
 };

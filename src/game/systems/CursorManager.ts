@@ -2,7 +2,7 @@ import { k } from "../../kaplayCtx";
 import { PlayerPhase, Direction, TurnOwner } from "../types";
 import type { TurnManager } from "./TurnManager";
 import type { PlotPosition } from "../types";
-import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, LOG_LEVEL, CURRENT_LOG_LEVEL } from "../config";
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS } from "../config";
 import { findReachableTiles } from "./Pathfinding";
 import { isWallBlocking } from "./WallBump";
 import { logger } from "../utils/logger";
@@ -61,18 +61,18 @@ export class CursorManager {
   }
 
   private updateReachableCache(state: any, turnManager: TurnManager): void {
-    if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[CursorCache] Update");
+    logger.time("[CursorCache] Update");
     const player = turnManager.getObjectManager().getPlayer();
     if (!player) {
       this.cachedReachableTiles = [];
-      if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[CursorCache] Update");
+      logger.timeEnd("[CursorCache] Update");
       return;
     }
 
-    if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[CursorCache] GridHash");
+    logger.time("[CursorCache] GridHash");
     // Create a simple hash of grid state (just check if grid reference changed)
     const gridHash = JSON.stringify(state.grid.map((row: any[]) => row.map(t => `${t.type}${t.orientation}`)));
-    if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[CursorCache] GridHash");
+    logger.timeEnd("[CursorCache] GridHash");
 
     // Check if player position or grid changed
     const playerMoved = !this.lastPlayerPosition ||
@@ -87,7 +87,7 @@ export class CursorManager {
       this.lastPlayerPosition = { ...player.gridPosition };
       this.lastGridHash = gridHash;
     }
-    if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[CursorCache] Update");
+    logger.timeEnd("[CursorCache] Update");
   }
 
   private determineCursorType(state: any, mousePos: any, turnManager: TurnManager): CursorType {
