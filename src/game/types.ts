@@ -118,7 +118,8 @@ export interface ItemDefinition {
   id: string;
   name: string;
   type: ItemType;
-  sprite: string;
+  sprite: string;  // Sprite atlas name (e.g., "items")
+  frame: number;   // Frame index within the sprite atlas
   tier: number;  // Item tier, typically 1-3
   charges: number;  // Negative = infinite, default -1 for equipment, 1 for consumables
   statBonuses?: Partial<Stats>;  // Stat bonuses for equipment
@@ -145,6 +146,7 @@ export interface MapObject {
   isPlayingDropAnimation: boolean;  // True if player is currently playing drop animation
   renderOrder: number;
   sprite: string;
+  frame?: number;  // Frame index for items (optional, used when sprite is an atlas)
   movementSpeed: number;
   movementAccumulator: number;
   movesRemaining: number;

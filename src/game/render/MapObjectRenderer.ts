@@ -1,6 +1,5 @@
 import { k } from "../../kaplayCtx";
 import { type MapObject, ObjectType } from "../types";
-import { ItemFrames } from "../assets";
 
 /**
  * Draws all map objects (player, enemies, items, exits) on the grid
@@ -36,7 +35,7 @@ export function drawMapObjects(
 
     // Player plays drop animation during start, idle when standing still
     // Enemies play idle animation
-    // Items use the "items" sprite atlas with their sprite name as frame
+    // Items use the sprite atlas specified in obj.sprite with frame number from obj.frame
     // Others use frame 0
     let spriteConfig;
     let spriteName = obj.sprite;
@@ -47,8 +46,7 @@ export function drawMapObjects(
     } else if (obj.type === ObjectType.Enemy) {
       spriteConfig = { anim: "idle", flipX: obj.flipX };
     } else if (obj.type === ObjectType.Item) {
-      spriteName = "items";
-      spriteConfig = { frame: ItemFrames[obj.sprite as keyof typeof ItemFrames], flipX: obj.flipX };
+      spriteConfig = { frame: obj.frame ?? 0, flipX: obj.flipX };
     } else {
       spriteConfig = { frame: 0, flipX: obj.flipX };
     }

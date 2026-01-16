@@ -2,7 +2,8 @@
   "equipment": {
     "punch": {
       "name": "Punch Dagger",
-      "sprite": "punch",
+      "sprite": "items",
+      "frame": 0,
       "tier": 1,
       "charges": -1,
       "slot": "RightHand",
@@ -13,7 +14,8 @@
     },
     "putch": {
       "name": "Putch Blade",
-      "sprite": "putch",
+      "sprite": "items",
+      "frame": 1,
       "tier": 2,
       "charges": -1,
       "slot": "RightHand",
@@ -24,7 +26,8 @@
     },
     "spatula": {
       "name": "Mason's Spatula",
-      "sprite": "spatula",
+      "sprite": "items",
+      "frame": 2,
       "tier": 1,
       "charges": -1,
       "slot": "RightHand",
@@ -35,7 +38,8 @@
     },
     "trowel": {
       "name": "Iron Trowel",
-      "sprite": "trowel",
+      "sprite": "items",
+      "frame": 3,
       "tier": 2,
       "charges": -1,
       "slot": "RightHand",
@@ -47,7 +51,8 @@
     },
     "level": {
       "name": "Spirit Level",
-      "sprite": "level",
+      "sprite": "items",
+      "frame": 4,
       "tier": 3,
       "charges": -1,
       "slot": ["LeftHand", "RightHand"],
@@ -58,7 +63,8 @@
     },
     "mell": {
       "name": "Mell Hammer",
-      "sprite": "mell",
+      "sprite": "items",
+      "frame": 5,
       "tier": 3,
       "charges": -1,
       "slot": "RightHand",
@@ -70,7 +76,8 @@
     },
     "mallet": {
       "name": "Wooden Mallet",
-      "sprite": "mallet",
+      "sprite": "items",
+      "frame": 6,
       "tier": 1,
       "charges": -1,
       "slot": "RightHand",
@@ -81,7 +88,8 @@
     },
     "hammer": {
       "name": "Steel Hammer",
-      "sprite": "hammer",
+      "sprite": "items",
+      "frame": 7,
       "tier": 2,
       "charges": -1,
       "slot": "RightHand",
@@ -92,7 +100,8 @@
     },
     "pick": {
       "name": "Mining Pick",
-      "sprite": "pick",
+      "sprite": "items",
+      "frame": 8,
       "tier": 2,
       "charges": -1,
       "slot": "RightHand",
@@ -104,7 +113,8 @@
     },
     "pickaxe": {
       "name": "Heavy Pickaxe",
-      "sprite": "pickaxe",
+      "sprite": "items",
+      "frame": 9,
       "tier": 3,
       "charges": -1,
       "slot": ["LeftHand", "RightHand"],
@@ -116,7 +126,8 @@
     },
     "coif": {
       "name": "Chain Coif",
-      "sprite": "coif",
+      "sprite": "items",
+      "frame": 20,
       "tier": 2,
       "charges": -1,
       "slot": "Head",
@@ -127,7 +138,8 @@
     },
     "cap": {
       "name": "Leather Cap",
-      "sprite": "cap",
+      "sprite": "items",
+      "frame": 21,
       "tier": 1,
       "charges": -1,
       "slot": "Head",
@@ -138,7 +150,8 @@
     },
     "hat": {
       "name": "Felt Hat",
-      "sprite": "hat",
+      "sprite": "items",
+      "frame": 22,
       "tier": 2,
       "charges": -1,
       "slot": "Head",
@@ -149,7 +162,8 @@
     },
     "chausses": {
       "name": "Chain Chausses",
-      "sprite": "chausses",
+      "sprite": "items",
+      "frame": 40,
       "tier": 3,
       "charges": -1,
       "slot": "Legs",
@@ -161,7 +175,8 @@
     },
     "trousers": {
       "name": "Leather Trousers",
-      "sprite": "trousers",
+      "sprite": "items",
+      "frame": 41,
       "tier": 2,
       "charges": -1,
       "slot": "Legs",
@@ -172,7 +187,8 @@
     },
     "pants": {
       "name": "Work Pants",
-      "sprite": "pants",
+      "sprite": "items",
+      "frame": 42,
       "tier": 1,
       "charges": -1,
       "slot": "Legs",
@@ -183,7 +199,8 @@
     },
     "chemises": {
       "name": "Chainmail Chemise",
-      "sprite": "chemises",
+      "sprite": "items",
+      "frame": 60,
       "tier": 3,
       "charges": -1,
       "slot": "Torso",
@@ -195,7 +212,8 @@
     },
     "shirt": {
       "name": "Leather Shirt",
-      "sprite": "shirt",
+      "sprite": "items",
+      "frame": 61,
       "tier": 2,
       "charges": -1,
       "slot": "Torso",
@@ -206,7 +224,8 @@
     },
     "apron": {
       "name": "Mason's Apron",
-      "sprite": "apron",
+      "sprite": "items",
+      "frame": 62,
       "tier": 1,
       "charges": -1,
       "slot": "Torso",
@@ -220,7 +239,8 @@
   "consumables": {
     "health_potion": {
       "name": "Health Potion",
-      "sprite": "punch",
+      "sprite": "items",
+      "frame": 0,
       "tier": 1,
       "charges": 1,
       "statBonuses": {

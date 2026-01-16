@@ -123,6 +123,9 @@ export class MapObjectManager {
       { x: 0, y: 0 }
     );
 
+    // Set the frame index for the item sprite
+    item.frame = itemDef.frame;
+
     // Store the item definition ID on the object for later reference
     (item as any).itemId = itemId;
 

@@ -129,28 +129,6 @@ export const BrickFrames = {
   SE: 8,
 } as const;
 
-export const ItemFrames = {
-  punch: 0,
-  putch: 1,
-  spatula: 2,
-  trowel: 3,
-  level: 4,
-  mell: 5,
-  mallet: 6,
-  hammer: 7,
-  pick: 8,
-  pickaxe: 9,
-  coif: 20,
-  cap: 21,
-  hat: 22,
-  chausses: 40,
-  trousers: 41,
-  pants: 42,
-  chemises: 60,
-  shirt: 61,
-  apron: 62,
-} as const;
-
 // Global enemy database instance
 export const enemyDatabase = new EnemyDatabase();
 
