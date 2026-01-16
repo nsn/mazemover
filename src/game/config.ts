@@ -86,6 +86,17 @@ export const EQUIPMENT = {
   PATCH_SIZE: 8,  // 9-patch border size
 }
 
+// Item Description Widget Configuration
+export const DESCRIPTION = {
+  X: GRID_OFFSET_X + GRID_COLS * TILE_SIZE + (640 - (GRID_OFFSET_X + GRID_COLS * TILE_SIZE)) / 2,
+  Y: 260,
+  WIDTH: 140,
+  HEIGHT: 80,
+  PATCH_SIZE: 8,  // 9-patch border size
+  PADDING: 4,     // Text padding inside widget
+  LINE_HEIGHT: 14, // Height between text lines
+}
+
 // Game Configuration
 export const STARTING_LEVEL = 10;  // Level the player starts at (counts down to 0)
 

@@ -26,12 +26,17 @@ import {
   drawInventoryBackground,
   drawInventoryItems,
   drawEquipmentBackground,
+  drawDescriptionBackground,
+  drawItemDescription,
+  getEquipmentSlotGridPos,
+  inventorySlotPos,
+  equipmentSlotPos,
   clearUI,
 } from "./render/UIRenderer";
 import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
-import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION } from "./config";
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION, INVENTORY, EQUIPMENT } from "./config";
 import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
 import { executeCombat, checkForCombat } from "./systems/Combat";
 import { isWallBlocking, openWall } from "./systems/WallBump";
@@ -1053,6 +1058,55 @@ export function render(): void {
   // Draw inventory items
   const itemDatabase = turnManager.getObjectManager().getItemDatabase();
   drawInventoryItems(state.inventory, itemDatabase);
+
+  // Draw description widget
+  drawDescriptionBackground();
+
+  // Check for item hover and display description
+  const mousePos = k.mousePos();
+  let hoveredItemDef = null;
+
+  // Check inventory slots for hover
+  for (let i = 0; i < state.inventory.length; i++) {
+    const item = state.inventory[i];
+    if (!item) continue;
+
+    const col = i % INVENTORY.SLOTS_X;
+    const row = Math.floor(i / INVENTORY.SLOTS_X);
+    const pos = inventorySlotPos(col, row, INVENTORY.PATCH_SIZE);
+
+    // Check if mouse is over this slot
+    if (mousePos.x >= pos.x && mousePos.x <= pos.x + INVENTORY.SLOT_SIZE &&
+        mousePos.y >= pos.y && mousePos.y <= pos.y + INVENTORY.SLOT_SIZE) {
+      hoveredItemDef = itemDatabase.getItem(item.definitionId);
+      break;
+    }
+  }
+
+  // Check equipment slots for hover
+  if (!hoveredItemDef) {
+    for (let i = 0; i < state.equipment.length; i++) {
+      const item = state.equipment[i];
+      if (!item) continue;
+
+      const gridPos = getEquipmentSlotGridPos(i);
+      if (!gridPos) continue;
+
+      const pos = equipmentSlotPos(gridPos.col, gridPos.row, EQUIPMENT.PATCH_SIZE);
+
+      // Check if mouse is over this slot
+      if (mousePos.x >= pos.x && mousePos.x <= pos.x + EQUIPMENT.SLOT_SIZE &&
+          mousePos.y >= pos.y && mousePos.y <= pos.y + EQUIPMENT.SLOT_SIZE) {
+        hoveredItemDef = itemDatabase.getItem(item.definitionId);
+        break;
+      }
+    }
+  }
+
+  // Draw item description if hovering over an item
+  if (hoveredItemDef) {
+    drawItemDescription(hoveredItemDef);
+  }
 
   // Draw level info
   drawLevelInfo(state.currentLevel);

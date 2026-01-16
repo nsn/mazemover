@@ -1,7 +1,7 @@
 import { k } from "../../kaplayCtx";
-import { type TileInstance, type MapObject, type GameState, TileType, Direction, type ItemInstance } from "../types";
+import { type TileInstance, type MapObject, type GameState, TileType, Direction, type ItemInstance, type ItemDefinition } from "../types";
 import { TileFrames, BrickFrames } from "../assets";
-import { INVENTORY, EQUIPMENT } from "../config";
+import { INVENTORY, EQUIPMENT, DESCRIPTION } from "../config";
 import { type ItemDatabase } from "../systems/ItemDatabase";
 
 function getTileFrame(type: TileType, direction: Direction): number {
@@ -334,6 +334,70 @@ export function drawInventoryItems(inventory: (ItemInstance | null)[], itemDatab
 }
 
 /**
+ * Draws the item description background widget
+ */
+export function drawDescriptionBackground(): void {
+  k.add([
+    k.sprite("9patch", {
+      width: DESCRIPTION.WIDTH,
+      height: DESCRIPTION.HEIGHT,
+    }),
+    k.pos(DESCRIPTION.X, DESCRIPTION.Y),
+    k.z(100),
+    "descriptionBackground",
+  ]);
+}
+
+/**
+ * Draws item description text
+ * @param itemDef Item definition to display
+ */
+export function drawItemDescription(itemDef: ItemDefinition): void {
+  const x = DESCRIPTION.X + DESCRIPTION.PADDING + DESCRIPTION.PATCH_SIZE;
+  const y = DESCRIPTION.Y + DESCRIPTION.PADDING + DESCRIPTION.PATCH_SIZE;
+
+  // Line 1: Item name
+  k.add([
+    k.text(itemDef.name, { font: "saga", size: 12 }),
+    k.pos(x, y),
+    k.color(255, 255, 255),
+    k.z(101),
+    "descriptionText",
+  ]);
+
+  // Line 2: Description (if exists)
+  if (itemDef.description) {
+    k.add([
+      k.text(itemDef.description, { font: "saga", size: 10, width: DESCRIPTION.WIDTH - 2 * (DESCRIPTION.PADDING + DESCRIPTION.PATCH_SIZE) }),
+      k.pos(x, y + DESCRIPTION.LINE_HEIGHT),
+      k.color(200, 200, 200),
+      k.z(101),
+      "descriptionText",
+    ]);
+  }
+
+  // Line 3: Stat bonuses (if exists)
+  if (itemDef.statBonuses) {
+    const bonuses: string[] = [];
+    if (itemDef.statBonuses.hp) bonuses.push(`+${itemDef.statBonuses.hp} HP`);
+    if (itemDef.statBonuses.atk) bonuses.push(`+${itemDef.statBonuses.atk} ATK`);
+    if (itemDef.statBonuses.def) bonuses.push(`+${itemDef.statBonuses.def} DEF`);
+    if (itemDef.statBonuses.agi) bonuses.push(`+${itemDef.statBonuses.agi} AGI`);
+
+    if (bonuses.length > 0) {
+      const bonusText = bonuses.join(", ");
+      k.add([
+        k.text(bonusText, { font: "saga", size: 10 }),
+        k.pos(x, y + DESCRIPTION.LINE_HEIGHT * 2),
+        k.color(100, 255, 100),
+        k.z(101),
+        "descriptionText",
+      ]);
+    }
+  }
+}
+
+/**
  * Clears all UI elements
  */
 export function clearUI(): void {
@@ -349,5 +413,7 @@ export function clearUI(): void {
   k.destroyAll("inventoryItem");
   k.destroyAll("equipmentBackground");
   k.destroyAll("equipmentSlot");
+  k.destroyAll("descriptionBackground");
+  k.destroyAll("descriptionText");
   k.destroyAll("sagaText");
 }
