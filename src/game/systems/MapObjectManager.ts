@@ -1,6 +1,7 @@
 import { ObjectType, type MapObject, type GridPosition, type PlotPosition, Direction, type MapObjectCallback, AIType, type Stats } from "../types";
 import { GRID_ROWS, GRID_COLS } from "../config";
 import { EnemyDatabase } from "./EnemyDatabase";
+import { ItemDatabase } from "./ItemDatabase";
 
 export interface EnemyConfig {
   name?: string;
@@ -15,9 +16,11 @@ let nextId = 1;
 export class MapObjectManager {
   private objects: Map<number, MapObject> = new Map();
   private enemyDatabase: EnemyDatabase;
+  private itemDatabase: ItemDatabase;
 
-  constructor(enemyDatabase: EnemyDatabase) {
+  constructor(enemyDatabase: EnemyDatabase, itemDatabase: ItemDatabase) {
     this.enemyDatabase = enemyDatabase;
+    this.itemDatabase = itemDatabase;
   }
 
   createObject(
@@ -102,8 +105,29 @@ export class MapObjectManager {
     return this.getAllObjects().filter(obj => obj.type === ObjectType.Enemy);
   }
 
-  createItem(gridPosition: GridPosition, name: string = "Item"): MapObject {
-    return this.createObject(ObjectType.Item, gridPosition, name, "item", 50, 1, undefined, { x: 0, y: 0 });
+  createItem(gridPosition: GridPosition, itemId: string): MapObject {
+    const itemDef = this.itemDatabase.getItem(itemId);
+    if (!itemDef) {
+      console.error(`[MapObjectManager] Item definition not found: ${itemId}`);
+      throw new Error(`Item definition not found: ${itemId}`);
+    }
+
+    const item = this.createObject(
+      ObjectType.Item,
+      gridPosition,
+      itemDef.name,
+      itemDef.sprite,
+      50,
+      0,  // Items don't move
+      undefined,
+      { x: 0, y: 0 }
+    );
+
+    // Store the item definition ID on the object for later reference
+    (item as any).itemId = itemId;
+
+    console.log(`[MapObjectManager] Created item ${itemDef.name} (${itemId})`);
+    return item;
   }
 
   createExit(gridPosition: GridPosition, name: string = "Exit", onEnter?: MapObjectCallback): MapObject {
@@ -261,5 +285,40 @@ export class MapObjectManager {
 
   getPlayer(): MapObject | undefined {
     return this.getAllObjects().find(obj => obj.type === ObjectType.Player);
+  }
+
+  /**
+   * Randomly spawns items on empty tiles
+   * @param spawnChance Probability (0-1) that each empty tile will have an item
+   */
+  spawnRandomItems(spawnChance: number = 0.1): void {
+    const allItems = this.itemDatabase.getAllItems();
+    if (allItems.length === 0) {
+      console.warn("[MapObjectManager] No items in database, skipping item spawn");
+      return;
+    }
+
+    let itemsSpawned = 0;
+
+    // Check each tile on the grid
+    for (let row = 0; row < GRID_ROWS; row++) {
+      for (let col = 0; col < GRID_COLS; col++) {
+        // Check if this tile is empty (no objects on it)
+        const objectsAtPosition = this.getObjectsAtPosition(row, col);
+        if (objectsAtPosition.length > 0) {
+          continue; // Tile is occupied
+        }
+
+        // Random chance to spawn item
+        if (Math.random() < spawnChance) {
+          // Select random item from database
+          const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
+          this.createItem({ row, col }, randomItem.id);
+          itemsSpawned++;
+        }
+      }
+    }
+
+    console.log(`[MapObjectManager] Spawned ${itemsSpawned} items on the map`);
   }
 }

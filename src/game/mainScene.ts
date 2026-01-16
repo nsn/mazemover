@@ -1,5 +1,5 @@
 import { k } from "../kaplayCtx";
-import { loadAssets, loadEnemyDatabase, enemyDatabase, loadItemDatabase } from "./assets";
+import { loadAssets, loadEnemyDatabase, enemyDatabase, loadItemDatabase, itemDatabase } from "./assets";
 import { TurnManager } from "./systems/TurnManager";
 import { InputController } from "./systems/InputController";
 import { CursorManager } from "./systems/CursorManager";
@@ -35,7 +35,7 @@ export function createMainScene(): void {
     cursorManager.initialize();
     setCursorManager(cursorManager);
 
-    const turnManager = new TurnManager(render, enemyDatabase);
+    const turnManager = new TurnManager(render, enemyDatabase, itemDatabase);
     setTurnManager(turnManager);
 
     // Set current level from global counter
@@ -115,6 +115,9 @@ export function createMainScene(): void {
     goblin1.isInStartLevelSequence = true;
     goblin2.isInStartLevelSequence = true;
     goblin3.isInStartLevelSequence = true;
+
+    // Spawn random items on empty tiles (10% chance per tile)
+    objManager.spawnRandomItems(0.1);
 
     // Create and start the level sequence
     console.log("[MainScene] Starting level sequence...");

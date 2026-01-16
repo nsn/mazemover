@@ -34,19 +34,26 @@ export function drawMapObjects(
     const y = gridOffsetY + obj.gridPosition.row * tileSize + tileSize / 2 + obj.pixelOffset.y + obj.spriteOffset.y;
 
     // Player plays drop animation during start, idle when standing still
-    // Enemies play idle animation, others use frame 0
+    // Enemies play idle animation
+    // Items use the "items" sprite atlas with their sprite name as anim
+    // Others use frame 0
     let spriteConfig;
+    let spriteName = obj.sprite;
+
     if (obj.type === ObjectType.Player) {
       const anim = obj.isPlayingDropAnimation ? "drop" : "idle";
       spriteConfig = { anim, flipX: obj.flipX };
     } else if (obj.type === ObjectType.Enemy) {
       spriteConfig = { anim: "idle", flipX: obj.flipX };
+    } else if (obj.type === ObjectType.Item) {
+      spriteName = "items";
+      spriteConfig = { anim: obj.sprite, flipX: obj.flipX };
     } else {
       spriteConfig = { frame: 0, flipX: obj.flipX };
     }
 
     const components: any[] = [
-      k.sprite(obj.sprite, spriteConfig),
+      k.sprite(spriteName, spriteConfig),
       k.pos(x, y),
       k.anchor("center"),
       k.area(),
