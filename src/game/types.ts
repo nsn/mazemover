@@ -119,6 +119,7 @@ export interface ItemDefinition {
   name: string;
   type: ItemType;
   sprite: string;
+  tier: number;  // Item tier, typically 1-3
   charges: number;  // Negative = infinite, default -1 for equipment, 1 for consumables
   statBonuses?: Partial<Stats>;  // Stat bonuses for equipment
   slot?: EquipmentSlot | EquipmentSlot[];  // Single slot or array for two-handed weapons

@@ -21,6 +21,7 @@ export class ItemDatabase {
             name: item.name,
             type: "Equipment",
             sprite: item.sprite,
+            tier: item.tier ?? 1,  // Default to tier 1
             charges: item.charges ?? -1,  // Default to infinite for equipment
             statBonuses: item.statBonuses,
             slot: item.slot,
@@ -38,6 +39,7 @@ export class ItemDatabase {
             name: item.name,
             type: "Consumable",
             sprite: item.sprite,
+            tier: item.tier ?? 1,  // Default to tier 1
             charges: item.charges ?? 1,  // Default to 1 for consumables
             statBonuses: item.statBonuses,
             description: item.description,

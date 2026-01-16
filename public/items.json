@@ -3,6 +3,7 @@
     "punch": {
       "name": "Punch Dagger",
       "sprite": "punch",
+      "tier": 1,
       "charges": -1,
       "slot": "RightHand",
       "statBonuses": {
@@ -13,6 +14,7 @@
     "putch": {
       "name": "Putch Blade",
       "sprite": "putch",
+      "tier": 2,
       "charges": -1,
       "slot": "RightHand",
       "statBonuses": {
@@ -23,6 +25,7 @@
     "spatula": {
       "name": "Mason's Spatula",
       "sprite": "spatula",
+      "tier": 1,
       "charges": -1,
       "slot": "RightHand",
       "statBonuses": {
@@ -33,6 +36,7 @@
     "trowel": {
       "name": "Iron Trowel",
       "sprite": "trowel",
+      "tier": 2,
       "charges": -1,
       "slot": "RightHand",
       "statBonuses": {
@@ -44,6 +48,7 @@
     "level": {
       "name": "Spirit Level",
       "sprite": "level",
+      "tier": 3,
       "charges": -1,
       "slot": ["LeftHand", "RightHand"],
       "statBonuses": {
@@ -54,6 +59,7 @@
     "mell": {
       "name": "Mell Hammer",
       "sprite": "mell",
+      "tier": 3,
       "charges": -1,
       "slot": "RightHand",
       "statBonuses": {
@@ -65,6 +71,7 @@
     "mallet": {
       "name": "Wooden Mallet",
       "sprite": "mallet",
+      "tier": 1,
       "charges": -1,
       "slot": "RightHand",
       "statBonuses": {
@@ -75,6 +82,7 @@
     "hammer": {
       "name": "Steel Hammer",
       "sprite": "hammer",
+      "tier": 2,
       "charges": -1,
       "slot": "RightHand",
       "statBonuses": {
@@ -85,6 +93,7 @@
     "pick": {
       "name": "Mining Pick",
       "sprite": "pick",
+      "tier": 2,
       "charges": -1,
       "slot": "RightHand",
       "statBonuses": {
@@ -96,6 +105,7 @@
     "pickaxe": {
       "name": "Heavy Pickaxe",
       "sprite": "pickaxe",
+      "tier": 3,
       "charges": -1,
       "slot": ["LeftHand", "RightHand"],
       "statBonuses": {
@@ -107,6 +117,7 @@
     "coif": {
       "name": "Chain Coif",
       "sprite": "coif",
+      "tier": 2,
       "charges": -1,
       "slot": "Head",
       "statBonuses": {
@@ -117,6 +128,7 @@
     "cap": {
       "name": "Leather Cap",
       "sprite": "cap",
+      "tier": 1,
       "charges": -1,
       "slot": "Head",
       "statBonuses": {
@@ -127,6 +139,7 @@
     "hat": {
       "name": "Felt Hat",
       "sprite": "hat",
+      "tier": 2,
       "charges": -1,
       "slot": "Head",
       "statBonuses": {
@@ -137,6 +150,7 @@
     "chausses": {
       "name": "Chain Chausses",
       "sprite": "chausses",
+      "tier": 3,
       "charges": -1,
       "slot": "Legs",
       "statBonuses": {
@@ -148,6 +162,7 @@
     "trousers": {
       "name": "Leather Trousers",
       "sprite": "trousers",
+      "tier": 2,
       "charges": -1,
       "slot": "Legs",
       "statBonuses": {
@@ -158,6 +173,7 @@
     "pants": {
       "name": "Work Pants",
       "sprite": "pants",
+      "tier": 1,
       "charges": -1,
       "slot": "Legs",
       "statBonuses": {
@@ -168,6 +184,7 @@
     "chemises": {
       "name": "Chainmail Chemise",
       "sprite": "chemises",
+      "tier": 3,
       "charges": -1,
       "slot": "Torso",
       "statBonuses": {
@@ -179,6 +196,7 @@
     "shirt": {
       "name": "Leather Shirt",
       "sprite": "shirt",
+      "tier": 2,
       "charges": -1,
       "slot": "Torso",
       "statBonuses": {
@@ -189,6 +207,7 @@
     "apron": {
       "name": "Mason's Apron",
       "sprite": "apron",
+      "tier": 1,
       "charges": -1,
       "slot": "Torso",
       "statBonuses": {
@@ -202,6 +221,7 @@
     "health_potion": {
       "name": "Health Potion",
       "sprite": "punch",
+      "tier": 1,
       "charges": 1,
       "statBonuses": {
         "hp": 5
