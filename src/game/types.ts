@@ -97,6 +97,39 @@ export interface Stats {
   agi: number;
 }
 
+export const ItemType = {
+  Equipment: "Equipment",
+  Consumable: "Consumable",
+} as const;
+
+export type ItemType = (typeof ItemType)[keyof typeof ItemType];
+
+export const EquipmentSlot = {
+  Head: "Head",
+  LeftHand: "LeftHand",
+  RightHand: "RightHand",
+  Legs: "Legs",
+  Torso: "Torso",
+} as const;
+
+export type EquipmentSlot = (typeof EquipmentSlot)[keyof typeof EquipmentSlot];
+
+export interface ItemDefinition {
+  id: string;
+  name: string;
+  type: ItemType;
+  sprite: string;
+  charges: number;  // Negative = infinite, default -1 for equipment, 1 for consumables
+  statBonuses?: Partial<Stats>;  // Stat bonuses for equipment
+  slot?: EquipmentSlot | EquipmentSlot[];  // Single slot or array for two-handed weapons
+  description?: string;
+}
+
+export interface ItemInstance {
+  definitionId: string;
+  remainingCharges: number;
+}
+
 export type MapObjectCallback = (mob: MapObject, isPlayer: boolean) => void;
 
 export interface MapObject {

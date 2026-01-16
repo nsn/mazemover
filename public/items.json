@@ -1,0 +1,212 @@
+{
+  "equipment": {
+    "punch": {
+      "name": "Punch Dagger",
+      "sprite": "punch",
+      "charges": -1,
+      "slot": "RightHand",
+      "statBonuses": {
+        "atk": 1
+      },
+      "description": "A small but sharp dagger"
+    },
+    "putch": {
+      "name": "Putch Blade",
+      "sprite": "putch",
+      "charges": -1,
+      "slot": "RightHand",
+      "statBonuses": {
+        "atk": 2
+      },
+      "description": "A curved blade for close combat"
+    },
+    "spatula": {
+      "name": "Mason's Spatula",
+      "sprite": "spatula",
+      "charges": -1,
+      "slot": "RightHand",
+      "statBonuses": {
+        "def": 1
+      },
+      "description": "A sturdy spatula, doubles as a small shield"
+    },
+    "trowel": {
+      "name": "Iron Trowel",
+      "sprite": "trowel",
+      "charges": -1,
+      "slot": "RightHand",
+      "statBonuses": {
+        "atk": 1,
+        "def": 1
+      },
+      "description": "A balanced tool for mason work"
+    },
+    "level": {
+      "name": "Spirit Level",
+      "sprite": "level",
+      "charges": -1,
+      "slot": ["LeftHand", "RightHand"],
+      "statBonuses": {
+        "agi": 2
+      },
+      "description": "A two-handed precision tool"
+    },
+    "mell": {
+      "name": "Mell Hammer",
+      "sprite": "mell",
+      "charges": -1,
+      "slot": "RightHand",
+      "statBonuses": {
+        "atk": 2,
+        "agi": -1
+      },
+      "description": "Heavy hammer, slow but powerful"
+    },
+    "mallet": {
+      "name": "Wooden Mallet",
+      "sprite": "mallet",
+      "charges": -1,
+      "slot": "RightHand",
+      "statBonuses": {
+        "atk": 1
+      },
+      "description": "A simple wooden mallet"
+    },
+    "hammer": {
+      "name": "Steel Hammer",
+      "sprite": "hammer",
+      "charges": -1,
+      "slot": "RightHand",
+      "statBonuses": {
+        "atk": 3
+      },
+      "description": "A heavy steel hammer"
+    },
+    "pick": {
+      "name": "Mining Pick",
+      "sprite": "pick",
+      "charges": -1,
+      "slot": "RightHand",
+      "statBonuses": {
+        "atk": 2,
+        "def": 1
+      },
+      "description": "Sharp pick for mining"
+    },
+    "pickaxe": {
+      "name": "Heavy Pickaxe",
+      "sprite": "pickaxe",
+      "charges": -1,
+      "slot": ["LeftHand", "RightHand"],
+      "statBonuses": {
+        "atk": 4,
+        "agi": -1
+      },
+      "description": "A massive two-handed pickaxe"
+    },
+    "coif": {
+      "name": "Chain Coif",
+      "sprite": "coif",
+      "charges": -1,
+      "slot": "Head",
+      "statBonuses": {
+        "def": 2
+      },
+      "description": "A protective chainmail hood"
+    },
+    "cap": {
+      "name": "Leather Cap",
+      "sprite": "cap",
+      "charges": -1,
+      "slot": "Head",
+      "statBonuses": {
+        "def": 1
+      },
+      "description": "A simple leather cap"
+    },
+    "hat": {
+      "name": "Felt Hat",
+      "sprite": "hat",
+      "charges": -1,
+      "slot": "Head",
+      "statBonuses": {
+        "agi": 1
+      },
+      "description": "A light felt hat"
+    },
+    "chausses": {
+      "name": "Chain Chausses",
+      "sprite": "chausses",
+      "charges": -1,
+      "slot": "Legs",
+      "statBonuses": {
+        "def": 2,
+        "agi": -1
+      },
+      "description": "Heavy chainmail leggings"
+    },
+    "trousers": {
+      "name": "Leather Trousers",
+      "sprite": "trousers",
+      "charges": -1,
+      "slot": "Legs",
+      "statBonuses": {
+        "def": 1
+      },
+      "description": "Sturdy leather trousers"
+    },
+    "pants": {
+      "name": "Work Pants",
+      "sprite": "pants",
+      "charges": -1,
+      "slot": "Legs",
+      "statBonuses": {
+        "agi": 1
+      },
+      "description": "Flexible work pants"
+    },
+    "chemises": {
+      "name": "Chainmail Chemise",
+      "sprite": "chemises",
+      "charges": -1,
+      "slot": "Torso",
+      "statBonuses": {
+        "def": 3,
+        "agi": -1
+      },
+      "description": "A heavy chainmail shirt"
+    },
+    "shirt": {
+      "name": "Leather Shirt",
+      "sprite": "shirt",
+      "charges": -1,
+      "slot": "Torso",
+      "statBonuses": {
+        "def": 2
+      },
+      "description": "A protective leather shirt"
+    },
+    "apron": {
+      "name": "Mason's Apron",
+      "sprite": "apron",
+      "charges": -1,
+      "slot": "Torso",
+      "statBonuses": {
+        "def": 1,
+        "hp": 2
+      },
+      "description": "A sturdy work apron"
+    }
+  },
+  "consumables": {
+    "health_potion": {
+      "name": "Health Potion",
+      "sprite": "punch",
+      "charges": 1,
+      "statBonuses": {
+        "hp": 5
+      },
+      "description": "Restores 5 HP"
+    }
+  }
+}

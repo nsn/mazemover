@@ -1,5 +1,6 @@
 import { k } from "../kaplayCtx";
 import { EnemyDatabase } from "./systems/EnemyDatabase";
+import { ItemDatabase } from "./systems/ItemDatabase";
 import { INVENTORY } from "./config";
 
 export async function loadAssets(): Promise<void> {
@@ -41,7 +42,7 @@ export async function loadAssets(): Promise<void> {
   });
 
   await k.loadSprite("items", "/items.png", {
-    sliceX: 1,
+    sliceX: 20,
     sliceY: 20,
     anims: {
       punch: 0,
@@ -54,6 +55,15 @@ export async function loadAssets(): Promise<void> {
       hammer: 7,
       pick: 8,
       pickaxe: 9,
+      coif: 20,
+      cap: 21,
+      hat: 22,
+      chausses: 40,
+      trousers: 41,
+      pants: 42,
+      chemises: 60,
+      shirt: 61,
+      apron: 62,
     }
   });
 
@@ -124,4 +134,11 @@ export const enemyDatabase = new EnemyDatabase();
 
 export async function loadEnemyDatabase(): Promise<void> {
   await enemyDatabase.load("/enemies.json");
+}
+
+// Global item database instance
+export const itemDatabase = new ItemDatabase();
+
+export async function loadItemDatabase(): Promise<void> {
+  await itemDatabase.load("/items.json");
 }

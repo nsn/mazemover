@@ -1,5 +1,5 @@
 import { k } from "../kaplayCtx";
-import { loadAssets, loadEnemyDatabase, enemyDatabase } from "./assets";
+import { loadAssets, loadEnemyDatabase, enemyDatabase, loadItemDatabase } from "./assets";
 import { TurnManager } from "./systems/TurnManager";
 import { InputController } from "./systems/InputController";
 import { CursorManager } from "./systems/CursorManager";
@@ -26,6 +26,7 @@ export function createMainScene(): void {
     console.log("[MainScene] Loading assets...");
     await loadAssets();
     await loadEnemyDatabase();
+    await loadItemDatabase();
 
     console.log("[MainScene] Initializing game systems...");
 
