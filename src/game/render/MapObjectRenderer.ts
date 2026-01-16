@@ -1,5 +1,6 @@
 import { k } from "../../kaplayCtx";
 import { type MapObject, ObjectType } from "../types";
+import { ItemFrames } from "../assets";
 
 /**
  * Draws all map objects (player, enemies, items, exits) on the grid
@@ -47,7 +48,7 @@ export function drawMapObjects(
       spriteConfig = { anim: "idle", flipX: obj.flipX };
     } else if (obj.type === ObjectType.Item) {
       spriteName = "items";
-      spriteConfig = { frame: (k as any).getSprite("items").anims[obj.sprite], flipX: obj.flipX };
+      spriteConfig = { frame: ItemFrames[obj.sprite as keyof typeof ItemFrames], flipX: obj.flipX };
     } else {
       spriteConfig = { frame: 0, flipX: obj.flipX };
     }
