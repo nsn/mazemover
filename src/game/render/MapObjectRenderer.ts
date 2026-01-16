@@ -1,5 +1,6 @@
 import { k } from "../../kaplayCtx";
 import { type MapObject, ObjectType } from "../types";
+import { LOG_LEVEL, CURRENT_LOG_LEVEL } from "../config";
 
 /**
  * Draws all map objects (player, enemies, items, exits) on the grid
@@ -18,7 +19,7 @@ export function drawMapObjects(
   isInStartLevelSequence: boolean = false,
   revealedTiles: Set<string> = new Set()
 ): void {
-  console.time("[drawMapObjects] Total");
+  if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.time("[drawMapObjects] Total");
   const sorted = [...objects].sort((a, b) => a.renderOrder - b.renderOrder);
 
   for (const obj of sorted) {
@@ -69,7 +70,7 @@ export function drawMapObjects(
 
     k.add(components);
   }
-  console.timeEnd("[drawMapObjects] Total");
+  if (CURRENT_LOG_LEVEL >= LOG_LEVEL.DEBUG) console.timeEnd("[drawMapObjects] Total");
 }
 
 /**
