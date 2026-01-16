@@ -29,6 +29,9 @@ type CursorType = keyof typeof CURSORS;
 
 export class CursorManager {
   private currentCursorType: CursorType;
+  private cachedReachableTiles: any[] = [];
+  private lastPlayerPosition: { row: number; col: number } | null = null;
+  private lastGridHash: string = "";
 
   constructor() {
     this.currentCursorType = "default";
@@ -44,11 +47,39 @@ export class CursorManager {
     // Determine cursor type based on hover state
     const state = turnManager.getState();
     const mousePos = k.mousePos();
+
+    // Update reachable tiles cache if player moved or grid changed
+    this.updateReachableCache(state, turnManager);
+
     const newCursorType = this.determineCursorType(state, mousePos, turnManager);
 
     // Only update CSS if cursor type changed (optimization)
     if (newCursorType !== this.currentCursorType) {
       this.changeCursorType(newCursorType);
+    }
+  }
+
+  private updateReachableCache(state: any, turnManager: TurnManager): void {
+    const player = turnManager.getObjectManager().getPlayer();
+    if (!player) {
+      this.cachedReachableTiles = [];
+      return;
+    }
+
+    // Create a simple hash of grid state (just check if grid reference changed)
+    const gridHash = JSON.stringify(state.grid.map((row: any[]) => row.map(t => `${t.type}${t.orientation}`)));
+
+    // Check if player position or grid changed
+    const playerMoved = !this.lastPlayerPosition ||
+                        this.lastPlayerPosition.row !== player.gridPosition.row ||
+                        this.lastPlayerPosition.col !== player.gridPosition.col;
+    const gridChanged = this.lastGridHash !== gridHash;
+
+    if (playerMoved || gridChanged) {
+      const moves = turnManager.getObjectManager().getAvailableMoves(player);
+      this.cachedReachableTiles = findReachableTiles(state.grid, player.gridPosition, moves);
+      this.lastPlayerPosition = { ...player.gridPosition };
+      this.lastGridHash = gridHash;
     }
   }
 
@@ -208,12 +239,8 @@ export class CursorManager {
       return null;
     }
 
-    // Calculate reachable tiles
-    const moves = turnManager.getObjectManager().getAvailableMoves(player);
-    const reachable = findReachableTiles(state.grid, player.gridPosition, moves);
-
-    // Check if the hovered tile is reachable
-    const target = reachable.find(
+    // Use cached reachable tiles instead of recalculating
+    const target = this.cachedReachableTiles.find(
       (t) => t.position.row === gridRow && t.position.col === gridCol
     );
 
@@ -259,12 +286,14 @@ export class CursorManager {
       return "rotate";
     }
 
-    // Check if hovering over a reachable tile
+    // Check if hovering over a reachable tile (use cache from rotating position)
     const player = turnManager.getObjectManager().getPlayer();
     if (!player) {
       return "cancel";
     }
 
+    // In rotation mode, we need to recalculate from rotating position (not from player position)
+    // This is a special case that still needs findReachableTiles, but only in rotation mode
     const moves = turnManager.getObjectManager().getAvailableMoves(player);
     const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves);
 
@@ -296,12 +325,8 @@ export class CursorManager {
       return null;
     }
 
-    // Calculate reachable tiles
-    const moves = turnManager.getObjectManager().getAvailableMoves(player);
-    const reachable = findReachableTiles(state.grid, player.gridPosition, moves);
-
-    // Check if the hovered tile is reachable
-    const target = reachable.find(
+    // Use cached reachable tiles instead of recalculating
+    const target = this.cachedReachableTiles.find(
       (t) => t.position.row === gridRow && t.position.col === gridCol
     );
 
