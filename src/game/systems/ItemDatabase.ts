@@ -1,10 +1,11 @@
 import type { ItemDefinition } from "../types";
+import { logger } from "../utils/logger";
 
 export class ItemDatabase {
   private items: Map<string, ItemDefinition> = new Map();
 
   async load(path: string): Promise<void> {
-    console.log(`[ItemDatabase] Loading items from ${path}...`);
+    logger.debug(`[ItemDatabase] Loading items from ${path}...`);
     try {
       const response = await fetch(path);
       if (!response.ok) {

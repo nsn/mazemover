@@ -5,6 +5,7 @@ import type { PlotPosition } from "../types";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS } from "../config";
 import { findReachableTiles } from "./Pathfinding";
 import { isWallBlocking } from "./WallBump";
+import { logger } from "../utils/logger";
 
 // Centralized cursor definitions - easy to extend with new cursor types
 const CURSORS = {
@@ -60,14 +61,18 @@ export class CursorManager {
   }
 
   private updateReachableCache(state: any, turnManager: TurnManager): void {
+    console.time("[CursorCache] Update");
     const player = turnManager.getObjectManager().getPlayer();
     if (!player) {
       this.cachedReachableTiles = [];
+      console.timeEnd("[CursorCache] Update");
       return;
     }
 
+    console.time("[CursorCache] GridHash");
     // Create a simple hash of grid state (just check if grid reference changed)
     const gridHash = JSON.stringify(state.grid.map((row: any[]) => row.map(t => `${t.type}${t.orientation}`)));
+    console.timeEnd("[CursorCache] GridHash");
 
     // Check if player position or grid changed
     const playerMoved = !this.lastPlayerPosition ||
@@ -76,11 +81,13 @@ export class CursorManager {
     const gridChanged = this.lastGridHash !== gridHash;
 
     if (playerMoved || gridChanged) {
+      logger.debug("[CursorCache] Recalculating reachable tiles");
       const moves = turnManager.getObjectManager().getAvailableMoves(player);
       this.cachedReachableTiles = findReachableTiles(state.grid, player.gridPosition, moves);
       this.lastPlayerPosition = { ...player.gridPosition };
       this.lastGridHash = gridHash;
     }
+    console.timeEnd("[CursorCache] Update");
   }
 
   private determineCursorType(state: any, mousePos: any, turnManager: TurnManager): CursorType {
