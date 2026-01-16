@@ -35,7 +35,7 @@ export function drawMapObjects(
 
     // Player plays drop animation during start, idle when standing still
     // Enemies play idle animation
-    // Items use the "items" sprite atlas with their sprite name as anim
+    // Items use the "items" sprite atlas with their sprite name as frame
     // Others use frame 0
     let spriteConfig;
     let spriteName = obj.sprite;
@@ -47,7 +47,7 @@ export function drawMapObjects(
       spriteConfig = { anim: "idle", flipX: obj.flipX };
     } else if (obj.type === ObjectType.Item) {
       spriteName = "items";
-      spriteConfig = { anim: obj.sprite, flipX: obj.flipX };
+      spriteConfig = { frame: (k as any).getSprite("items").anims[obj.sprite], flipX: obj.flipX };
     } else {
       spriteConfig = { frame: 0, flipX: obj.flipX };
     }
