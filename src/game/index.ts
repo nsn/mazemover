@@ -25,6 +25,7 @@ import {
   drawStateMachineInfo,
   drawInventoryBackground,
   drawInventoryItems,
+  drawEquipmentBackground,
   clearUI,
 } from "./render/UIRenderer";
 import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject } from "./types";
@@ -1043,6 +1044,9 @@ export function render(): void {
   const skipButtonY = 360 / 2 + 80;
 
   logger.time("[Render] UI Setup");
+  // Draw equipment background
+  drawEquipmentBackground();
+
   // Draw inventory background
   drawInventoryBackground();
 

@@ -100,6 +100,7 @@ export class TurnManager {
       wallBumpTarget: null,
       currentLevel: STARTING_LEVEL,
       inventory: Array(10).fill(null),  // Initialize 10 empty inventory slots (5x2 grid)
+      equipment: Array(5).fill(null),  // Initialize 5 empty equipment slots: [Head, LeftHand, RightHand, Legs, Torso]
     };
 
     // Initialize state pattern

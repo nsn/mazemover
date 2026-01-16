@@ -75,6 +75,17 @@ export const INVENTORY = {
   PATCH_SIZE: 8,  // 9-patch border size
 }
 
+// Equipment Configuration
+export const EQUIPMENT = {
+  X: GRID_OFFSET_X + GRID_COLS * TILE_SIZE + (640 - (GRID_OFFSET_X + GRID_COLS * TILE_SIZE)) / 2,
+  Y: 100,
+  SLOTS_X: 5,
+  SLOTS_Y: 1,
+  SLOT_SIZE: 26,
+  SLOT_SPACING: 2,
+  PATCH_SIZE: 8,  // 9-patch border size
+}
+
 // Game Configuration
 export const STARTING_LEVEL = 10;  // Level the player starts at (counts down to 0)
 

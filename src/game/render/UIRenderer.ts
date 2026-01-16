@@ -1,7 +1,7 @@
 import { k } from "../../kaplayCtx";
 import { type TileInstance, type MapObject, type GameState, TileType, Direction, type ItemInstance } from "../types";
 import { TileFrames, BrickFrames } from "../assets";
-import { INVENTORY } from "../config";
+import { INVENTORY, EQUIPMENT } from "../config";
 import { type ItemDatabase } from "../systems/ItemDatabase";
 
 function getTileFrame(type: TileType, direction: Direction): number {
@@ -196,7 +196,7 @@ export function drawStateMachineInfo(state: GameState, player: MapObject | null)
  * @param padding Border padding (defaults to PATCH_SIZE)
  * @returns Object with x and y coordinates for the slot
  */
-export function slotPos(
+export function inventorySlotPos(
   slotCol: number,
   slotRow: number,
   padding: number = INVENTORY.PATCH_SIZE
@@ -204,6 +204,24 @@ export function slotPos(
   return {
     x: INVENTORY.X + slotCol * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) + padding,
     y: INVENTORY.Y + slotRow * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) + padding,
+  };
+}
+
+/**
+ * Calculates the position of an equipment slot
+ * @param slotCol Slot column index (0-based)
+ * @param slotRow Slot row index (0-based)
+ * @param padding Border padding (defaults to PATCH_SIZE)
+ * @returns Object with x and y coordinates for the slot
+ */
+export function equipmentSlotPos(
+  slotCol: number,
+  slotRow: number,
+  padding: number = EQUIPMENT.PATCH_SIZE
+): { x: number; y: number } {
+  return {
+    x: EQUIPMENT.X + slotCol * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) + padding,
+    y: EQUIPMENT.Y + slotRow * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) + padding,
   };
 }
 
@@ -224,11 +242,38 @@ export function drawInventoryBackground(): void {
 
   for (let i = 0; i < INVENTORY.SLOTS_X; i++) {
     for (let j = 0; j < INVENTORY.SLOTS_Y; j++) {
-      const pos = slotPos(i, j, INVENTORY.PATCH_SIZE);
+      const pos = inventorySlotPos(i, j, INVENTORY.PATCH_SIZE);
       k.add([
         k.sprite("inventoryslot"),
         k.pos(pos.x, pos.y),
         "inventorySlot",
+      ]);
+    }
+  }
+}
+
+/**
+ * Draws the equipment background sprite
+ */
+export function drawEquipmentBackground(): void {
+  const width = EQUIPMENT.SLOTS_X * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING + 2 * EQUIPMENT.PATCH_SIZE
+  const height = EQUIPMENT.SLOTS_Y * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING + 2 * EQUIPMENT.PATCH_SIZE
+  k.add([
+    k.sprite("9patch", {
+      width: width,
+      height: height,
+    }),
+    k.pos(EQUIPMENT.X, EQUIPMENT.Y),
+    "equipmentBackground",
+  ]);
+
+  for (let i = 0; i < EQUIPMENT.SLOTS_X; i++) {
+    for (let j = 0; j < EQUIPMENT.SLOTS_Y; j++) {
+      const pos = equipmentSlotPos(i, j, EQUIPMENT.PATCH_SIZE);
+      k.add([
+        k.sprite("inventoryslot"),
+        k.pos(pos.x, pos.y),
+        "equipmentSlot",
       ]);
     }
   }
@@ -253,7 +298,7 @@ export function drawInventoryItems(inventory: (ItemInstance | null)[], itemDatab
     // Calculate row and column from index (5 columns, 2 rows)
     const col = i % INVENTORY.SLOTS_X;
     const row = Math.floor(i / INVENTORY.SLOTS_X);
-    const pos = slotPos(col, row, INVENTORY.PATCH_SIZE);
+    const pos = inventorySlotPos(col, row, INVENTORY.PATCH_SIZE);
 
     // Draw item sprite at slot position (centered)
     k.add([
@@ -280,5 +325,7 @@ export function clearUI(): void {
   k.destroyAll("inventoryBackground");
   k.destroyAll("inventorySlot");
   k.destroyAll("inventoryItem");
+  k.destroyAll("equipmentBackground");
+  k.destroyAll("equipmentSlot");
   k.destroyAll("sagaText");
 }
