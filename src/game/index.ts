@@ -36,7 +36,7 @@ import {
 import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
-import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION, INVENTORY, EQUIPMENT } from "./config";
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION, INVENTORY, EQUIPMENT, DESCRIPTION } from "./config";
 import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
 import { executeCombat, checkForCombat } from "./systems/Combat";
 import { isWallBlocking, openWall } from "./systems/WallBump";
@@ -1062,6 +1062,15 @@ export function render(): void {
   // Draw description widget
   drawDescriptionBackground();
 
+  // TEST: Always draw some text to verify widget is visible
+  k.add([
+    k.text("Test Description Widget", { font: "saga", size: 10 }),
+    k.pos(DESCRIPTION.X + 12, DESCRIPTION.Y + 12),
+    k.color(255, 0, 0),
+    k.z(101),
+    "descriptionText",
+  ]);
+
   // Check for item hover and display description
   const mousePos = k.mousePos();
   let hoveredItemDef = null;
@@ -1079,6 +1088,7 @@ export function render(): void {
     if (mousePos.x >= pos.x && mousePos.x <= pos.x + INVENTORY.SLOT_SIZE &&
         mousePos.y >= pos.y && mousePos.y <= pos.y + INVENTORY.SLOT_SIZE) {
       hoveredItemDef = itemDatabase.getItem(item.definitionId);
+      logger.debug(`[Render] Hovering inventory item: ${item.definitionId}`, hoveredItemDef);
       break;
     }
   }
@@ -1098,6 +1108,7 @@ export function render(): void {
       if (mousePos.x >= pos.x && mousePos.x <= pos.x + EQUIPMENT.SLOT_SIZE &&
           mousePos.y >= pos.y && mousePos.y <= pos.y + EQUIPMENT.SLOT_SIZE) {
         hoveredItemDef = itemDatabase.getItem(item.definitionId);
+        logger.debug(`[Render] Hovering equipment item: ${item.definitionId}`, hoveredItemDef);
         break;
       }
     }
@@ -1105,6 +1116,7 @@ export function render(): void {
 
   // Draw item description if hovering over an item
   if (hoveredItemDef) {
+    logger.debug(`[Render] Drawing description for:`, hoveredItemDef);
     drawItemDescription(hoveredItemDef);
   }
 
