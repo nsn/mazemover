@@ -74,7 +74,7 @@ export interface GameState {
   wallBumpTarget: GridPosition | null;  // Target tile of current wall bump sequence
   currentLevel: number;  // Current dungeon level (counts down from STARTING_LEVEL to 0)
   inventory: (ItemInstance | null)[];  // Player inventory - array of item instances or null for empty slots
-  equipment: (ItemInstance | null)[];  // Player equipment - 5 slots: [Head, LeftHand, RightHand, Legs, Torso]
+  equipment: (ItemInstance | null)[];  // Player equipment - 5 slots: [0=Head, 1=LeftHand, 2=RightHand, 3=Legs, 4=Torso]
 }
 
 export const ObjectType = {

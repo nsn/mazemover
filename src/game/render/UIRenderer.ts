@@ -253,6 +253,26 @@ export function drawInventoryBackground(): void {
 }
 
 /**
+ * Maps equipment slot index to grid position in cross layout
+ * Layout:
+ *   . H .     (. = empty, H = Head)
+ *   L T R     (L = LeftHand, T = Torso, R = RightHand)
+ *   . G .     (G = leGs/Legs)
+ * @param slotIndex Equipment slot index (0-4)
+ * @returns Object with col and row for the grid position, or null if invalid
+ */
+export function getEquipmentSlotGridPos(slotIndex: number): { col: number; row: number } | null {
+  switch (slotIndex) {
+    case 0: return { col: 1, row: 0 }; // Head - top center
+    case 1: return { col: 0, row: 1 }; // LeftHand - middle left
+    case 2: return { col: 2, row: 1 }; // RightHand - middle right
+    case 3: return { col: 1, row: 2 }; // Legs - bottom center
+    case 4: return { col: 1, row: 1 }; // Torso - middle center
+    default: return null;
+  }
+}
+
+/**
  * Draws the equipment background sprite
  */
 export function drawEquipmentBackground(): void {
@@ -267,15 +287,17 @@ export function drawEquipmentBackground(): void {
     "equipmentBackground",
   ]);
 
-  for (let i = 0; i < EQUIPMENT.SLOTS_X; i++) {
-    for (let j = 0; j < EQUIPMENT.SLOTS_Y; j++) {
-      const pos = equipmentSlotPos(i, j, EQUIPMENT.PATCH_SIZE);
-      k.add([
-        k.sprite("inventoryslot"),
-        k.pos(pos.x, pos.y),
-        "equipmentSlot",
-      ]);
-    }
+  // Draw only the 5 equipment slots in cross pattern
+  for (let slotIndex = 0; slotIndex < 5; slotIndex++) {
+    const gridPos = getEquipmentSlotGridPos(slotIndex);
+    if (!gridPos) continue;
+
+    const pos = equipmentSlotPos(gridPos.col, gridPos.row, EQUIPMENT.PATCH_SIZE);
+    k.add([
+      k.sprite("inventoryslot"),
+      k.pos(pos.x, pos.y),
+      "equipmentSlot",
+    ]);
   }
 }
 

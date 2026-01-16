@@ -79,8 +79,8 @@ export const INVENTORY = {
 export const EQUIPMENT = {
   X: GRID_OFFSET_X + GRID_COLS * TILE_SIZE + (640 - (GRID_OFFSET_X + GRID_COLS * TILE_SIZE)) / 2,
   Y: 100,
-  SLOTS_X: 5,
-  SLOTS_Y: 1,
+  SLOTS_X: 3,
+  SLOTS_Y: 3,
   SLOT_SIZE: 26,
   SLOT_SPACING: 2,
   PATCH_SIZE: 8,  // 9-patch border size
