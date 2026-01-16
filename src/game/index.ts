@@ -431,7 +431,7 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
       break;
     }
 
-    objectManager.checkInteractions(player, previousPosition);
+    objectManager.checkInteractions(player, previousPosition, turnManager.getState().inventory);
     logger.debug(`[movePlayerAlongPath] Step ${i} complete`);
   }
 

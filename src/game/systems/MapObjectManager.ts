@@ -1,4 +1,4 @@
-import { ObjectType, type MapObject, type GridPosition, type PlotPosition, Direction, type MapObjectCallback, AIType, type Stats } from "../types";
+import { ObjectType, type MapObject, type GridPosition, type PlotPosition, Direction, type MapObjectCallback, AIType, type Stats, type ItemInstance } from "../types";
 import { GRID_ROWS, GRID_COLS } from "../config";
 import { EnemyDatabase } from "./EnemyDatabase";
 import { ItemDatabase } from "./ItemDatabase";
@@ -141,26 +141,74 @@ export class MapObjectManager {
     return this.getAllObjects().find(obj => obj.type === ObjectType.Exit);
   }
 
-  checkInteractions(mob: MapObject, previousPosition: GridPosition): void {
+  checkInteractions(mob: MapObject, previousPosition: GridPosition, inventory?: (ItemInstance | null)[]): void {
     const isPlayer = mob.type === ObjectType.Player;
     const currentPos = mob.gridPosition;
-    
+
     for (const obj of this.getAllObjects()) {
       if (obj.id === mob.id) continue;
-      
-      const wasOnTile = obj.gridPosition.row === previousPosition.row && 
+
+      const wasOnTile = obj.gridPosition.row === previousPosition.row &&
                         obj.gridPosition.col === previousPosition.col;
-      const isOnTile = obj.gridPosition.row === currentPos.row && 
+      const isOnTile = obj.gridPosition.row === currentPos.row &&
                        obj.gridPosition.col === currentPos.col;
-      
+
       if (wasOnTile && !isOnTile && obj.onExit) {
         obj.onExit(mob, isPlayer);
       }
-      
+
       if (!wasOnTile && isOnTile && obj.onEnter) {
         obj.onEnter(mob, isPlayer);
       }
+
+      // Handle item pickup for player
+      if (isPlayer && isOnTile && obj.type === ObjectType.Item && inventory) {
+        this.pickupItem(obj, inventory);
+      }
     }
+  }
+
+  /**
+   * Attempts to pick up an item and add it to the inventory
+   * @param item The item object to pick up
+   * @param inventory The player's inventory array
+   * @returns true if item was picked up, false if inventory is full
+   */
+  private pickupItem(item: MapObject, inventory: (ItemInstance | null)[]): boolean {
+    // Find first empty slot
+    const emptySlotIndex = inventory.findIndex(slot => slot === null);
+
+    if (emptySlotIndex === -1) {
+      console.log("[MapObjectManager] Inventory is full, cannot pick up item:", item.name);
+      return false;
+    }
+
+    // Get item definition to create ItemInstance
+    const itemId = (item as any).itemId as string;
+    if (!itemId) {
+      console.error("[MapObjectManager] Item has no itemId, cannot pick up:", item.name);
+      return false;
+    }
+
+    const itemDef = this.itemDatabase.getItem(itemId);
+    if (!itemDef) {
+      console.error("[MapObjectManager] Item definition not found for:", itemId);
+      return false;
+    }
+
+    // Create item instance and add to inventory
+    const itemInstance: ItemInstance = {
+      definitionId: itemId,
+      remainingCharges: itemDef.charges,
+    };
+
+    inventory[emptySlotIndex] = itemInstance;
+    console.log(`[MapObjectManager] Picked up ${item.name} and placed in slot ${emptySlotIndex}`);
+
+    // Remove item from map
+    this.destroyObject(item);
+
+    return true;
   }
 
   getObject(id: number): MapObject | undefined {

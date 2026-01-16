@@ -99,6 +99,7 @@ export class TurnManager {
       wallBumpCount: 0,
       wallBumpTarget: null,
       currentLevel: STARTING_LEVEL,
+      inventory: Array(10).fill(null),  // Initialize 10 empty inventory slots (5x2 grid)
     };
 
     // Initialize state pattern

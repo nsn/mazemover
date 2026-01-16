@@ -73,6 +73,7 @@ export interface GameState {
   wallBumpCount: number;  // Number of consecutive wall bumps
   wallBumpTarget: GridPosition | null;  // Target tile of current wall bump sequence
   currentLevel: number;  // Current dungeon level (counts down from STARTING_LEVEL to 0)
+  inventory: (ItemInstance | null)[];  // Player inventory - array of item instances or null for empty slots
 }
 
 export const ObjectType = {
