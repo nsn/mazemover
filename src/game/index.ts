@@ -1019,9 +1019,12 @@ function drawRotationOverlay(
 }
 
 export function render(): void {
+  console.time("[Render] Total");
   if (isAnimating) return;
 
+  console.time("[Render] clearAll");
   clearAll();
+  console.timeEnd("[Render] clearAll");
 
   const state = turnManager.getState();
   const mapObjects = turnManager.getMapObjects();
@@ -1114,6 +1117,8 @@ export function render(): void {
   // Draw debug info
   drawDebugInfo();
   drawStateMachineInfo(state, player || null);
+
+  console.timeEnd("[Render] Total");
 }
 
 export function getGameState() {

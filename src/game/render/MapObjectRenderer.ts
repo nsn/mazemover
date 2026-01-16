@@ -18,6 +18,7 @@ export function drawMapObjects(
   isInStartLevelSequence: boolean = false,
   revealedTiles: Set<string> = new Set()
 ): void {
+  console.time("[drawMapObjects] Total");
   const sorted = [...objects].sort((a, b) => a.renderOrder - b.renderOrder);
 
   for (const obj of sorted) {
@@ -68,6 +69,7 @@ export function drawMapObjects(
 
     k.add(components);
   }
+  console.timeEnd("[drawMapObjects] Total");
 }
 
 /**
