@@ -338,6 +338,10 @@ export class MapObjectManager {
     return this.getAllObjects().find(obj => obj.type === ObjectType.Player);
   }
 
+  getItemDatabase(): ItemDatabase {
+    return this.itemDatabase;
+  }
+
   /**
    * Randomly spawns items on empty tiles
    * @param spawnChance Probability (0-1) that each empty tile will have an item

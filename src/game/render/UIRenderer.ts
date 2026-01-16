@@ -1,7 +1,8 @@
 import { k } from "../../kaplayCtx";
-import { type TileInstance, type MapObject, type GameState, TileType, Direction } from "../types";
+import { type TileInstance, type MapObject, type GameState, TileType, Direction, type ItemInstance } from "../types";
 import { TileFrames, BrickFrames } from "../assets";
 import { INVENTORY } from "../config";
+import { type ItemDatabase } from "../systems/ItemDatabase";
 
 function getTileFrame(type: TileType, direction: Direction): number {
   // Get base column for tile type
@@ -234,6 +235,38 @@ export function drawInventoryBackground(): void {
 }
 
 /**
+ * Draws inventory items in their slots
+ * @param inventory Array of item instances or null for empty slots
+ * @param itemDatabase ItemDatabase to get item definitions
+ */
+export function drawInventoryItems(inventory: (ItemInstance | null)[], itemDatabase: ItemDatabase): void {
+  for (let i = 0; i < inventory.length; i++) {
+    const item = inventory[i];
+    if (!item) continue;
+
+    const itemDef = itemDatabase.getItem(item.definitionId);
+    if (!itemDef) {
+      console.error(`[UIRenderer] Item definition not found: ${item.definitionId}`);
+      continue;
+    }
+
+    // Calculate row and column from index (5 columns, 2 rows)
+    const col = i % INVENTORY.SLOTS_X;
+    const row = Math.floor(i / INVENTORY.SLOTS_X);
+    const pos = slotPos(col, row, INVENTORY.PATCH_SIZE);
+
+    // Draw item sprite at slot position (centered)
+    k.add([
+      k.sprite(itemDef.sprite, { frame: itemDef.frame }),
+      k.pos(pos.x + INVENTORY.SLOT_SIZE / 2, pos.y + INVENTORY.SLOT_SIZE / 2),
+      k.anchor("center"),
+      k.z(1),
+      "inventoryItem",
+    ]);
+  }
+}
+
+/**
  * Clears all UI elements
  */
 export function clearUI(): void {
@@ -246,5 +279,6 @@ export function clearUI(): void {
   k.destroyAll("stateMachineInfo");
   k.destroyAll("inventoryBackground");
   k.destroyAll("inventorySlot");
+  k.destroyAll("inventoryItem");
   k.destroyAll("sagaText");
 }

@@ -24,6 +24,7 @@ import {
   drawLevelInfo,
   drawStateMachineInfo,
   drawInventoryBackground,
+  drawInventoryItems,
   clearUI,
 } from "./render/UIRenderer";
 import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject } from "./types";
@@ -1044,6 +1045,10 @@ export function render(): void {
   logger.time("[Render] UI Setup");
   // Draw inventory background
   drawInventoryBackground();
+
+  // Draw inventory items
+  const itemDatabase = turnManager.getObjectManager().getItemDatabase();
+  drawInventoryItems(state.inventory, itemDatabase);
 
   // Draw level info
   drawLevelInfo(state.currentLevel);
