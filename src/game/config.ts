@@ -87,4 +87,4 @@ export const LOG_LEVEL = {
   DEBUG: 4,
 } as const;
 
-export const CURRENT_LOG_LEVEL = LOG_LEVEL.DEBUG; // Change to LOG_LEVEL.NONE to disable all logging
+export const CURRENT_LOG_LEVEL = LOG_LEVEL.ERROR; // Change to LOG_LEVEL.NONE to disable all logging
