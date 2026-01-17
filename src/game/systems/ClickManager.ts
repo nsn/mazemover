@@ -141,19 +141,26 @@ export class ClickManager {
       return true;
     }
 
-    // Check if clicked on a reachable tile
+    // Check if clicked on a reachable tile (but NOT the rotating tile itself)
     const player = turnManager.getObjectManager().getPlayer();
     if (player) {
-      const moves = turnManager.getObjectManager().getAvailableMoves(player);
-      const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves);
-      const target = reachable.find(
-        (t) => t.position.row === gridPos.row && t.position.col === gridPos.col
-      );
+      // Don't allow movement to the rotating tile position - clicking it should only rotate
+      const isClickingRotatingTile =
+        gridPos.row === state.rotatingTilePosition.row &&
+        gridPos.col === state.rotatingTilePosition.col;
 
-      if (target && target.path.length > 1) {
-        console.log("[ClickManager] Confirming rotation and moving to:", target.position);
-        this.callbacks.onConfirmRotationAndMove(target.path);
-        return true;
+      if (!isClickingRotatingTile) {
+        const moves = turnManager.getObjectManager().getAvailableMoves(player);
+        const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves);
+        const target = reachable.find(
+          (t) => t.position.row === gridPos.row && t.position.col === gridPos.col
+        );
+
+        if (target && target.path.length > 1) {
+          console.log("[ClickManager] Confirming rotation and moving to:", target.position);
+          this.callbacks.onConfirmRotationAndMove(target.path);
+          return true;
+        }
       }
     }
 
