@@ -6,7 +6,6 @@ import { findReachableTiles } from "./Pathfinding";
 import { isWallBlocking } from "./WallBump";
 import {
   screenToGrid,
-  getPlotAtPosition,
   isMouseOverPlayer,
   isMouseOverPreviewTile,
 } from "./PositionUtils";
@@ -164,7 +163,7 @@ export class ClickManager {
     return true;
   }
 
-  private handleTilePlacementClick(mousePos: { x: number; y: number }, turnManager: TurnManager): boolean {
+  private handleTilePlacementClick(mousePos: { x: number; y: number }, _turnManager: TurnManager): boolean {
     // Check if clicking on preview tile (rotate)
     if (isMouseOverPreviewTile(mousePos.x, mousePos.y, PREVIEW_X, PREVIEW_Y)) {
       console.log("[ClickManager] Preview tile hit - rotating");
@@ -182,13 +181,15 @@ export class ClickManager {
       }
     }
 
-    // Check if clicking on a plot
-    const plots = turnManager.getPlots();
-    const plot = getPlotAtPosition(mousePos.x, mousePos.y, plots);
-    if (plot) {
-      console.log("[ClickManager] Plot hit:", plot);
-      this.callbacks.onSelectPlot(plot);
-      return true;
+    // Check if clicking on a plot (use rendered plot objects)
+    const plotObjects = k.get("plot");
+    for (const plotObj of plotObjects) {
+      if ((plotObj as any).hasPoint && (plotObj as any).hasPoint(mousePos)) {
+        const plotData = (plotObj as any).plotData as PlotPosition;
+        console.log("[ClickManager] Plot hit:", plotData);
+        this.callbacks.onSelectPlot(plotData);
+        return true;
+      }
     }
 
     // Background click - cancel placement
@@ -248,14 +249,16 @@ export class ClickManager {
     }
 
     // Check if clicking on a plot (enter placement)
-    if (state.currentTile) {
-      const plots = turnManager.getPlots();
-      const plot = getPlotAtPosition(mousePos.x, mousePos.y, plots);
-      if (plot && turnManager.canPlaceTile()) {
-        console.log("[ClickManager] Plot hit - entering placement:", plot);
-        this.callbacks.onEnterTilePlacement();
-        this.callbacks.onSelectPlot(plot);
-        return true;
+    if (state.currentTile && turnManager.canPlaceTile()) {
+      const plotObjects = k.get("plot");
+      for (const plotObj of plotObjects) {
+        if ((plotObj as any).hasPoint && (plotObj as any).hasPoint(mousePos)) {
+          const plotData = (plotObj as any).plotData as PlotPosition;
+          console.log("[ClickManager] Plot hit - entering placement:", plotData);
+          this.callbacks.onEnterTilePlacement();
+          this.callbacks.onSelectPlot(plotData);
+          return true;
+        }
       }
     }
 

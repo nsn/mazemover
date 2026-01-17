@@ -6,7 +6,6 @@ import { findReachableTiles } from "./Pathfinding";
 import { isWallBlocking } from "./WallBump";
 import {
   screenToGrid,
-  getPlotAtPosition,
   getEnemyAtPosition,
   isMouseOverPreviewTile,
 } from "./PositionUtils";
@@ -37,6 +36,19 @@ export class CursorManager {
 
   constructor() {
     this.currentCursorType = "default";
+  }
+
+  /**
+   * Check if mouse is over any rendered plot object
+   */
+  private isMouseOverPlot(mousePos: { x: number; y: number }): boolean {
+    const plotObjects = k.get("plot");
+    for (const plotObj of plotObjects) {
+      if ((plotObj as any).hasPoint && (plotObj as any).hasPoint(mousePos)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   initialize(): void {
@@ -75,9 +87,7 @@ export class CursorManager {
       }
 
       // Check if hovering over a plot (place cursor)
-      const plots = turnManager.getPlots();
-      const plot = getPlotAtPosition(mousePos.x, mousePos.y, plots);
-      if (plot && state.currentTile) {
+      if (state.currentTile && this.isMouseOverPlot(mousePos)) {
         return "place";
       }
 
@@ -89,10 +99,8 @@ export class CursorManager {
       const player = turnManager.getObjectManager().getPlayer();
       if (!player || player.movesRemaining <= 0) {
         // Check if hovering over plots (can still place tiles)
-        if (state.currentTile) {
-          const plots = turnManager.getPlots();
-          const plot = getPlotAtPosition(mousePos.x, mousePos.y, plots);
-          if (plot) return "place";
+        if (state.currentTile && this.isMouseOverPlot(mousePos)) {
+          return "place";
         }
         return "default";
       }
@@ -100,10 +108,8 @@ export class CursorManager {
       const gridPos = screenToGrid(mousePos.x, mousePos.y);
       if (!gridPos) {
         // Not over grid, check if over plots
-        if (state.currentTile) {
-          const plots = turnManager.getPlots();
-          const plot = getPlotAtPosition(mousePos.x, mousePos.y, plots);
-          if (plot) return "place";
+        if (state.currentTile && this.isMouseOverPlot(mousePos)) {
+          return "place";
         }
         return "default";
       }
@@ -131,10 +137,8 @@ export class CursorManager {
       }
 
       // Check if over plots
-      if (state.currentTile) {
-        const plots = turnManager.getPlots();
-        const plot = getPlotAtPosition(mousePos.x, mousePos.y, plots);
-        if (plot) return "place";
+      if (state.currentTile && this.isMouseOverPlot(mousePos)) {
+        return "place";
       }
     }
 
