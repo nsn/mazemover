@@ -36,7 +36,7 @@ import {
 import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
-import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION, INVENTORY, EQUIPMENT, DESCRIPTION } from "./config";
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION, INVENTORY, EQUIPMENT } from "./config";
 import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
 import { executeCombat, checkForCombat } from "./systems/Combat";
 import { isWallBlocking, openWall } from "./systems/WallBump";
@@ -949,6 +949,59 @@ export function initializeGameHandlers(
   k.onDraw(() => {
     cm.update(tm);
   });
+
+  // Register hover detection for item descriptions (runs every frame)
+  k.onDraw(() => {
+    if (isAnimating) return;
+
+    const state = tm.getState();
+    const mousePos = k.mousePos();
+    const itemDatabase = tm.getObjectManager().getItemDatabase();
+    let hoveredItemDef = null;
+
+    // Check inventory slots for hover
+    for (let i = 0; i < state.inventory.length; i++) {
+      const item = state.inventory[i];
+      if (!item) continue;
+
+      const col = i % INVENTORY.SLOTS_X;
+      const row = Math.floor(i / INVENTORY.SLOTS_X);
+      const pos = inventorySlotPos(col, row, INVENTORY.PATCH_SIZE);
+
+      if (mousePos.x >= pos.x && mousePos.x <= pos.x + INVENTORY.SLOT_SIZE &&
+          mousePos.y >= pos.y && mousePos.y <= pos.y + INVENTORY.SLOT_SIZE) {
+        hoveredItemDef = itemDatabase.getItem(item.definitionId);
+        break;
+      }
+    }
+
+    // Check equipment slots for hover
+    if (!hoveredItemDef) {
+      for (let i = 0; i < state.equipment.length; i++) {
+        const item = state.equipment[i];
+        if (!item) continue;
+
+        const gridPos = getEquipmentSlotGridPos(i);
+        if (!gridPos) continue;
+
+        const pos = equipmentSlotPos(gridPos.col, gridPos.row, EQUIPMENT.PATCH_SIZE);
+
+        if (mousePos.x >= pos.x && mousePos.x <= pos.x + EQUIPMENT.SLOT_SIZE &&
+            mousePos.y >= pos.y && mousePos.y <= pos.y + EQUIPMENT.SLOT_SIZE) {
+          hoveredItemDef = itemDatabase.getItem(item.definitionId);
+          break;
+        }
+      }
+    }
+
+    // Clear previous description text
+    k.destroyAll("descriptionText");
+
+    // Draw item description if hovering over an item
+    if (hoveredItemDef) {
+      drawItemDescription(hoveredItemDef);
+    }
+  });
 }
 
 function clearAll(): void {
@@ -1026,13 +1079,11 @@ function drawRotationOverlay(
 }
 
 export function render(): void {
-  console.log("[RENDER] Render called at", Date.now());
   if (isAnimating) return;
 
   clearAll();
 
   const state = turnManager.getState();
-  console.log("[RENDER] State loaded, inventory items:", state.inventory.filter(i => i !== null).length);
   const mapObjects = turnManager.getMapObjects();
   const player = turnManager.getObjectManager().getPlayer();
 
@@ -1052,80 +1103,8 @@ export function render(): void {
   const itemDatabase = turnManager.getObjectManager().getItemDatabase();
   drawInventoryItems(state.inventory, itemDatabase);
 
-  // Draw description widget
+  // Draw description widget background (text will be drawn by onDraw callback)
   drawDescriptionBackground();
-
-  // TEST: Always draw some text to verify widget is visible
-  k.add([
-    k.text("Test Description Widget", { font: "saga", size: 10 }),
-    k.pos(DESCRIPTION.X + 12, DESCRIPTION.Y + 12),
-    k.color(255, 0, 0),
-    k.z(101),
-    "descriptionText",
-  ]);
-
-  // Check for item hover and display description
-  const mousePos = k.mousePos();
-  console.log("[HOVER] Mouse position:", mousePos.x, mousePos.y);
-  let hoveredItemDef = null;
-
-  // Debug: Log inventory state once per second
-  if (Math.floor(k.time()) !== Math.floor(k.time() - k.dt())) {
-    const nonNullItems = state.inventory.filter(item => item !== null);
-    console.log(`[Inventory Debug] Items in inventory: ${nonNullItems.length}`, nonNullItems);
-  }
-
-  console.log("[HOVER] Checking", state.inventory.length, "inventory slots...");
-
-  // Check inventory slots for hover
-  for (let i = 0; i < state.inventory.length; i++) {
-    const item = state.inventory[i];
-    if (!item) continue;
-
-    const col = i % INVENTORY.SLOTS_X;
-    const row = Math.floor(i / INVENTORY.SLOTS_X);
-    const pos = inventorySlotPos(col, row, INVENTORY.PATCH_SIZE);
-
-    // Debug: Log slot bounds when mouse is near
-    if (Math.abs(mousePos.x - pos.x) < 50 && Math.abs(mousePos.y - pos.y) < 50) {
-      console.log(`[Hover Debug] Slot ${i}: mouse=(${mousePos.x.toFixed(0)},${mousePos.y.toFixed(0)}) bounds=(${pos.x},${pos.y})-(${pos.x + INVENTORY.SLOT_SIZE},${pos.y + INVENTORY.SLOT_SIZE})`);
-    }
-
-    // Check if mouse is over this slot
-    if (mousePos.x >= pos.x && mousePos.x <= pos.x + INVENTORY.SLOT_SIZE &&
-        mousePos.y >= pos.y && mousePos.y <= pos.y + INVENTORY.SLOT_SIZE) {
-      hoveredItemDef = itemDatabase.getItem(item.definitionId);
-      logger.debug(`[Render] Hovering inventory item: ${item.definitionId}`, hoveredItemDef);
-      break;
-    }
-  }
-
-  // Check equipment slots for hover
-  if (!hoveredItemDef) {
-    for (let i = 0; i < state.equipment.length; i++) {
-      const item = state.equipment[i];
-      if (!item) continue;
-
-      const gridPos = getEquipmentSlotGridPos(i);
-      if (!gridPos) continue;
-
-      const pos = equipmentSlotPos(gridPos.col, gridPos.row, EQUIPMENT.PATCH_SIZE);
-
-      // Check if mouse is over this slot
-      if (mousePos.x >= pos.x && mousePos.x <= pos.x + EQUIPMENT.SLOT_SIZE &&
-          mousePos.y >= pos.y && mousePos.y <= pos.y + EQUIPMENT.SLOT_SIZE) {
-        hoveredItemDef = itemDatabase.getItem(item.definitionId);
-        logger.debug(`[Render] Hovering equipment item: ${item.definitionId}`, hoveredItemDef);
-        break;
-      }
-    }
-  }
-
-  // Draw item description if hovering over an item
-  if (hoveredItemDef) {
-    logger.debug(`[Render] Drawing description for:`, hoveredItemDef);
-    drawItemDescription(hoveredItemDef);
-  }
 
   // Draw level info
   drawLevelInfo(state.currentLevel);

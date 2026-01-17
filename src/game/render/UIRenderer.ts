@@ -356,8 +356,6 @@ export function drawItemDescription(itemDef: ItemDefinition): void {
   const x = DESCRIPTION.X + DESCRIPTION.PADDING + DESCRIPTION.PATCH_SIZE;
   const y = DESCRIPTION.Y + DESCRIPTION.PADDING + DESCRIPTION.PATCH_SIZE;
 
-  console.log(`[drawItemDescription] Drawing at x=${x}, y=${y}`, itemDef);
-
   // Line 1: Item name
   k.add([
     k.text(itemDef.name, { font: "saga", size: 12 }),
