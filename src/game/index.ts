@@ -947,9 +947,7 @@ export function initializeGameHandlers(
 
   // Register cursor update callback
   k.onDraw(() => {
-    logger.time("[Frame] CursorUpdate");
     cm.update(tm);
-    logger.timeEnd("[Frame] CursorUpdate");
   });
 }
 
