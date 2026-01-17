@@ -287,14 +287,29 @@ export function drawEquipmentBackground(): void {
     "equipmentBackground",
   ]);
 
-  // Draw only the 5 equipment slots in cross pattern
+  // Draw only the 5 equipment slots in cross pattern (default state)
+  drawEquipmentSlots([]);
+}
+
+/**
+ * Draws equipment slots with optional highlighting
+ * @param highlightedSlots Array of slot indices to highlight (frame 1)
+ */
+export function drawEquipmentSlots(highlightedSlots: number[]): void {
+  // Clear existing slots
+  k.destroyAll("equipmentSlot");
+
+  // Draw the 5 equipment slots in cross pattern
   for (let slotIndex = 0; slotIndex < 5; slotIndex++) {
     const gridPos = getEquipmentSlotGridPos(slotIndex);
     if (!gridPos) continue;
 
     const pos = equipmentSlotPos(gridPos.col, gridPos.row, EQUIPMENT.PATCH_SIZE);
+    const isHighlighted = highlightedSlots.includes(slotIndex);
+    const frame = isHighlighted ? 1 : 0; // Frame 0 = default, Frame 1 = highlighted
+
     k.add([
-      k.sprite("inventoryslot"),
+      k.sprite("inventoryslot", { frame }),
       k.pos(pos.x, pos.y),
       "equipmentSlot",
     ]);

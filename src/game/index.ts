@@ -27,12 +27,13 @@ import {
   drawInventoryItems,
   drawEquipmentBackground,
   drawEquipmentItems,
+  drawEquipmentSlots,
   drawDescriptionBackground,
   drawItemDescription,
   clearUI,
 } from "./render/UIRenderer";
 import { getInventoryItemAtPosition, getEquipmentItemAtPosition } from "./systems/PositionUtils";
-import { equipItemFromInventory, unequipItemToInventory, applyEquipmentBonuses } from "./systems/EquipmentManager";
+import { equipItemFromInventory, unequipItemToInventory, applyEquipmentBonuses, getOccupiedSlots } from "./systems/EquipmentManager";
 import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
@@ -46,6 +47,7 @@ let turnManager: TurnManager;
 let clickManager: ClickManager;
 let isAnimating = false;
 let lastHoveredItemId: string | null = null;
+let lastHighlightedSlots: number[] = [];
 
 async function handleClick(): Promise<void> {
   const pos = k.mousePos();
@@ -813,16 +815,27 @@ export function initializeGameHandlers(
         lastHoveredItemId = null;
         k.destroyAll("descriptionText");
       }
+      if (lastHighlightedSlots.length > 0) {
+        lastHighlightedSlots = [];
+        drawEquipmentSlots([]);
+      }
       return;
     }
 
     const itemDatabase = tm.getObjectManager().getItemDatabase();
     let hoveredItemId: string | null = null;
+    let highlightedSlots: number[] = [];
 
     // Check inventory for hover using shared utility
     const inventoryItem = getInventoryItemAtPosition(mousePos.x, mousePos.y, tm);
     if (inventoryItem) {
       hoveredItemId = inventoryItem.item.definitionId;
+
+      // Determine which equipment slots should be highlighted
+      const itemDef = itemDatabase.getItem(inventoryItem.item.definitionId);
+      if (itemDef) {
+        highlightedSlots = getOccupiedSlots(itemDef);
+      }
     }
 
     // Check equipment for hover using shared utility
@@ -831,6 +844,15 @@ export function initializeGameHandlers(
       if (equipmentItem) {
         hoveredItemId = equipmentItem.item.definitionId;
       }
+    }
+
+    // Update equipment slot highlighting if changed
+    const slotsChanged = highlightedSlots.length !== lastHighlightedSlots.length ||
+      !highlightedSlots.every((slot, i) => slot === lastHighlightedSlots[i]);
+
+    if (slotsChanged) {
+      lastHighlightedSlots = highlightedSlots;
+      drawEquipmentSlots(highlightedSlots);
     }
 
     // Only update description if hovered item changed
@@ -857,6 +879,7 @@ function clearAll(): void {
   clearUI();
   k.destroyAll("rotationOverlay");
   lastHoveredItemId = null; // Reset hover state so description updates after render
+  lastHighlightedSlots = []; // Reset equipment slot highlights
 }
 
 async function executePushWithAnimation(): Promise<void> {

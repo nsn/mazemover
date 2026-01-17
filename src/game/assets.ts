@@ -30,7 +30,10 @@ export async function loadAssets(): Promise<void> {
     sliceY: 6
   });
 
-  await k.loadSprite("inventoryslot", "/inventoryslot.png")
+  await k.loadSprite("inventoryslot", "/inventoryslot.png", {
+    sliceX: 3,
+    sliceY: 1
+  });
 
   await k.loadSprite("9patch", "/9patch.png", {
     slice9: {
