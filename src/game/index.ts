@@ -1027,16 +1027,10 @@ function drawRotationOverlay(
   }
 }
 
-let renderCallCount = 0;
 export function render(): void {
-  renderCallCount++;
-  logger.debug(`[Render] Call #${renderCallCount}`);
-  logger.time("[Render] Total");
   if (isAnimating) return;
 
-  logger.time("[Render] clearAll");
   clearAll();
-  logger.timeEnd("[Render] clearAll");
 
   const state = turnManager.getState();
   const mapObjects = turnManager.getMapObjects();
@@ -1048,7 +1042,6 @@ export function render(): void {
   const skipButtonX = GRID_OFFSET_X + GRID_COLS * TILE_SIZE + TILE_SIZE * 3;
   const skipButtonY = 360 / 2 + 80;
 
-  logger.time("[Render] UI Setup");
   // Draw equipment background
   drawEquipmentBackground();
 
@@ -1136,27 +1129,18 @@ export function render(): void {
   if (player) {
     drawPlayerStats(player, statsX, statsY);
   }
-  logger.timeEnd("[Render] UI Setup");
 
-  logger.time("[Render] Main Scene");
   if (state.turnOwner === TurnOwner.Player) {
     if (state.playerPhase === PlayerPhase.RotatingTile) {
       // Rotation mode rendering
-      logger.time("[Render] drawGrid");
       drawGridWithOverlay(state.grid, null, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360, state.isInStartLevelSequence, state.revealedTiles);
-      logger.timeEnd("[Render] drawGrid");
-
-      logger.time("[Render] drawDecay");
       drawDecayOverlay(state.grid, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
-      logger.timeEnd("[Render] drawDecay");
 
       // Draw darkening overlay on non-active tiles
       if (state.rotatingTilePosition && player) {
-        logger.time("[Render] rotationOverlay");
         const moves = turnManager.getObjectManager().getAvailableMoves(player);
         const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves);
         drawRotationOverlay(state.rotatingTilePosition, reachable, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
-        logger.timeEnd("[Render] rotationOverlay");
       }
 
       drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
@@ -1165,13 +1149,8 @@ export function render(): void {
       }
       drawSkipButton(skipButtonX, skipButtonY);
     } else if (state.playerPhase === PlayerPhase.TilePlacement && state.currentTile) {
-      logger.time("[Render] drawGrid");
       drawGridWithOverlay(state.grid, state.selectedPlot, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360, state.isInStartLevelSequence, state.revealedTiles);
-      logger.timeEnd("[Render] drawGrid");
-
-      logger.time("[Render] drawDecay");
       drawDecayOverlay(state.grid, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
-      logger.timeEnd("[Render] drawDecay");
 
       drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
       const plots = turnManager.getPlots();
@@ -1183,13 +1162,8 @@ export function render(): void {
       }
       drawSkipButton(skipButtonX, skipButtonY);
     } else {
-      logger.time("[Render] drawGrid");
       drawGridWithOverlay(state.grid, null, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360, state.isInStartLevelSequence, state.revealedTiles);
-      logger.timeEnd("[Render] drawGrid");
-
-      logger.time("[Render] drawDecay");
       drawDecayOverlay(state.grid, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
-      logger.timeEnd("[Render] drawDecay");
 
       if (isMovementMode) {
         drawReachableTiles(reachableTiles, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
@@ -1204,13 +1178,8 @@ export function render(): void {
     }
   } else {
     // Enemy turn - still show plots and tile preview
-    logger.time("[Render] drawGrid");
     drawGridWithOverlay(state.grid, null, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360, state.isInStartLevelSequence, state.revealedTiles);
-    logger.timeEnd("[Render] drawGrid");
-
-    logger.time("[Render] drawDecay");
     drawDecayOverlay(state.grid, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
-    logger.timeEnd("[Render] drawDecay");
 
     drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
 
@@ -1221,13 +1190,10 @@ export function render(): void {
       drawPlots(plots, null, state.playerPhase, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE);
     }
   }
-  logger.timeEnd("[Render] Main Scene");
 
   // Draw debug info
   drawDebugInfo();
   drawStateMachineInfo(state, player || null);
-
-  logger.timeEnd("[Render] Total");
 }
 
 export function getGameState() {
