@@ -2,6 +2,7 @@ import { k } from "../kaplayCtx";
 import { TurnManager } from "./systems/TurnManager";
 import { InputController } from "./systems/InputController";
 import { CursorManager } from "./systems/CursorManager";
+import { ClickManager, type ClickCallbacks } from "./systems/ClickManager";
 import { logger } from "./utils/logger";
 import {
   drawPlots,
@@ -13,7 +14,6 @@ import {
 } from "./render/GridRenderer";
 import {
   drawMapObjects,
-  drawReachableTiles,
   clearMapObjects,
 } from "./render/MapObjectRenderer";
 import {
@@ -28,249 +28,32 @@ import {
   drawEquipmentBackground,
   drawDescriptionBackground,
   drawItemDescription,
-  getEquipmentSlotGridPos,
-  inventorySlotPos,
-  equipmentSlotPos,
   clearUI,
 } from "./render/UIRenderer";
+import { getInventoryItemAtPosition, getEquipmentItemAtPosition } from "./systems/PositionUtils";
 import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
-import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION, INVENTORY, EQUIPMENT } from "./config";
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION } from "./config";
 import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
 import { executeCombat, checkForCombat } from "./systems/Combat";
 import { isWallBlocking, openWall } from "./systems/WallBump";
 import { applyRandomDecayToTile } from "./core/Grid";
 
 let turnManager: TurnManager;
+let clickManager: ClickManager;
 let isAnimating = false;
-let isMovementMode = false;
-let reachableTiles: ReachableTile[] = [];
-let selectedPlayer: MapObject | null = null;
 let lastHoveredItemId: string | null = null;
 
 async function handleClick(): Promise<void> {
-  logger.debug("[handleClick] Called - isAnimating:", isAnimating);
-
-  if (isAnimating) {
-    logger.debug("Click ignored - animating");
-    return;
-  }
-
-  // Block input during start level sequence
-  if (turnManager.getState().isInStartLevelSequence) {
-    logger.debug("Click ignored - start level sequence playing");
-    return;
-  }
-
   const pos = k.mousePos();
-  logger.debug("Click at:", pos);
-
-  // Check for skip button click
-  const skipButtons = k.get("skipButton");
-  for (const button of skipButtons) {
-    if ((button as any).hasPoint && (button as any).hasPoint(pos)) {
-      logger.debug("Skip button clicked");
-      const player = turnManager.getObjectManager().getPlayer();
-      if (player) {
-        skipPlayerTurn(player);
-      }
-      return;
-    }
-  }
-
-  // Handle rotation mode clicks
-  if (turnManager.isRotatingTile()) {
-    const state = turnManager.getState();
-    if (!state.rotatingTilePosition) {
-      turnManager.cancelRotation();
-      render();
-      return;
-    }
-
-    const clickedGridCol = Math.floor((pos.x - GRID_OFFSET_X) / TILE_SIZE);
-    const clickedGridRow = Math.floor((pos.y - GRID_OFFSET_Y) / TILE_SIZE);
-
-    // Check if clicked on the rotating tile
-    if (clickedGridRow === state.rotatingTilePosition.row &&
-        clickedGridCol === state.rotatingTilePosition.col) {
-      logger.debug("Rotating player tile");
-      turnManager.rotatePlayerTile();
-      render();
-      return;
-    }
-
-    // Check if clicked on a reachable tile
-    const player = turnManager.getObjectManager().getPlayer();
-    if (player && clickedGridRow >= 0 && clickedGridRow < GRID_ROWS &&
-        clickedGridCol >= 0 && clickedGridCol < GRID_COLS) {
-      const moves = turnManager.getObjectManager().getAvailableMoves(player);
-      const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves);
-      const target = reachable.find(
-        (t) => t.position.row === clickedGridRow && t.position.col === clickedGridCol
-      );
-
-      if (target && target.path.length > 1) {
-        logger.debug("Confirming rotation and moving to:", target.position);
-        turnManager.confirmRotation();
-        movePlayerAlongPath(player, target.path);
-        return;
-      }
-    }
-
-    // Clicked outside reachable tiles - cancel rotation
-    logger.debug("Canceling rotation");
-    turnManager.cancelRotation();
-    render();
-    return;
-  }
-
-  if (isMovementMode && selectedPlayer) {
-    const reachableHighlights = k.get("reachableHighlight");
-    for (const highlight of reachableHighlights) {
-      if ((highlight as any).hasPoint && (highlight as any).hasPoint(pos)) {
-        const targetPos = (highlight as any).gridPos as GridPosition;
-        logger.debug("Reachable tile hit - moving to:", targetPos);
-        const target = reachableTiles.find(
-          (t) => t.position.row === targetPos.row && t.position.col === targetPos.col
-        );
-        if (target) {
-          movePlayerAlongPath(selectedPlayer, target.path);
-        }
-        return;
-      }
-    }
-
-    logger.debug("Click outside reachable - canceling movement mode");
-    exitMovementMode();
-    render();
-    return;
-  }
-
-  const mapObjs = k.get("mapObject");
-  for (const obj of mapObjs) {
-    if ((obj as any).hasPoint && (obj as any).hasPoint(pos)) {
-      const objData = (obj as any).objectData as MapObject;
-      if (objData.type === "Player" && objData.movesRemaining > 0) {
-        logger.debug("Player clicked - entering rotation mode");
-        turnManager.enterRotationMode();
-        render();
-        return;
-      }
-    }
-  }
-
-  // Check if clicked on a reachable grid tile (direct move without entering movement mode first)
-  logger.debug("[handleClick] Checking tile click - isPlayerTurn:", turnManager.isPlayerTurn(), "isTilePlacement:", turnManager.isTilePlacement());
-  if (turnManager.isPlayerTurn() && !turnManager.isTilePlacement()) {
-    const player = turnManager.getObjectManager().getPlayer();
-    logger.debug("[handleClick] Player found:", !!player, "moves:", player?.movesRemaining);
-    if (player && player.movesRemaining > 0) {
-      const clickedGridCol = Math.floor((pos.x - GRID_OFFSET_X) / TILE_SIZE);
-      const clickedGridRow = Math.floor((pos.y - GRID_OFFSET_Y) / TILE_SIZE);
-      logger.debug("[handleClick] Grid click at:", clickedGridRow, clickedGridCol);
-
-      if (clickedGridRow >= 0 && clickedGridRow < GRID_ROWS &&
-          clickedGridCol >= 0 && clickedGridCol < GRID_COLS) {
-        const state = turnManager.getState();
-        const targetPos = { row: clickedGridRow, col: clickedGridCol };
-        const moves = turnManager.getObjectManager().getAvailableMoves(player);
-        const reachable = findReachableTiles(state.grid, player.gridPosition, moves);
-        const target = reachable.find(
-          (t) => t.position.row === clickedGridRow && t.position.col === clickedGridCol
-        );
-        if (target && target.path.length > 1) {
-          logger.debug("Direct move to reachable tile:", target.position);
-          movePlayerAlongPath(player, target.path);
-          return;
-        }
-
-        // Check if this is a wall bump (adjacent tile blocked by wall)
-        const dRow = Math.abs(targetPos.row - player.gridPosition.row);
-        const dCol = Math.abs(targetPos.col - player.gridPosition.col);
-        const isAdjacent = (dRow === 1 && dCol === 0) || (dRow === 0 && dCol === 1);
-        logger.debug("[handleClick] isAdjacent:", isAdjacent);
-
-        if (isAdjacent) {
-          const wallBlocking = isWallBlocking(state.grid, player.gridPosition, targetPos);
-          logger.debug("[handleClick] Wall blocking:", wallBlocking);
-          if (wallBlocking) {
-            logger.debug("Wall bump detected - calling handleWallBump");
-            await handleWallBump(player, targetPos);
-            logger.debug("Wall bump completed - returning from handleClick");
-            return;
-          }
-        }
-      }
-    }
-  }
-
-  const currentTiles = k.get("currentTile");
-  for (const tile of currentTiles) {
-    if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
-      logger.debug("Current tile hit - rotating");
-      turnManager.rotateTile();
-      return;
-    }
-  }
-
-  const previewTiles = k.get("previewTile");
-  for (const tile of previewTiles) {
-    if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
-      if (turnManager.isPlayerTurn() && turnManager.canPlaceTile()) {
-        logger.debug("Preview tile hit - entering tile placement");
-        turnManager.enterTilePlacement();
-      } else if (turnManager.isTilePlacement()) {
-        logger.debug("Preview tile hit - rotating");
-        turnManager.rotateTile();
-      }
-      return;
-    }
-  }
-
-  const highlightAreas = k.get("highlightArea");
-  for (const area of highlightAreas) {
-    if ((area as any).hasPoint && (area as any).hasPoint(pos)) {
-      logger.debug("Highlight area hit - pushing");
-      if (turnManager.canPush()) {
-        executePushWithAnimation();
-      }
-      return;
-    }
-  }
-
-  const plots = k.get("plot");
-  for (const plot of plots) {
-    if ((plot as any).hasPoint && (plot as any).hasPoint(pos)) {
-      const plotData = (plot as any).plotData as PlotPosition;
-      logger.debug("Plot hit:", plotData);
-      if (turnManager.isPlayerTurn() && turnManager.canPlaceTile()) {
-        turnManager.enterTilePlacement();
-        turnManager.selectPlot(plotData);
-      } else if (turnManager.isTilePlacement()) {
-        turnManager.selectPlot(plotData);
-      }
-      return;
-    }
-  }
-
-  if (turnManager.isTilePlacement()) {
-    logger.debug("Background hit - canceling");
-    turnManager.cancelPlacement();
-  }
-}
-
-function exitMovementMode(): void {
-  isMovementMode = false;
-  selectedPlayer = null;
-  reachableTiles = [];
+  clickManager.handleLeftClick(pos, turnManager, isAnimating);
 }
 
 async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Promise<void> {
   logger.debug("[movePlayerAlongPath] START - path length:", path.length, "isAnimating before:", isAnimating);
 
   if (path.length <= 1) {
-    exitMovementMode();
     render();
     return;
   }
@@ -451,8 +234,6 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
   isAnimating = false;
   logger.debug("[movePlayerAlongPath] isAnimating set to false");
-  exitMovementMode();
-  logger.debug("[movePlayerAlongPath] Exited movement mode");
 
   turnManager.completeMove();
   logger.debug("[movePlayerAlongPath] Move completed, executing enemy turns");
@@ -466,11 +247,6 @@ async function skipPlayerTurn(_player: MapObject): Promise<void> {
   logger.debug("Skipping player turn - passing to enemies");
 
   isAnimating = true;
-
-  k.destroyAll("reachableHighlight");
-
-  exitMovementMode();
-
   isAnimating = false;
 
   turnManager.completeMove();
@@ -819,35 +595,8 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
 }
 
 function handleRightClick(): void {
-  if (isAnimating) return;
-
-  // Cancel rotation mode on right-click
-  if (turnManager.isRotatingTile()) {
-    logger.debug("Right-click - canceling rotation");
-    turnManager.cancelRotation();
-    render();
-    return;
-  }
-
   const pos = k.mousePos();
-
-  const currentTiles = k.get("currentTile");
-  for (const tile of currentTiles) {
-    if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
-      logger.debug("Current tile right-click - rotating CCW");
-      turnManager.rotateTileCounterClockwise();
-      return;
-    }
-  }
-
-  const previewTiles = k.get("previewTile");
-  for (const tile of previewTiles) {
-    if ((tile as any).hasPoint && (tile as any).hasPoint(pos)) {
-      logger.debug("Preview tile right-click - rotating CCW");
-      turnManager.rotateTileCounterClockwise();
-      return;
-    }
-  }
+  clickManager.handleRightClick(pos, turnManager, isAnimating);
 }
 
 async function tryMovePlayerInDirection(rowDelta: number, colDelta: number): Promise<void> {
@@ -929,6 +678,63 @@ export function initializeGameHandlers(
   ic: InputController,
   cm: CursorManager
 ): void {
+  // Initialize click manager with callbacks
+  const clickCallbacks: ClickCallbacks = {
+    onSkipTurn: () => {
+      const player = tm.getObjectManager().getPlayer();
+      if (player) skipPlayerTurn(player);
+    },
+    onRotatePlayerTile: () => {
+      tm.rotatePlayerTile();
+      render();
+    },
+    onConfirmRotationAndMove: (path: GridPosition[]) => {
+      const player = tm.getObjectManager().getPlayer();
+      if (player) {
+        tm.confirmRotation();
+        movePlayerAlongPath(player, path);
+      }
+    },
+    onCancelRotation: () => {
+      tm.cancelRotation();
+      render();
+    },
+    onPlayerClicked: () => {
+      tm.enterRotationMode();
+      render();
+    },
+    onMovePlayer: (path: GridPosition[]) => {
+      const player = tm.getObjectManager().getPlayer();
+      if (player) movePlayerAlongPath(player, path);
+    },
+    onWallBump: (targetPos: GridPosition) => {
+      const player = tm.getObjectManager().getPlayer();
+      if (player) handleWallBump(player, targetPos);
+    },
+    onRotateTile: () => {
+      tm.rotateTile();
+    },
+    onRotateTileCounterClockwise: () => {
+      tm.rotateTileCounterClockwise();
+    },
+    onEnterTilePlacement: () => {
+      tm.enterTilePlacement();
+    },
+    onExecutePush: () => {
+      if (tm.canPush()) {
+        executePushWithAnimation();
+      }
+    },
+    onSelectPlot: (plot: PlotPosition) => {
+      tm.selectPlot(plot);
+    },
+    onCancelPlacement: () => {
+      tm.cancelPlacement();
+    },
+  };
+
+  clickManager = new ClickManager(clickCallbacks);
+
   // Set up mouse event handlers
   k.onMousePress("left", handleClick);
   k.onMousePress("right", handleRightClick);
@@ -969,42 +775,20 @@ export function initializeGameHandlers(
       return;
     }
 
-    const state = tm.getState();
     const itemDatabase = tm.getObjectManager().getItemDatabase();
     let hoveredItemId: string | null = null;
 
-    // Check inventory slots for hover
-    for (let i = 0; i < state.inventory.length; i++) {
-      const item = state.inventory[i];
-      if (!item) continue;
-
-      const col = i % INVENTORY.SLOTS_X;
-      const row = Math.floor(i / INVENTORY.SLOTS_X);
-      const pos = inventorySlotPos(col, row, INVENTORY.PATCH_SIZE);
-
-      if (mousePos.x >= pos.x && mousePos.x <= pos.x + INVENTORY.SLOT_SIZE &&
-          mousePos.y >= pos.y && mousePos.y <= pos.y + INVENTORY.SLOT_SIZE) {
-        hoveredItemId = item.definitionId;
-        break;
-      }
+    // Check inventory for hover using shared utility
+    const inventoryItem = getInventoryItemAtPosition(mousePos.x, mousePos.y, tm);
+    if (inventoryItem) {
+      hoveredItemId = inventoryItem.item.definitionId;
     }
 
-    // Check equipment slots for hover
+    // Check equipment for hover using shared utility
     if (!hoveredItemId) {
-      for (let i = 0; i < state.equipment.length; i++) {
-        const item = state.equipment[i];
-        if (!item) continue;
-
-        const gridPos = getEquipmentSlotGridPos(i);
-        if (!gridPos) continue;
-
-        const pos = equipmentSlotPos(gridPos.col, gridPos.row, EQUIPMENT.PATCH_SIZE);
-
-        if (mousePos.x >= pos.x && mousePos.x <= pos.x + EQUIPMENT.SLOT_SIZE &&
-            mousePos.y >= pos.y && mousePos.y <= pos.y + EQUIPMENT.SLOT_SIZE) {
-          hoveredItemId = item.definitionId;
-          break;
-        }
+      const equipmentItem = getEquipmentItemAtPosition(mousePos.x, mousePos.y, tm);
+      if (equipmentItem) {
+        hoveredItemId = equipmentItem.item.definitionId;
       }
     }
 
@@ -1181,9 +965,6 @@ export function render(): void {
       drawGridWithOverlay(state.grid, null, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360, state.isInStartLevelSequence, state.revealedTiles);
       drawDecayOverlay(state.grid, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
 
-      if (isMovementMode) {
-        drawReachableTiles(reachableTiles, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
-      }
       drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
       if (state.currentTile) {
         drawPreviewTile(state.currentTile, PREVIEW_X, PREVIEW_Y);
