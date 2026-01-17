@@ -955,8 +955,21 @@ export function initializeGameHandlers(
   k.onDraw(() => {
     if (isAnimating) return;
 
-    const state = tm.getState();
     const mousePos = k.mousePos();
+
+    // Only check hover if mouse is in the UI area (right side of screen)
+    // UI starts at GRID_OFFSET_X + GRID_COLS * TILE_SIZE
+    const uiStartX = GRID_OFFSET_X + GRID_COLS * TILE_SIZE;
+    if (mousePos.x < uiStartX) {
+      // Mouse is over the game grid, not UI - clear any existing hover
+      if (lastHoveredItemId !== null) {
+        lastHoveredItemId = null;
+        k.destroyAll("descriptionText");
+      }
+      return;
+    }
+
+    const state = tm.getState();
     const itemDatabase = tm.getObjectManager().getItemDatabase();
     let hoveredItemId: string | null = null;
 
