@@ -91,7 +91,8 @@ export class CursorManager {
         return "place";
       }
 
-      return "default";
+      // Hovering outside affected area - show cancel cursor
+      return "cancel";
     }
 
     // NORMAL GAMEPLAY: Check grid for navigation, combat, demolish cursors
