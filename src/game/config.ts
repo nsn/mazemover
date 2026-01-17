@@ -78,7 +78,7 @@ export const INVENTORY = {
 // Equipment Configuration
 export const EQUIPMENT = {
   X: GRID_OFFSET_X + GRID_COLS * TILE_SIZE + (640 - (GRID_OFFSET_X + GRID_COLS * TILE_SIZE)) / 2,
-  Y: 100,
+  Y: 80,
   SLOTS_X: 3,
   SLOTS_Y: 3,
   SLOT_SIZE: 26,
