@@ -334,6 +334,38 @@ export function drawInventoryItems(inventory: (ItemInstance | null)[], itemDatab
 }
 
 /**
+ * Draws equipment items in their slots
+ * @param equipment Array of item instances or null for empty slots
+ * @param itemDatabase ItemDatabase to get item definitions
+ */
+export function drawEquipmentItems(equipment: (ItemInstance | null)[], itemDatabase: ItemDatabase): void {
+  for (let i = 0; i < equipment.length; i++) {
+    const item = equipment[i];
+    if (!item) continue;
+
+    const itemDef = itemDatabase.getItem(item.definitionId);
+    if (!itemDef) {
+      console.error(`[UIRenderer] Item definition not found: ${item.definitionId}`);
+      continue;
+    }
+
+    const gridPos = getEquipmentSlotGridPos(i);
+    if (!gridPos) continue;
+
+    const pos = equipmentSlotPos(gridPos.col, gridPos.row, EQUIPMENT.PATCH_SIZE);
+
+    // Draw item sprite at slot position (centered)
+    k.add([
+      k.sprite(itemDef.sprite, { frame: itemDef.frame }),
+      k.pos(pos.x + EQUIPMENT.SLOT_SIZE / 2, pos.y + EQUIPMENT.SLOT_SIZE / 2),
+      k.anchor("center"),
+      k.z(1),
+      "equipmentItem",
+    ]);
+  }
+}
+
+/**
  * Draws the item description background widget
  */
 export function drawDescriptionBackground(): void {
@@ -413,6 +445,7 @@ export function clearUI(): void {
   k.destroyAll("inventoryItem");
   k.destroyAll("equipmentBackground");
   k.destroyAll("equipmentSlot");
+  k.destroyAll("equipmentItem");
   k.destroyAll("descriptionBackground");
   k.destroyAll("descriptionText");
   k.destroyAll("sagaText");

@@ -26,11 +26,13 @@ import {
   drawInventoryBackground,
   drawInventoryItems,
   drawEquipmentBackground,
+  drawEquipmentItems,
   drawDescriptionBackground,
   drawItemDescription,
   clearUI,
 } from "./render/UIRenderer";
 import { getInventoryItemAtPosition, getEquipmentItemAtPosition } from "./systems/PositionUtils";
+import { equipItemFromInventory } from "./systems/EquipmentManager";
 import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
@@ -47,6 +49,27 @@ let lastHoveredItemId: string | null = null;
 
 async function handleClick(): Promise<void> {
   const pos = k.mousePos();
+
+  // Check for inventory item clicks first (equipment management)
+  const inventoryItem = getInventoryItemAtPosition(pos.x, pos.y, turnManager);
+  if (inventoryItem) {
+    const state = turnManager.getState();
+    const itemDatabase = turnManager.getObjectManager().getItemDatabase();
+    const success = equipItemFromInventory(
+      state.inventory,
+      state.equipment,
+      inventoryItem.index,
+      itemDatabase
+    );
+
+    if (success) {
+      // Re-render to show updated inventory/equipment
+      render();
+    }
+    return; // Don't process other clicks if we clicked an inventory item
+  }
+
+  // Handle normal game clicks
   clickManager.handleLeftClick(pos, turnManager, isAnimating);
 }
 
@@ -906,9 +929,10 @@ export function render(): void {
   // Draw inventory background
   drawInventoryBackground();
 
-  // Draw inventory items
+  // Draw inventory and equipment items
   const itemDatabase = turnManager.getObjectManager().getItemDatabase();
   drawInventoryItems(state.inventory, itemDatabase);
+  drawEquipmentItems(state.equipment, itemDatabase);
 
   // Draw description widget background (text will be drawn by onDraw callback)
   drawDescriptionBackground();
