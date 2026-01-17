@@ -711,12 +711,9 @@ export function initializeGameHandlers(
       tm.rotatePlayerTile();
       render();
     },
-    onConfirmRotationAndMove: (path: GridPosition[]) => {
-      const player = tm.getObjectManager().getPlayer();
-      if (player) {
-        tm.confirmRotation();
-        movePlayerAlongPath(player, path);
-      }
+    onConfirmRotation: () => {
+      tm.confirmRotation();
+      render();
     },
     onCancelRotation: () => {
       tm.cancelRotation();

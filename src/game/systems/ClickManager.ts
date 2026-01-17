@@ -16,7 +16,7 @@ import {
 export interface ClickCallbacks {
   onSkipTurn: () => void;
   onRotatePlayerTile: () => void;
-  onConfirmRotationAndMove: (path: GridPosition[]) => void;
+  onConfirmRotation: () => void;
   onCancelRotation: () => void;
   onPlayerClicked: () => void;
   onMovePlayer: (path: GridPosition[]) => void;
@@ -157,8 +157,8 @@ export class ClickManager {
         );
 
         if (target && target.path.length > 1) {
-          console.log("[ClickManager] Confirming rotation and moving to:", target.position);
-          this.callbacks.onConfirmRotationAndMove(target.path);
+          console.log("[ClickManager] Confirming rotation (no movement)");
+          this.callbacks.onConfirmRotation();
           return true;
         }
       }
