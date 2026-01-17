@@ -1066,6 +1066,12 @@ export function render(): void {
   const mousePos = k.mousePos();
   let hoveredItemDef = null;
 
+  // Debug: Log inventory state once per second
+  if (Math.floor(k.time()) !== Math.floor(k.time() - k.dt())) {
+    const nonNullItems = state.inventory.filter(item => item !== null);
+    console.log(`[Inventory Debug] Items in inventory: ${nonNullItems.length}`, nonNullItems);
+  }
+
   // Check inventory slots for hover
   for (let i = 0; i < state.inventory.length; i++) {
     const item = state.inventory[i];
@@ -1074,6 +1080,11 @@ export function render(): void {
     const col = i % INVENTORY.SLOTS_X;
     const row = Math.floor(i / INVENTORY.SLOTS_X);
     const pos = inventorySlotPos(col, row, INVENTORY.PATCH_SIZE);
+
+    // Debug: Log slot bounds when mouse is near
+    if (Math.abs(mousePos.x - pos.x) < 50 && Math.abs(mousePos.y - pos.y) < 50) {
+      console.log(`[Hover Debug] Slot ${i}: mouse=(${mousePos.x.toFixed(0)},${mousePos.y.toFixed(0)}) bounds=(${pos.x},${pos.y})-(${pos.x + INVENTORY.SLOT_SIZE},${pos.y + INVENTORY.SLOT_SIZE})`);
+    }
 
     // Check if mouse is over this slot
     if (mousePos.x >= pos.x && mousePos.x <= pos.x + INVENTORY.SLOT_SIZE &&
