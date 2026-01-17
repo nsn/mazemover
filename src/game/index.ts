@@ -47,6 +47,7 @@ let isAnimating = false;
 let isMovementMode = false;
 let reachableTiles: ReachableTile[] = [];
 let selectedPlayer: MapObject | null = null;
+let lastHoveredItemId: string | null = null;
 
 async function handleClick(): Promise<void> {
   logger.debug("[handleClick] Called - isAnimating:", isAnimating);
@@ -957,7 +958,7 @@ export function initializeGameHandlers(
     const state = tm.getState();
     const mousePos = k.mousePos();
     const itemDatabase = tm.getObjectManager().getItemDatabase();
-    let hoveredItemDef = null;
+    let hoveredItemId: string | null = null;
 
     // Check inventory slots for hover
     for (let i = 0; i < state.inventory.length; i++) {
@@ -970,13 +971,13 @@ export function initializeGameHandlers(
 
       if (mousePos.x >= pos.x && mousePos.x <= pos.x + INVENTORY.SLOT_SIZE &&
           mousePos.y >= pos.y && mousePos.y <= pos.y + INVENTORY.SLOT_SIZE) {
-        hoveredItemDef = itemDatabase.getItem(item.definitionId);
+        hoveredItemId = item.definitionId;
         break;
       }
     }
 
     // Check equipment slots for hover
-    if (!hoveredItemDef) {
+    if (!hoveredItemId) {
       for (let i = 0; i < state.equipment.length; i++) {
         const item = state.equipment[i];
         if (!item) continue;
@@ -988,18 +989,26 @@ export function initializeGameHandlers(
 
         if (mousePos.x >= pos.x && mousePos.x <= pos.x + EQUIPMENT.SLOT_SIZE &&
             mousePos.y >= pos.y && mousePos.y <= pos.y + EQUIPMENT.SLOT_SIZE) {
-          hoveredItemDef = itemDatabase.getItem(item.definitionId);
+          hoveredItemId = item.definitionId;
           break;
         }
       }
     }
 
-    // Clear previous description text
-    k.destroyAll("descriptionText");
+    // Only update description if hovered item changed
+    if (hoveredItemId !== lastHoveredItemId) {
+      lastHoveredItemId = hoveredItemId;
 
-    // Draw item description if hovering over an item
-    if (hoveredItemDef) {
-      drawItemDescription(hoveredItemDef);
+      // Clear previous description text
+      k.destroyAll("descriptionText");
+
+      // Draw item description if hovering over an item
+      if (hoveredItemId) {
+        const itemDef = itemDatabase.getItem(hoveredItemId);
+        if (itemDef) {
+          drawItemDescription(itemDef);
+        }
+      }
     }
   });
 }
@@ -1009,6 +1018,7 @@ function clearAll(): void {
   clearMapObjects();
   clearUI();
   k.destroyAll("rotationOverlay");
+  lastHoveredItemId = null; // Reset hover state so description updates after render
 }
 
 async function executePushWithAnimation(): Promise<void> {
