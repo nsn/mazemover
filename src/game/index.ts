@@ -1026,11 +1026,13 @@ function drawRotationOverlay(
 }
 
 export function render(): void {
+  console.log("[RENDER] Render called at", Date.now());
   if (isAnimating) return;
 
   clearAll();
 
   const state = turnManager.getState();
+  console.log("[RENDER] State loaded, inventory items:", state.inventory.filter(i => i !== null).length);
   const mapObjects = turnManager.getMapObjects();
   const player = turnManager.getObjectManager().getPlayer();
 
@@ -1064,6 +1066,7 @@ export function render(): void {
 
   // Check for item hover and display description
   const mousePos = k.mousePos();
+  console.log("[HOVER] Mouse position:", mousePos.x, mousePos.y);
   let hoveredItemDef = null;
 
   // Debug: Log inventory state once per second
@@ -1071,6 +1074,8 @@ export function render(): void {
     const nonNullItems = state.inventory.filter(item => item !== null);
     console.log(`[Inventory Debug] Items in inventory: ${nonNullItems.length}`, nonNullItems);
   }
+
+  console.log("[HOVER] Checking", state.inventory.length, "inventory slots...");
 
   // Check inventory slots for hover
   for (let i = 0; i < state.inventory.length; i++) {
