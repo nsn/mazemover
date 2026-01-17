@@ -153,6 +153,7 @@ export interface MapObject {
   movementAccumulator: number;
   movesRemaining: number;
   stats?: Stats;
+  baseStats?: Stats;  // Base stats before equipment bonuses
   currentHP?: number;
   onEnter?: MapObjectCallback;
   onExit?: MapObjectCallback;

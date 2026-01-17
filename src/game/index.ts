@@ -32,7 +32,7 @@ import {
   clearUI,
 } from "./render/UIRenderer";
 import { getInventoryItemAtPosition, getEquipmentItemAtPosition } from "./systems/PositionUtils";
-import { equipItemFromInventory } from "./systems/EquipmentManager";
+import { equipItemFromInventory, unequipItemToInventory, applyEquipmentBonuses } from "./systems/EquipmentManager";
 import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
@@ -50,11 +50,13 @@ let lastHoveredItemId: string | null = null;
 async function handleClick(): Promise<void> {
   const pos = k.mousePos();
 
-  // Check for inventory item clicks first (equipment management)
+  const state = turnManager.getState();
+  const itemDatabase = turnManager.getObjectManager().getItemDatabase();
+  const player = turnManager.getObjectManager().getPlayer();
+
+  // Check for inventory item clicks first (equip item)
   const inventoryItem = getInventoryItemAtPosition(pos.x, pos.y, turnManager);
   if (inventoryItem) {
-    const state = turnManager.getState();
-    const itemDatabase = turnManager.getObjectManager().getItemDatabase();
     const success = equipItemFromInventory(
       state.inventory,
       state.equipment,
@@ -62,11 +64,30 @@ async function handleClick(): Promise<void> {
       itemDatabase
     );
 
-    if (success) {
-      // Re-render to show updated inventory/equipment
+    if (success && player) {
+      // Apply stat bonuses after equipping
+      applyEquipmentBonuses(player, state.equipment, itemDatabase);
       render();
     }
     return; // Don't process other clicks if we clicked an inventory item
+  }
+
+  // Check for equipment item clicks (unequip item)
+  const equipmentItem = getEquipmentItemAtPosition(pos.x, pos.y, turnManager);
+  if (equipmentItem) {
+    const success = unequipItemToInventory(
+      state.inventory,
+      state.equipment,
+      equipmentItem.index,
+      itemDatabase
+    );
+
+    if (success && player) {
+      // Apply stat bonuses after unequipping (removes bonuses)
+      applyEquipmentBonuses(player, state.equipment, itemDatabase);
+      render();
+    }
+    return; // Don't process other clicks if we clicked an equipment item
   }
 
   // Handle normal game clicks

@@ -1,4 +1,4 @@
-import { EquipmentSlot, type ItemInstance, type ItemDefinition } from "../types";
+import { EquipmentSlot, type ItemInstance, type ItemDefinition, type MapObject, type Stats } from "../types";
 import { type ItemDatabase } from "./ItemDatabase";
 
 /**
@@ -43,6 +43,54 @@ export function countEmptyInventorySlots(inventory: (ItemInstance | null)[]): nu
  */
 export function findFirstEmptyInventorySlot(inventory: (ItemInstance | null)[]): number {
   return inventory.findIndex(item => item === null);
+}
+
+/**
+ * Unequip an item from equipment slot to inventory
+ * @param inventory Current inventory array
+ * @param equipment Current equipment array
+ * @param equipmentIndex Index of item in equipment to unequip
+ * @param itemDatabase Item database to look up item definitions
+ * @returns true if successful, false if no inventory space
+ */
+export function unequipItemToInventory(
+  inventory: (ItemInstance | null)[],
+  equipment: (ItemInstance | null)[],
+  equipmentIndex: number,
+  itemDatabase: ItemDatabase
+): boolean {
+  const itemToUnequip = equipment[equipmentIndex];
+  if (!itemToUnequip) {
+    console.error("[EquipmentManager] No item at equipment index", equipmentIndex);
+    return false;
+  }
+
+  const itemDef = itemDatabase.getItem(itemToUnequip.definitionId);
+  if (!itemDef) {
+    console.error("[EquipmentManager] Item definition not found:", itemToUnequip.definitionId);
+    return false;
+  }
+
+  // Check if we have inventory space
+  const emptySlot = findFirstEmptyInventorySlot(inventory);
+  if (emptySlot === -1) {
+    console.error("[EquipmentManager] No inventory space to unequip item");
+    return false;
+  }
+
+  // Get all slots this item occupies
+  const slotsToFree = getOccupiedSlots(itemDef);
+
+  // Move item to inventory
+  inventory[emptySlot] = itemToUnequip;
+
+  // Clear all equipment slots this item occupied
+  for (const slotIndex of slotsToFree) {
+    equipment[slotIndex] = null;
+  }
+
+  console.log(`[EquipmentManager] Unequipped ${itemDef.name} from slots ${slotsToFree.join(", ")}`);
+  return true;
 }
 
 /**
@@ -128,4 +176,81 @@ export function equipItemFromInventory(
 
   console.log(`[EquipmentManager] Equipped ${itemDef.name} to slots ${slotsToOccupy.join(", ")}`);
   return true;
+}
+
+/**
+ * Calculate total stat bonuses from all equipped items
+ * @param equipment Current equipment array
+ * @param itemDatabase Item database to look up item definitions
+ * @returns Partial<Stats> with total bonuses
+ */
+export function calculateEquipmentBonuses(
+  equipment: (ItemInstance | null)[],
+  itemDatabase: ItemDatabase
+): Partial<Stats> {
+  const totalBonuses: Partial<Stats> = {
+    hp: 0,
+    atk: 0,
+    def: 0,
+    agi: 0,
+  };
+
+  // Track which items we've already counted (for multi-slot items)
+  const countedItems = new Set<string>();
+
+  for (let i = 0; i < equipment.length; i++) {
+    const item = equipment[i];
+    if (!item) continue;
+
+    // Skip if we've already counted this item instance
+    if (countedItems.has(item.definitionId)) continue;
+
+    const itemDef = itemDatabase.getItem(item.definitionId);
+    if (!itemDef || !itemDef.statBonuses) continue;
+
+    // Mark this item as counted
+    countedItems.add(item.definitionId);
+
+    // Add bonuses
+    if (itemDef.statBonuses.hp) totalBonuses.hp! += itemDef.statBonuses.hp;
+    if (itemDef.statBonuses.atk) totalBonuses.atk! += itemDef.statBonuses.atk;
+    if (itemDef.statBonuses.def) totalBonuses.def! += itemDef.statBonuses.def;
+    if (itemDef.statBonuses.agi) totalBonuses.agi! += itemDef.statBonuses.agi;
+  }
+
+  return totalBonuses;
+}
+
+/**
+ * Apply equipment bonuses to player's stats
+ * Should be called after equipping/unequipping items
+ * @param player Player object to update
+ * @param equipment Current equipment array
+ * @param itemDatabase Item database to look up item definitions
+ */
+export function applyEquipmentBonuses(
+  player: MapObject,
+  equipment: (ItemInstance | null)[],
+  itemDatabase: ItemDatabase
+): void {
+  if (!player.stats || !player.baseStats) {
+    console.error("[EquipmentManager] Player missing stats or baseStats");
+    return;
+  }
+
+  // Calculate total bonuses from equipment
+  const bonuses = calculateEquipmentBonuses(equipment, itemDatabase);
+
+  // Apply bonuses to base stats
+  player.stats.hp = player.baseStats.hp + (bonuses.hp || 0);
+  player.stats.atk = player.baseStats.atk + (bonuses.atk || 0);
+  player.stats.def = player.baseStats.def + (bonuses.def || 0);
+  player.stats.agi = player.baseStats.agi + (bonuses.agi || 0);
+
+  // Ensure current HP doesn't exceed new max HP
+  if (player.currentHP !== undefined && player.currentHP > player.stats.hp) {
+    player.currentHP = player.stats.hp;
+  }
+
+  console.log(`[EquipmentManager] Applied bonuses: HP+${bonuses.hp}, ATK+${bonuses.atk}, DEF+${bonuses.def}, AGI+${bonuses.agi}`);
 }
