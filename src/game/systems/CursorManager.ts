@@ -32,6 +32,7 @@ export class CursorManager {
   private cachedReachableTiles: any[] = [];
   private lastPlayerPosition: { row: number; col: number } | null = null;
   private lastGridHash: string = "";
+  private lastEnemyHash: string = "";
 
   constructor() {
     this.currentCursorType = "default";
@@ -69,17 +70,23 @@ export class CursorManager {
     // Create a simple hash of grid state (just check if grid reference changed)
     const gridHash = JSON.stringify(state.grid.map((row: any[]) => row.map(t => `${t.type}${t.orientation}`)));
 
-    // Check if player position or grid changed
+    // Create hash of enemy positions (enemies block movement)
+    const enemies = turnManager.getObjectManager().getEnemies();
+    const enemyHash = JSON.stringify(enemies.map(e => `${e.gridPosition.row},${e.gridPosition.col}`));
+
+    // Check if player position or grid changed or enemies changed
     const playerMoved = !this.lastPlayerPosition ||
                         this.lastPlayerPosition.row !== player.gridPosition.row ||
                         this.lastPlayerPosition.col !== player.gridPosition.col;
     const gridChanged = this.lastGridHash !== gridHash;
+    const enemiesChanged = this.lastEnemyHash !== enemyHash;
 
-    if (playerMoved || gridChanged) {
+    if (playerMoved || gridChanged || enemiesChanged) {
       const moves = turnManager.getObjectManager().getAvailableMoves(player);
       this.cachedReachableTiles = findReachableTiles(state.grid, player.gridPosition, moves);
       this.lastPlayerPosition = { ...player.gridPosition };
       this.lastGridHash = gridHash;
+      this.lastEnemyHash = enemyHash;
     }
   }
 
