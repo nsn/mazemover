@@ -164,6 +164,16 @@ export class ClickManager {
   }
 
   private handleTilePlacementClick(mousePos: { x: number; y: number }, _turnManager: TurnManager): boolean {
+    // Check if clicking on the current tile being placed (rotate)
+    const currentTiles = k.get("currentTile");
+    for (const tile of currentTiles) {
+      if ((tile as any).hasPoint && (tile as any).hasPoint(mousePos)) {
+        console.log("[ClickManager] Current tile hit - rotating");
+        this.callbacks.onRotateTile();
+        return true;
+      }
+    }
+
     // Check if clicking on preview tile (rotate)
     if (isMouseOverPreviewTile(mousePos.x, mousePos.y, PREVIEW_X, PREVIEW_Y)) {
       console.log("[ClickManager] Preview tile hit - rotating");

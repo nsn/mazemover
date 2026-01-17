@@ -51,6 +51,19 @@ export class CursorManager {
     return false;
   }
 
+  /**
+   * Check if mouse is over the current tile being placed
+   */
+  private isMouseOverCurrentTile(mousePos: { x: number; y: number }): boolean {
+    const currentTiles = k.get("currentTile");
+    for (const tile of currentTiles) {
+      if ((tile as any).hasPoint && (tile as any).hasPoint(mousePos)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   initialize(): void {
     this.changeCursorType("default");
     console.log("[CursorManager] Initialized with CSS cursors");
@@ -75,8 +88,13 @@ export class CursorManager {
 
     // TILE PLACEMENT STATE: Check for rotate or place/push cursors
     if (state.playerPhase === PlayerPhase.TilePlacement) {
-      // Check if hovering over current tile (for rotation)
-      if (state.selectedPlot && isMouseOverPreviewTile(mousePos.x, mousePos.y, PREVIEW_X, PREVIEW_Y)) {
+      // Check if hovering over the tile at the selected plot position (for rotation)
+      if (state.selectedPlot && this.isMouseOverCurrentTile(mousePos)) {
+        return "rotate";
+      }
+
+      // Check if hovering over preview tile (for rotation)
+      if (!state.selectedPlot && isMouseOverPreviewTile(mousePos.x, mousePos.y, PREVIEW_X, PREVIEW_Y)) {
         return "rotate";
       }
 
