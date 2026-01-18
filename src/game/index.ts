@@ -1038,14 +1038,16 @@ export function render(): void {
   const skipButtonX = GRID_OFFSET_X + GRID_COLS * TILE_SIZE + TILE_SIZE * 3;
   const skipButtonY = 360 / 2 + 80;
 
+  // Get item database for UI rendering
+  const itemDatabase = turnManager.getObjectManager().getItemDatabase();
+
   // Draw equipment background
-  drawEquipmentBackground();
+  drawEquipmentBackground(state.equipment, itemDatabase);
 
   // Draw inventory background
   drawInventoryBackground();
 
   // Draw inventory and equipment items
-  const itemDatabase = turnManager.getObjectManager().getItemDatabase();
   drawInventoryItems(state.inventory, itemDatabase);
   drawEquipmentItems(state.equipment, itemDatabase);
 

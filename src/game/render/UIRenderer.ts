@@ -275,8 +275,13 @@ export function getEquipmentSlotGridPos(slotIndex: number): { col: number; row: 
 
 /**
  * Draws the equipment background sprite
+ * @param equipment Current equipment array to check for multi-slot items
+ * @param itemDatabase ItemDatabase to look up item definitions
  */
-export function drawEquipmentBackground(): void {
+export function drawEquipmentBackground(
+  equipment?: (ItemInstance | null)[],
+  itemDatabase?: ItemDatabase
+): void {
   const width = EQUIPMENT.SLOTS_X * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING + 2 * EQUIPMENT.PATCH_SIZE
   const height = EQUIPMENT.SLOTS_Y * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING + 2 * EQUIPMENT.PATCH_SIZE
   k.add([
@@ -288,8 +293,8 @@ export function drawEquipmentBackground(): void {
     "equipmentBackground",
   ]);
 
-  // Draw only the 5 equipment slots in cross pattern (default state)
-  drawEquipmentSlots([]);
+  // Draw the 5 equipment slots in cross pattern with proper disabled state
+  drawEquipmentSlots([], equipment, itemDatabase);
 }
 
 /**
