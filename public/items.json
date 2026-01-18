@@ -1,7 +1,7 @@
 {
   "equipment": {
     "punch": {
-      "name": "Punch Dagger",
+      "name": "Punch",
       "sprite": "items",
       "frame": 0,
       "tier": 1,
@@ -10,10 +10,10 @@
       "statBonuses": {
         "atk": 1
       },
-      "description": "A small but sharp dagger"
+      "description": "pointed steel tool for heavy work"
     },
     "putch": {
-      "name": "Putch Blade",
+      "name": "Pitch",
       "sprite": "items",
       "frame": 1,
       "tier": 2,
@@ -22,32 +22,32 @@
       "statBonuses": {
         "atk": 2
       },
-      "description": "A curved blade for close combat"
+      "description": "a widde bladed chisel"
     },
     "spatula": {
-      "name": "Mason's Spatula",
+      "name": "Spatula",
       "sprite": "items",
       "frame": 2,
       "tier": 1,
       "charges": -1,
-      "slot": "OffHand",
+      "slot": "MainHand",
       "statBonuses": {
         "def": 1
       },
-      "description": "A sturdy spatula, doubles as a small shield"
+      "description": "A sturdy spatula, doubles as a small blade"
     },
     "trowel": {
-      "name": "Iron Trowel",
+      "name": "Trowel",
       "sprite": "items",
       "frame": 3,
       "tier": 2,
       "charges": -1,
-      "slot": "OffHand",
+      "slot": "MainHand",
       "statBonuses": {
         "atk": 1,
         "def": 1
       },
-      "description": "A balanced tool for mason work"
+      "description": "flat bladed tool for mason work"
     },
     "level": {
       "name": "Spirit Level",
@@ -62,41 +62,41 @@
       "description": "A two-handed precision tool"
     },
     "mell": {
-      "name": "Mell Hammer",
+      "name": "Mell",
       "sprite": "items",
       "frame": 5,
       "tier": 3,
       "charges": -1,
-      "slot": "OffHand",
+      "slot": "MainHand",
       "statBonuses": {
         "atk": 2,
         "agi": -1
       },
-      "description": "Heavy hammer, slow but powerful"
+      "description": "Heavy, short hammer, slow but powerful"
     },
     "mallet": {
-      "name": "Wooden Mallet",
+      "name": "Mallet",
       "sprite": "items",
       "frame": 6,
       "tier": 1,
       "charges": -1,
-      "slot": "OffHand",
+      "slot": "MainHand",
       "statBonuses": {
         "atk": 1
       },
       "description": "A simple wooden mallet"
     },
     "hammer": {
-      "name": "Steel Hammer",
+      "name": "Hammer",
       "sprite": "items",
       "frame": 7,
       "tier": 2,
       "charges": -1,
-      "slot": "OffHand",
+      "slot": "MainHand",
       "statBonuses": {
         "atk": 3
       },
-      "description": "A heavy steel hammer"
+      "description": "A heavy hammer made of steel"
     },
     "pick": {
       "name": "Mining Pick",
@@ -104,7 +104,7 @@
       "frame": 8,
       "tier": 2,
       "charges": -1,
-      "slot": "OffHand",
+      "slot": "MainHand",
       "statBonuses": {
         "atk": 2,
         "def": 1

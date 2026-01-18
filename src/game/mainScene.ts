@@ -43,6 +43,12 @@ export function createMainScene(): void {
     state.currentLevel = globalCurrentLevel;
     console.log(`[MainScene] Starting at level ${globalCurrentLevel}`);
 
+    // Add starting items to inventory
+    state.inventory[0] = { definitionId: "mell", remainingCharges: -1 };
+    state.inventory[1] = { definitionId: "pickaxe", remainingCharges: -1 };
+    state.inventory[2] = { definitionId: "punch", remainingCharges: -1 };
+    console.log("[MainScene] Added starting items to inventory: Mell, Pickaxe, Punch");
+
     const inputController = new InputController(turnManager);
     setInputController(inputController);
 
@@ -116,8 +122,8 @@ export function createMainScene(): void {
     goblin2.isInStartLevelSequence = true;
     goblin3.isInStartLevelSequence = true;
 
-    // Spawn random items on empty tiles (30% chance per tile)
-    objManager.spawnRandomItems(0.3);
+    // Spawn random items on empty tiles (5% chance per tile)
+    objManager.spawnRandomItems(0.05);
 
     // Create and start the level sequence
     console.log("[MainScene] Starting level sequence...");
