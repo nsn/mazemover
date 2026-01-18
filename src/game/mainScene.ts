@@ -116,8 +116,8 @@ export function createMainScene(): void {
     goblin2.isInStartLevelSequence = true;
     goblin3.isInStartLevelSequence = true;
 
-    // Spawn random items on empty tiles (20% chance per tile)
-    objManager.spawnRandomItems(0.2);
+    // Spawn random items on empty tiles (30% chance per tile)
+    objManager.spawnRandomItems(0.3);
 
     // Create and start the level sequence
     console.log("[MainScene] Starting level sequence...");

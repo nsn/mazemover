@@ -69,6 +69,19 @@ async function handleClick(): Promise<void> {
     if (success && player) {
       // Apply stat bonuses after equipping
       applyEquipmentBonuses(player, state.equipment, itemDatabase);
+
+      // Debug log equipment slots
+      console.log("[Equipment] After equipping:");
+      state.equipment.forEach((item, index) => {
+        const slotName = ["Head", "LeftHand", "RightHand", "Legs", "Torso"][index];
+        if (item) {
+          const itemDef = itemDatabase.getItem(item.definitionId);
+          console.log(`  [${index}] ${slotName}: ${itemDef?.name || item.definitionId}`);
+        } else {
+          console.log(`  [${index}] ${slotName}: empty`);
+        }
+      });
+
       render();
     }
     return; // Don't process other clicks if we clicked an inventory item
@@ -87,6 +100,19 @@ async function handleClick(): Promise<void> {
     if (success && player) {
       // Apply stat bonuses after unequipping (removes bonuses)
       applyEquipmentBonuses(player, state.equipment, itemDatabase);
+
+      // Debug log equipment slots
+      console.log("[Equipment] After unequipping:");
+      state.equipment.forEach((item, index) => {
+        const slotName = ["Head", "LeftHand", "RightHand", "Legs", "Torso"][index];
+        if (item) {
+          const itemDef = itemDatabase.getItem(item.definitionId);
+          console.log(`  [${index}] ${slotName}: ${itemDef?.name || item.definitionId}`);
+        } else {
+          console.log(`  [${index}] ${slotName}: empty`);
+        }
+      });
+
       render();
     }
     return; // Don't process other clicks if we clicked an equipment item
