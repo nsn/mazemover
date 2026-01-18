@@ -6,7 +6,7 @@
       "frame": 0,
       "tier": 1,
       "charges": -1,
-      "slot": "RightHand",
+      "slot": "OffHand",
       "statBonuses": {
         "atk": 1
       },
@@ -18,7 +18,7 @@
       "frame": 1,
       "tier": 2,
       "charges": -1,
-      "slot": "RightHand",
+      "slot": "OffHand",
       "statBonuses": {
         "atk": 2
       },
@@ -30,7 +30,7 @@
       "frame": 2,
       "tier": 1,
       "charges": -1,
-      "slot": "RightHand",
+      "slot": "OffHand",
       "statBonuses": {
         "def": 1
       },
@@ -42,7 +42,7 @@
       "frame": 3,
       "tier": 2,
       "charges": -1,
-      "slot": "RightHand",
+      "slot": "OffHand",
       "statBonuses": {
         "atk": 1,
         "def": 1
@@ -55,7 +55,7 @@
       "frame": 4,
       "tier": 3,
       "charges": -1,
-      "slot": ["LeftHand", "RightHand"],
+      "slot": ["MainHand", "OffHand"],
       "statBonuses": {
         "agi": 2
       },
@@ -67,7 +67,7 @@
       "frame": 5,
       "tier": 3,
       "charges": -1,
-      "slot": "RightHand",
+      "slot": "OffHand",
       "statBonuses": {
         "atk": 2,
         "agi": -1
@@ -80,7 +80,7 @@
       "frame": 6,
       "tier": 1,
       "charges": -1,
-      "slot": "RightHand",
+      "slot": "OffHand",
       "statBonuses": {
         "atk": 1
       },
@@ -92,7 +92,7 @@
       "frame": 7,
       "tier": 2,
       "charges": -1,
-      "slot": "RightHand",
+      "slot": "OffHand",
       "statBonuses": {
         "atk": 3
       },
@@ -104,7 +104,7 @@
       "frame": 8,
       "tier": 2,
       "charges": -1,
-      "slot": "RightHand",
+      "slot": "OffHand",
       "statBonuses": {
         "atk": 2,
         "def": 1
@@ -117,7 +117,7 @@
       "frame": 9,
       "tier": 3,
       "charges": -1,
-      "slot": ["LeftHand", "RightHand"],
+      "slot": ["MainHand", "OffHand"],
       "statBonuses": {
         "atk": 4,
         "agi": -1
