@@ -3,6 +3,7 @@ import { type TileInstance, type MapObject, type GameState, TileType, Direction,
 import { TileFrames, BrickFrames } from "../assets";
 import { INVENTORY, EQUIPMENT, DESCRIPTION } from "../config";
 import { type ItemDatabase } from "../systems/ItemDatabase";
+import { isSlotBlocked } from "../systems/EquipmentManager";
 
 function getTileFrame(type: TileType, direction: Direction): number {
   // Get base column for tile type
@@ -316,33 +317,9 @@ export function drawEquipmentSlots(
     let frame = 0; // Frame 0 = default
     if (isHighlighted) {
       frame = 1; // Frame 1 = highlighted
-    }
-
-    // Check if this slot is occupied by a multi-slot item and is NOT the first slot
-    if (equipment && itemDatabase) {
-      const item = equipment[slotIndex];
-      if (item) {
-        const itemDef = itemDatabase.getItem(item.definitionId);
-        if (itemDef && itemDef.slot && Array.isArray(itemDef.slot)) {
-          // This is a multi-slot item
-          const occupiedSlots = itemDef.slot.map(slot => {
-            switch (slot) {
-              case "Head": return 0;
-              case "MainHand": return 1;
-              case "OffHand": return 2;
-              case "Legs": return 3;
-              case "Torso": return 4;
-              default: return -1;
-            }
-          });
-
-          // If this is not the first slot occupied by this item, mark as disabled
-          const firstSlot = Math.min(...occupiedSlots);
-          if (slotIndex !== firstSlot) {
-            frame = 2; // Frame 2 = disabled
-          }
-        }
-      }
+    } else if (equipment && itemDatabase && isSlotBlocked(equipment, slotIndex, itemDatabase)) {
+      // Check if this slot is blocked by a multi-slot item in another slot
+      frame = 2; // Frame 2 = disabled
     }
 
     k.add([
