@@ -108,8 +108,8 @@ export type ItemType = (typeof ItemType)[keyof typeof ItemType];
 
 export const EquipmentSlot = {
   Head: "Head",
-  LeftHand: "LeftHand",
-  RightHand: "RightHand",
+  MainHand: "MainHand",
+  OffHand: "OffHand",
   Legs: "Legs",
   Torso: "Torso",
 } as const;

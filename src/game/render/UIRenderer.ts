@@ -256,7 +256,7 @@ export function drawInventoryBackground(): void {
  * Maps equipment slot index to grid position in cross layout
  * Layout:
  *   . H .     (. = empty, H = Head)
- *   L T R     (L = LeftHand, T = Torso, R = RightHand)
+ *   M T O     (M = MainHand, T = Torso, O = OffHand)
  *   . G .     (G = leGs/Legs)
  * @param slotIndex Equipment slot index (0-4)
  * @returns Object with col and row for the grid position, or null if invalid
@@ -264,8 +264,8 @@ export function drawInventoryBackground(): void {
 export function getEquipmentSlotGridPos(slotIndex: number): { col: number; row: number } | null {
   switch (slotIndex) {
     case 0: return { col: 1, row: 0 }; // Head - top center
-    case 1: return { col: 0, row: 1 }; // LeftHand - middle left
-    case 2: return { col: 2, row: 1 }; // RightHand - middle right
+    case 1: return { col: 0, row: 1 }; // MainHand - middle left
+    case 2: return { col: 2, row: 1 }; // OffHand - middle right
     case 3: return { col: 1, row: 2 }; // Legs - bottom center
     case 4: return { col: 1, row: 1 }; // Torso - middle center
     default: return null;
@@ -328,8 +328,8 @@ export function drawEquipmentSlots(
           const occupiedSlots = itemDef.slot.map(slot => {
             switch (slot) {
               case "Head": return 0;
-              case "LeftHand": return 1;
-              case "RightHand": return 2;
+              case "MainHand": return 1;
+              case "OffHand": return 2;
               case "Legs": return 3;
               case "Torso": return 4;
               default: return -1;
@@ -406,8 +406,8 @@ export function drawEquipmentItems(equipment: (ItemInstance | null)[], itemDatab
       const occupiedSlots = itemDef.slot.map(slot => {
         switch (slot) {
           case "Head": return 0;
-          case "LeftHand": return 1;
-          case "RightHand": return 2;
+          case "MainHand": return 1;
+          case "OffHand": return 2;
           case "Legs": return 3;
           case "Torso": return 4;
           default: return -1;

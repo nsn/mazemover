@@ -73,7 +73,7 @@ async function handleClick(): Promise<void> {
       // Debug log equipment slots
       console.log("[Equipment] After equipping:");
       state.equipment.forEach((item, index) => {
-        const slotName = ["Head", "LeftHand", "RightHand", "Legs", "Torso"][index];
+        const slotName = ["Head", "MainHand", "OffHand", "Legs", "Torso"][index];
         if (item) {
           const itemDef = itemDatabase.getItem(item.definitionId);
           console.log(`  [${index}] ${slotName}: ${itemDef?.name || item.definitionId}`);
@@ -104,7 +104,7 @@ async function handleClick(): Promise<void> {
       // Debug log equipment slots
       console.log("[Equipment] After unequipping:");
       state.equipment.forEach((item, index) => {
-        const slotName = ["Head", "LeftHand", "RightHand", "Legs", "Torso"][index];
+        const slotName = ["Head", "MainHand", "OffHand", "Legs", "Torso"][index];
         if (item) {
           const itemDef = itemDatabase.getItem(item.definitionId);
           console.log(`  [${index}] ${slotName}: ${itemDef?.name || item.definitionId}`);
@@ -147,7 +147,7 @@ async function handleClick(): Promise<void> {
             // Debug log equipment slots
             console.log("[Equipment] After unequipping (clicked blocked slot):");
             state.equipment.forEach((item, index) => {
-              const slotName = ["Head", "LeftHand", "RightHand", "Legs", "Torso"][index];
+              const slotName = ["Head", "MainHand", "OffHand", "Legs", "Torso"][index];
               if (item) {
                 const itemDef = itemDatabase.getItem(item.definitionId);
                 console.log(`  [${index}] ${slotName}: ${itemDef?.name || item.definitionId}`);

@@ -7,8 +7,8 @@ import { type ItemDatabase } from "./ItemDatabase";
 export function equipmentSlotToIndex(slot: EquipmentSlot): number {
   switch (slot) {
     case EquipmentSlot.Head: return 0;
-    case EquipmentSlot.LeftHand: return 1;
-    case EquipmentSlot.RightHand: return 2;
+    case EquipmentSlot.MainHand: return 1;
+    case EquipmentSlot.OffHand: return 2;
     case EquipmentSlot.Legs: return 3;
     case EquipmentSlot.Torso: return 4;
   }
