@@ -1023,8 +1023,18 @@ function drawRotationOverlay(
   }
 }
 
+let renderCallCount = 0;
+
 export function render(): void {
-  if (isAnimating) return;
+  if (isAnimating) {
+    return;
+  }
+
+  renderCallCount++;
+  if (renderCallCount % 100 === 1) {
+    // Log every 100th render to avoid console spam
+    console.log("[Render] Render call #" + renderCallCount + ", isInStartLevelSequence:", turnManager?.getState()?.isInStartLevelSequence);
+  }
 
   clearAll();
 

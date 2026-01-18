@@ -6,6 +6,7 @@ import { CursorManager } from "./systems/CursorManager";
 import { StartLevelSequence } from "./systems/StartLevelSequence";
 import { GRID_ROWS, GRID_COLS, STARTING_LEVEL } from "./config";
 import { getImmovableEdgeTiles, getOppositeSide, getRandomTileOnSide } from "./core/Grid";
+import { applyEquipmentBonuses } from "./systems/EquipmentManager";
 import {
   initializeGameHandlers,
   setTurnManager,
@@ -14,11 +15,15 @@ import {
   render,
 } from "./index";
 
-// Global level counter that persists across scene reloads
+// Global state that persists across scene reloads
 let globalCurrentLevel = STARTING_LEVEL;
+let globalInventory: (import("./types").ItemInstance | null)[] | null = null;
+let globalEquipment: (import("./types").ItemInstance | null)[] | null = null;
 
 export function resetGlobalLevel(): void {
   globalCurrentLevel = STARTING_LEVEL;
+  globalInventory = null;
+  globalEquipment = null;
 }
 
 export function createMainScene(): void {
@@ -43,11 +48,25 @@ export function createMainScene(): void {
     state.currentLevel = globalCurrentLevel;
     console.log(`[MainScene] Starting at level ${globalCurrentLevel}`);
 
-    // Add starting items to inventory
-    state.inventory[0] = { definitionId: "mell", remainingCharges: -1 };
-    state.inventory[1] = { definitionId: "pickaxe", remainingCharges: -1 };
-    state.inventory[2] = { definitionId: "punch", remainingCharges: -1 };
-    console.log("[MainScene] Added starting items to inventory: Mell, Pickaxe, Punch");
+    // Initialize or restore inventory and equipment
+    let restoredEquipment = false;
+    if (globalInventory === null || globalEquipment === null) {
+      // First time starting the game - initialize with starting items
+      console.log("[MainScene] First game start - initializing inventory with starting items");
+      state.inventory[0] = { definitionId: "mell", remainingCharges: -1 };
+      state.inventory[1] = { definitionId: "pickaxe", remainingCharges: -1 };
+      state.inventory[2] = { definitionId: "punch", remainingCharges: -1 };
+
+      // Save to global state
+      globalInventory = [...state.inventory];
+      globalEquipment = [...state.equipment];
+    } else {
+      // Continuing from previous level - restore saved inventory and equipment
+      console.log("[MainScene] Continuing game - restoring inventory and equipment from previous level");
+      state.inventory = [...globalInventory];
+      state.equipment = [...globalEquipment];
+      restoredEquipment = true;
+    }
 
     const inputController = new InputController(turnManager);
     setInputController(inputController);
@@ -67,6 +86,12 @@ export function createMainScene(): void {
       "Exit Stairs",
       (_mob, isPlayer) => {
         if (isPlayer) {
+          // Save current inventory and equipment before transitioning
+          const currentState = turnManager.getState();
+          globalInventory = [...currentState.inventory];
+          globalEquipment = [...currentState.equipment];
+          console.log("[Game] Saved inventory and equipment state");
+
           // Decrement global level counter
           globalCurrentLevel--;
           console.log(`[Game] Player reached the exit! Descending to level: ${globalCurrentLevel}`);
@@ -112,6 +137,26 @@ export function createMainScene(): void {
     const playerTile = getRandomTileOnSide(oppositeSide, GRID_ROWS, GRID_COLS);
     objManager.createPlayer({ row: playerTile.row, col: playerTile.col }, "Player1");
 
+    // Apply equipment bonuses if we restored equipment from previous level
+    if (restoredEquipment) {
+      try {
+        const player = objManager.getPlayer();
+        if (player) {
+          console.log("[MainScene] Applying equipment bonuses...");
+          console.log("[MainScene] Player stats before:", player.stats);
+          console.log("[MainScene] Player baseStats:", player.baseStats);
+          console.log("[MainScene] Equipment:", state.equipment);
+          applyEquipmentBonuses(player, state.equipment, itemDatabase);
+          console.log("[MainScene] Applied equipment bonuses from restored equipment");
+          console.log("[MainScene] Player stats after:", player.stats);
+        } else {
+          console.error("[MainScene] Could not find player to apply equipment bonuses");
+        }
+      } catch (error) {
+        console.error("[MainScene] Error applying equipment bonuses:", error);
+      }
+    }
+
     // Create enemies (will be spawned by StartLevelSequence)
     const goblin1 = objManager.createEnemy({ row: 3, col: 3 }, "goblin");
     const goblin2 = objManager.createEnemy({ row: 3, col: 2 }, "goblin");
@@ -127,10 +172,19 @@ export function createMainScene(): void {
 
     // Create and start the level sequence
     console.log("[MainScene] Starting level sequence...");
+    console.log("[MainScene] Game state:", {
+      isInStartLevelSequence: state.isInStartLevelSequence,
+      revealedTilesCount: state.revealedTiles.size,
+      hasCurrentTile: state.currentTile !== null
+    });
+
     const startSequence = new StartLevelSequence(
       turnManager.getState(),
       objManager,
-      render, // Render callback
+      () => {
+        console.log("[MainScene] Render called from StartLevelSequence");
+        render();
+      },
       () => {
         console.log("[MainScene] Level sequence complete, starting player turn");
         turnManager.startPlayerTurn();
@@ -138,7 +192,9 @@ export function createMainScene(): void {
     );
 
     // Start the sequence (async, but we don't await)
+    console.log("[MainScene] Calling startSequence.start()...");
     startSequence.start();
+    console.log("[MainScene] startSequence.start() called (async)");
   });
 }
 

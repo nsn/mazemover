@@ -280,6 +280,12 @@ export function applyEquipmentBonuses(
 ): void {
   if (!player.stats || !player.baseStats) {
     console.error("[EquipmentManager] Player missing stats or baseStats");
+    console.error("[EquipmentManager] Player object:", player);
+    return;
+  }
+
+  if (!itemDatabase) {
+    console.error("[EquipmentManager] ItemDatabase is null or undefined");
     return;
   }
 
