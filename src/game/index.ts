@@ -32,8 +32,8 @@ import {
   drawItemDescription,
   clearUI,
 } from "./render/UIRenderer";
-import { getInventoryItemAtPosition, getEquipmentItemAtPosition } from "./systems/PositionUtils";
-import { equipItemFromInventory, unequipItemToInventory, applyEquipmentBonuses, getOccupiedSlots } from "./systems/EquipmentManager";
+import { getInventoryItemAtPosition, getEquipmentItemAtPosition, getEquipmentSlotAtPosition } from "./systems/PositionUtils";
+import { equipItemFromInventory, unequipItemToInventory, applyEquipmentBonuses, getOccupiedSlots, isSlotBlocked } from "./systems/EquipmentManager";
 import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
@@ -116,6 +116,52 @@ async function handleClick(): Promise<void> {
       render();
     }
     return; // Don't process other clicks if we clicked an equipment item
+  }
+
+  // Check if clicking on a blocked equipment slot (e.g., right hand when two-handed weapon equipped in left)
+  const clickedSlotIndex = getEquipmentSlotAtPosition(pos.x, pos.y);
+  if (clickedSlotIndex !== null && isSlotBlocked(state.equipment, clickedSlotIndex, itemDatabase)) {
+    // Find the item that's blocking this slot
+    for (let i = 0; i < state.equipment.length; i++) {
+      const item = state.equipment[i];
+      if (!item || i === clickedSlotIndex) continue;
+
+      const itemDef = itemDatabase.getItem(item.definitionId);
+      if (!itemDef || !itemDef.slot) continue;
+
+      if (Array.isArray(itemDef.slot)) {
+        const occupiedSlots = getOccupiedSlots(itemDef);
+        if (occupiedSlots.includes(clickedSlotIndex)) {
+          // This item is blocking the clicked slot - unequip it
+          console.log(`[Equipment] Clicked blocked slot ${clickedSlotIndex}, unequipping blocking item from slot ${i}`);
+          const success = unequipItemToInventory(
+            state.inventory,
+            state.equipment,
+            i,
+            itemDatabase
+          );
+
+          if (success && player) {
+            applyEquipmentBonuses(player, state.equipment, itemDatabase);
+
+            // Debug log equipment slots
+            console.log("[Equipment] After unequipping (clicked blocked slot):");
+            state.equipment.forEach((item, index) => {
+              const slotName = ["Head", "LeftHand", "RightHand", "Legs", "Torso"][index];
+              if (item) {
+                const itemDef = itemDatabase.getItem(item.definitionId);
+                console.log(`  [${index}] ${slotName}: ${itemDef?.name || item.definitionId}`);
+              } else {
+                console.log(`  [${index}] ${slotName}: empty`);
+              }
+            });
+
+            render();
+          }
+          return;
+        }
+      }
+    }
   }
 
   // Handle normal game clicks

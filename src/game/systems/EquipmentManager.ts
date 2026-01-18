@@ -32,6 +32,41 @@ export function getOccupiedSlots(itemDef: ItemDefinition): number[] {
 }
 
 /**
+ * Check if an equipment slot is blocked by a multi-slot item in another slot
+ * @param equipment Current equipment array
+ * @param slotIndex Index to check
+ * @param itemDatabase Item database to look up item definitions
+ * @returns true if slot is blocked by another item, false otherwise
+ */
+export function isSlotBlocked(
+  equipment: (ItemInstance | null)[],
+  slotIndex: number,
+  itemDatabase: ItemDatabase
+): boolean {
+  // Check all other equipment slots for multi-slot items that might block this slot
+  for (let i = 0; i < equipment.length; i++) {
+    if (i === slotIndex) continue; // Don't check the slot itself
+
+    const item = equipment[i];
+    if (!item) continue;
+
+    const itemDef = itemDatabase.getItem(item.definitionId);
+    if (!itemDef || !itemDef.slot) continue;
+
+    // Check if this is a multi-slot item
+    if (Array.isArray(itemDef.slot)) {
+      const occupiedSlots = getOccupiedSlots(itemDef);
+      // If this multi-slot item blocks our target slot, return true
+      if (occupiedSlots.includes(slotIndex)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
  * Count empty slots in inventory
  */
 export function countEmptyInventorySlots(inventory: (ItemInstance | null)[]): number {
@@ -127,12 +162,23 @@ export function equipItemFromInventory(
   // Get all slots this item will occupy
   const slotsToOccupy = getOccupiedSlots(itemDef);
 
-  // Find all items that need to be unequipped
+  // Check if any of the slots are blocked by other multi-slot items
+  for (const slotIndex of slotsToOccupy) {
+    if (isSlotBlocked(equipment, slotIndex, itemDatabase)) {
+      console.error(`[EquipmentManager] Slot ${slotIndex} is blocked by another item`);
+      return false;
+    }
+  }
+
+  // Find all items that need to be unequipped (deduplicated)
   const itemsToUnequip: ItemInstance[] = [];
+  const unequippedIds = new Set<string>();
+
   for (const slotIndex of slotsToOccupy) {
     const currentItem = equipment[slotIndex];
-    if (currentItem) {
+    if (currentItem && !unequippedIds.has(currentItem.definitionId)) {
       itemsToUnequip.push(currentItem);
+      unequippedIds.add(currentItem.definitionId);
     }
   }
 
@@ -169,12 +215,11 @@ export function equipItemFromInventory(
     equipment[slotIndex] = null;
   }
 
-  // 4. Equip the new item
-  for (const slotIndex of slotsToOccupy) {
-    equipment[slotIndex] = itemToEquip;
-  }
+  // 4. Equip the new item in the FIRST occupied slot only
+  const firstSlot = Math.min(...slotsToOccupy);
+  equipment[firstSlot] = itemToEquip;
 
-  console.log(`[EquipmentManager] Equipped ${itemDef.name} to slots ${slotsToOccupy.join(", ")}`);
+  console.log(`[EquipmentManager] Equipped ${itemDef.name} to slot ${firstSlot} (blocks slots ${slotsToOccupy.join(", ")})`);
   return true;
 }
 

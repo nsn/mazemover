@@ -100,6 +100,24 @@ export function getInventoryItemAtPosition(mouseX: number, mouseY: number, turnM
 }
 
 /**
+ * Get the equipment slot index at the mouse position (regardless of whether there's an item)
+ */
+export function getEquipmentSlotAtPosition(mouseX: number, mouseY: number): number | null {
+  for (let i = 0; i < 5; i++) {
+    const gridPos = getEquipmentSlotGridPos(i);
+    if (!gridPos) continue;
+
+    const pos = equipmentSlotPos(gridPos.col, gridPos.row, EQUIPMENT.PATCH_SIZE);
+
+    if (mouseX >= pos.x && mouseX <= pos.x + EQUIPMENT.SLOT_SIZE &&
+        mouseY >= pos.y && mouseY <= pos.y + EQUIPMENT.SLOT_SIZE) {
+      return i;
+    }
+  }
+  return null;
+}
+
+/**
  * Checks if mouse is hovering over an equipment item
  * Returns the item instance if hovering, null otherwise
  */
