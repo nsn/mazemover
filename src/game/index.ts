@@ -809,6 +809,9 @@ export function initializeGameHandlers(
     // Only check hover if mouse is in the UI area (right side of screen)
     // UI starts at GRID_OFFSET_X + GRID_COLS * TILE_SIZE
     const uiStartX = GRID_OFFSET_X + GRID_COLS * TILE_SIZE;
+    const state = tm.getState();
+    const itemDatabase = tm.getObjectManager().getItemDatabase();
+
     if (mousePos.x < uiStartX) {
       // Mouse is over the game grid, not UI - clear any existing hover
       if (lastHoveredItemId !== null) {
@@ -817,12 +820,11 @@ export function initializeGameHandlers(
       }
       if (lastHighlightedSlots.length > 0) {
         lastHighlightedSlots = [];
-        drawEquipmentSlots([]);
+        drawEquipmentSlots([], state.equipment, itemDatabase);
       }
       return;
     }
 
-    const itemDatabase = tm.getObjectManager().getItemDatabase();
     let hoveredItemId: string | null = null;
     let highlightedSlots: number[] = [];
 
@@ -852,7 +854,7 @@ export function initializeGameHandlers(
 
     if (slotsChanged) {
       lastHighlightedSlots = highlightedSlots;
-      drawEquipmentSlots(highlightedSlots);
+      drawEquipmentSlots(highlightedSlots, state.equipment, itemDatabase);
     }
 
     // Only update description if hovered item changed

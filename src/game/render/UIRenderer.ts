@@ -294,8 +294,14 @@ export function drawEquipmentBackground(): void {
 /**
  * Draws equipment slots with optional highlighting
  * @param highlightedSlots Array of slot indices to highlight (frame 1)
+ * @param equipment Current equipment array to check for multi-slot items
+ * @param itemDatabase ItemDatabase to look up item definitions
  */
-export function drawEquipmentSlots(highlightedSlots: number[]): void {
+export function drawEquipmentSlots(
+  highlightedSlots: number[],
+  equipment?: (ItemInstance | null)[],
+  itemDatabase?: ItemDatabase
+): void {
   // Clear existing slots
   k.destroyAll("equipmentSlot");
 
@@ -306,7 +312,38 @@ export function drawEquipmentSlots(highlightedSlots: number[]): void {
 
     const pos = equipmentSlotPos(gridPos.col, gridPos.row, EQUIPMENT.PATCH_SIZE);
     const isHighlighted = highlightedSlots.includes(slotIndex);
-    const frame = isHighlighted ? 1 : 0; // Frame 0 = default, Frame 1 = highlighted
+
+    let frame = 0; // Frame 0 = default
+    if (isHighlighted) {
+      frame = 1; // Frame 1 = highlighted
+    }
+
+    // Check if this slot is occupied by a multi-slot item and is NOT the first slot
+    if (equipment && itemDatabase) {
+      const item = equipment[slotIndex];
+      if (item) {
+        const itemDef = itemDatabase.getItem(item.definitionId);
+        if (itemDef && itemDef.slot && Array.isArray(itemDef.slot)) {
+          // This is a multi-slot item
+          const occupiedSlots = itemDef.slot.map(slot => {
+            switch (slot) {
+              case "Head": return 0;
+              case "LeftHand": return 1;
+              case "RightHand": return 2;
+              case "Legs": return 3;
+              case "Torso": return 4;
+              default: return -1;
+            }
+          });
+
+          // If this is not the first slot occupied by this item, mark as disabled
+          const firstSlot = Math.min(...occupiedSlots);
+          if (slotIndex !== firstSlot) {
+            frame = 2; // Frame 2 = disabled
+          }
+        }
+      }
+    }
 
     k.add([
       k.sprite("inventoryslot", { frame }),
@@ -362,6 +399,26 @@ export function drawEquipmentItems(equipment: (ItemInstance | null)[], itemDatab
     if (!itemDef) {
       console.error(`[UIRenderer] Item definition not found: ${item.definitionId}`);
       continue;
+    }
+
+    // For multi-slot items, only render in the first slot
+    if (itemDef.slot && Array.isArray(itemDef.slot)) {
+      const occupiedSlots = itemDef.slot.map(slot => {
+        switch (slot) {
+          case "Head": return 0;
+          case "LeftHand": return 1;
+          case "RightHand": return 2;
+          case "Legs": return 3;
+          case "Torso": return 4;
+          default: return -1;
+        }
+      });
+
+      const firstSlot = Math.min(...occupiedSlots);
+      if (i !== firstSlot) {
+        // This is not the first slot for this multi-slot item, skip rendering
+        continue;
+      }
     }
 
     const gridPos = getEquipmentSlotGridPos(i);
