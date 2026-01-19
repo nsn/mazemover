@@ -372,8 +372,6 @@ export function clearUI(): void {
   k.destroyAll("descriptionText");
   k.destroyAll("sagaText");
   k.destroyAll("uiBorder");
-  k.destroyAll("equipmentHeader");
-  k.destroyAll("inventoryHeader");
 }
 
 // ============================
@@ -382,7 +380,6 @@ export function clearUI(): void {
 
 // Internal helper to draw UI border
 function drawUIBorder(): void {
-  const headerHeight = 16;
   const spacing = 8;
   const statsWidth = 80;
 
@@ -396,10 +393,8 @@ function drawUIBorder(): void {
 
   const totalHeight =
     UI.PADDING +
-    headerHeight +
     equipmentHeight +
     spacing +
-    headerHeight +
     inventoryHeight +
     spacing +
     DESCRIPTION.HEIGHT +
@@ -413,17 +408,6 @@ function drawUIBorder(): void {
     k.pos(UI.X, UI.Y),
     k.z(90),
     "uiBorder",
-  ]);
-}
-
-// Internal helper to draw equipment header
-function drawEquipmentHeader(x: number, y: number): void {
-  k.add([
-    k.text("Equipment", { size: 12, font: "saga" }),
-    k.pos(x, y),
-    k.color(255, 255, 255),
-    k.z(100),
-    "equipmentHeader",
   ]);
 }
 
@@ -459,17 +443,6 @@ function drawEquipmentSlots(
   }
 }
 
-// Internal helper to draw inventory header
-function drawInventoryHeader(x: number, y: number): void {
-  k.add([
-    k.text("Inventory", { size: 12, font: "saga" }),
-    k.pos(x, y),
-    k.color(255, 255, 255),
-    k.z(100),
-    "inventoryHeader",
-  ]);
-}
-
 // Internal helper to draw inventory slots
 function drawInventorySlots(x: number, y: number): void {
   for (let col = 0; col < INVENTORY.SLOTS_X; col++) {
@@ -503,7 +476,7 @@ function drawDescription(x: number, y: number, itemDef?: ItemDefinition): void {
     const textY = y + DESCRIPTION.PADDING;
 
     k.add([
-      k.text(itemDef.name, { size: 12, font: "saga", width: DESCRIPTION.WIDTH - 2 * DESCRIPTION.PADDING }),
+      k.text(itemDef.name, { size: 16, font: "saga", width: DESCRIPTION.WIDTH - 2 * DESCRIPTION.PADDING }),
       k.pos(textX, textY),
       k.color(255, 255, 255),
       k.z(101),
@@ -553,7 +526,6 @@ export function drawUI(
   state: GameState,
   itemDatabase: ItemDatabase
 ): void {
-  const headerHeight = 16;
   const spacing = 8;
 
   const equipmentWidth = EQUIPMENT.SLOTS_X * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
@@ -561,27 +533,20 @@ export function drawUI(
   const inventoryHeight = INVENTORY.SLOTS_Y * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING;
 
   // Calculate positions for each widget
-  const equipmentHeaderX = UI.X + UI.PADDING;
-  const equipmentHeaderY = UI.Y + UI.PADDING;
-
   const equipmentSlotsX = UI.X + UI.PADDING;
-  const equipmentSlotsY = equipmentHeaderY + headerHeight;
+  const equipmentSlotsY = UI.Y + UI.PADDING;
 
   const playerStatsX = equipmentSlotsX + equipmentWidth + spacing;
   const playerStatsY = equipmentSlotsY;
 
-  const inventoryHeaderX = UI.X + UI.PADDING;
-  const inventoryHeaderY = equipmentSlotsY + equipmentHeight + spacing;
-
   const inventorySlotsX = UI.X + UI.PADDING;
-  const inventorySlotsY = inventoryHeaderY + headerHeight;
+  const inventorySlotsY = equipmentSlotsY + equipmentHeight + spacing;
 
   const descriptionX = UI.X + UI.PADDING;
   const descriptionY = inventorySlotsY + inventoryHeight + spacing;
 
   // Draw all UI components
   drawUIBorder();
-  drawEquipmentHeader(equipmentHeaderX, equipmentHeaderY);
   drawEquipmentSlots(equipmentSlotsX, equipmentSlotsY, [], state.equipment, itemDatabase);
   drawEquipmentItems(equipmentSlotsX, equipmentSlotsY, state.equipment, itemDatabase);
 
@@ -589,7 +554,6 @@ export function drawUI(
     drawPlayerStats(player, playerStatsX, playerStatsY);
   }
 
-  drawInventoryHeader(inventoryHeaderX, inventoryHeaderY);
   drawInventorySlots(inventorySlotsX, inventorySlotsY);
   drawInventoryItems(inventorySlotsX, inventorySlotsY, state.inventory, itemDatabase);
   drawDescription(descriptionX, descriptionY);
@@ -604,9 +568,8 @@ export function updateEquipmentSlotHighlighting(
   equipment: (ItemInstance | null)[],
   itemDatabase: ItemDatabase
 ): void {
-  const headerHeight = 16;
   const equipmentSlotsX = UI.X + UI.PADDING;
-  const equipmentSlotsY = UI.Y + UI.PADDING + headerHeight;
+  const equipmentSlotsY = UI.Y + UI.PADDING;
 
   drawEquipmentSlots(equipmentSlotsX, equipmentSlotsY, highlightedSlots, equipment, itemDatabase);
 }
@@ -616,12 +579,10 @@ export function updateEquipmentSlotHighlighting(
  * @internal Used by hover effect system
  */
 export function updateDescription(itemDef?: ItemDefinition): void {
-  const headerHeight = 16;
   const spacing = 8;
   const equipmentHeight = EQUIPMENT.SLOTS_Y * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
   const inventoryHeight = INVENTORY.SLOTS_Y * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING;
-  const inventoryHeaderY = UI.Y + UI.PADDING + headerHeight + equipmentHeight + spacing;
-  const inventorySlotsY = inventoryHeaderY + headerHeight;
+  const inventorySlotsY = UI.Y + UI.PADDING + equipmentHeight + spacing;
   const descriptionX = UI.X + UI.PADDING;
   const descriptionY = inventorySlotsY + inventoryHeight + spacing;
 

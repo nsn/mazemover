@@ -84,12 +84,10 @@ export function getInventoryItemAtPosition(mouseX: number, mouseY: number, turnM
   const state = turnManager.getState();
 
   // Calculate inventory base position (same as in render function)
-  const headerHeight = 16;
   const spacing = 8;
   const equipmentHeight = EQUIPMENT.SLOTS_Y * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
-  const inventoryHeaderY = UI.Y + UI.PADDING + headerHeight + equipmentHeight + spacing;
   const inventorySlotsX = UI.X + UI.PADDING;
-  const inventorySlotsY = inventoryHeaderY + headerHeight;
+  const inventorySlotsY = UI.Y + UI.PADDING + equipmentHeight + spacing;
 
   for (let i = 0; i < state.inventory.length; i++) {
     const item = state.inventory[i];
@@ -112,9 +110,8 @@ export function getInventoryItemAtPosition(mouseX: number, mouseY: number, turnM
  */
 export function getEquipmentSlotAtPosition(mouseX: number, mouseY: number): number | null {
   // Calculate equipment base position (same as in render function)
-  const headerHeight = 16;
   const equipmentSlotsX = UI.X + UI.PADDING;
-  const equipmentSlotsY = UI.Y + UI.PADDING + headerHeight;
+  const equipmentSlotsY = UI.Y + UI.PADDING;
 
   for (let i = 0; i < 5; i++) {
     const gridPos = getEquipmentSlotGridPos(i);
@@ -138,9 +135,8 @@ export function getEquipmentItemAtPosition(mouseX: number, mouseY: number, turnM
   const state = turnManager.getState();
 
   // Calculate equipment base position (same as in render function)
-  const headerHeight = 16;
   const equipmentSlotsX = UI.X + UI.PADDING;
-  const equipmentSlotsY = UI.Y + UI.PADDING + headerHeight;
+  const equipmentSlotsY = UI.Y + UI.PADDING;
 
   for (let i = 0; i < state.equipment.length; i++) {
     const item = state.equipment[i];

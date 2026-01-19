@@ -44,6 +44,15 @@ export async function loadAssets(): Promise<void> {
     },
   });
 
+  await k.loadSprite("spacer", "/spacer.png", {
+    slice9: {
+        left: 5,
+        right: 5,
+        top: 0,
+        bottom: 0,
+    },
+  });
+
   await k.loadSprite("items", "/items.png", {
     sliceX: 20,
     sliceY: 20,
