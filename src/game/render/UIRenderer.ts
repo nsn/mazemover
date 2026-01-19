@@ -428,13 +428,28 @@ function drawUIBorder(): void {
  * @param y Y coordinate for the spacer
  */
 export function drawSpacer(x: number, y: number): void {
+  const ramp = 10;
+  const margin = 10;
   const totalWidth = calculateUIWidth();
-  const spacerWidth = totalWidth - 20; // 20 pixels narrower than UI
-  const spacerX = x + 10; // Center by offsetting 10 pixels (half of 20)
+  const spacerWidth = totalWidth - 2 * margin;
+  const spacerX = x + margin; // Center by offsetting 10 pixels (half of 20)
+  const innerWidth = spacerWidth - 2 * ramp;
 
   k.add([
-    k.sprite("spacer", { width: spacerWidth, height: 5 }),
+    k.sprite("spacer", { width: ramp, height: 4, frame: 0 }),
     k.pos(spacerX, y),
+    k.z(100),
+    "uiSpacer",
+  ]);
+  k.add([
+    k.sprite("spacer", { width: innerWidth, height: 3, frame: 1 }),
+    k.pos(spacerX + ramp, y),
+    k.z(100),
+    "uiSpacer",
+  ]);
+  k.add([
+    k.sprite("spacer", { width: ramp, height: 3, frame: 2 }),
+    k.pos(spacerX + innerWidth , y),
     k.z(100),
     "uiSpacer",
   ]);
@@ -491,21 +506,13 @@ function drawInventorySlots(x: number, y: number): void {
 
 // Internal helper to draw description widget
 function drawDescription(x: number, y: number, itemDef?: ItemDefinition): void {
-  k.add([
-    k.rect(DESCRIPTION.WIDTH, DESCRIPTION.HEIGHT),
-    k.pos(x, y),
-    k.color(20, 20, 20),
-    k.opacity(0.8),
-    k.z(100),
-    "descriptionBackground",
-  ]);
-
   if (itemDef) {
     const textX = x + DESCRIPTION.PADDING;
     const textY = y + DESCRIPTION.PADDING;
+    const textWidth = calculateUIWidth() - 2 * DESCRIPTION.PADDING;
 
     k.add([
-      k.text(itemDef.name, { size: 16, font: "saga", width: DESCRIPTION.WIDTH - 2 * DESCRIPTION.PADDING }),
+      k.text(itemDef.name, { size: 16, font: "saga", width: textWidth }),
       k.pos(textX, textY),
       k.color(255, 255, 255),
       k.z(101),
@@ -515,12 +522,12 @@ function drawDescription(x: number, y: number, itemDef?: ItemDefinition): void {
     if (itemDef.description) {
       k.add([
         k.text(itemDef.description, {
-          size: 10,
+          size: 16,
           font: "saga",
-          width: DESCRIPTION.WIDTH - 2 * DESCRIPTION.PADDING,
+          width: textWidth,
         }),
         k.pos(textX, textY + DESCRIPTION.LINE_HEIGHT),
-        k.color(200, 200, 200),
+        k.color(72, 59, 58),
         k.z(101),
         "descriptionText",
       ]);

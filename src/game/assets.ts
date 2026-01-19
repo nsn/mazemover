@@ -45,12 +45,8 @@ export async function loadAssets(): Promise<void> {
   });
 
   await k.loadSprite("spacer", "/spacer.png", {
-    slice9: {
-        left: 10,
-        right: 10,
-        top: 1,
-        bottom: 1
-    },
+    sliceX: 3,
+    sliceY: 1,
   });
 
   await k.loadSprite("items", "/items.png", {
@@ -101,10 +97,10 @@ export async function loadAssets(): Promise<void> {
   // await k.loadFont("saga","saga_8.ttf", {size: 16});
   await k.loadFont("saga","saga_8.ttf", {
     size: 16, 
-    outline: {
-      width: 0, 
-      color: k.Color.fromArray([64,64,64])
-    }
+    // outline: {
+    //   width: 0, 
+    //   color: k.Color.fromArray([64,64,64])
+    // }
   });
 
   await k.loadFont("sctfont","saga_8.ttf", {
