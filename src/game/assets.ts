@@ -35,7 +35,7 @@ export async function loadAssets(): Promise<void> {
     sliceY: 1
   });
 
-  await k.loadSprite("9patch", "/9patch.png", {
+  await k.loadSprite("woodframe", "/woodpatch.png", {
     slice9: {
         left: INVENTORY.PATCH_SIZE,
         right: INVENTORY.PATCH_SIZE,
@@ -77,7 +77,7 @@ export async function loadAssets(): Promise<void> {
       idle: {from : 0, to: 3, loop: true},
       walk: {from : 110, to: 113, loop: true},
       drop: {from : 186, to: 197, loop: false, speed: 10},
-      fall: {from : 1210, to: 1221, loop: false, speed: 10},
+      fall: {from : 803, to: 810, loop: false, speed: 60},
     }
   });
 

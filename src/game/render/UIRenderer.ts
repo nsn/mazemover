@@ -233,7 +233,7 @@ export function drawInventoryBackground(): void {
   const width = INVENTORY.SLOTS_X * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING + 2 * INVENTORY.PATCH_SIZE
   const height = INVENTORY.SLOTS_Y * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING + 2 * INVENTORY.PATCH_SIZE
   k.add([
-    k.sprite("9patch", {
+    k.sprite("woodframe", {
       width: width,
       height: height,
     }),
@@ -285,7 +285,7 @@ export function drawEquipmentBackground(
   const width = EQUIPMENT.SLOTS_X * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING + 2 * EQUIPMENT.PATCH_SIZE
   const height = EQUIPMENT.SLOTS_Y * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING + 2 * EQUIPMENT.PATCH_SIZE
   k.add([
-    k.sprite("9patch", {
+    k.sprite("woodframe", {
       width: width,
       height: height,
     }),
@@ -424,7 +424,7 @@ export function drawEquipmentItems(equipment: (ItemInstance | null)[], itemDatab
  */
 export function drawDescriptionBackground(): void {
   k.add([
-    k.sprite("9patch", {
+    k.sprite("woodframe", {
       width: DESCRIPTION.WIDTH,
       height: DESCRIPTION.HEIGHT,
     }),
