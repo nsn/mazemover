@@ -46,8 +46,8 @@ export async function loadAssets(): Promise<void> {
 
   await k.loadSprite("spacer", "/spacer.png", {
     slice9: {
-        left: 5,
-        right: 5,
+        left: 10,
+        right: 10,
         top: 0,
         bottom: 0,
     },

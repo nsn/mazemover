@@ -376,25 +376,32 @@ export function clearUI(): void {
   k.destroyAll("descriptionText");
   k.destroyAll("sagaText");
   k.destroyAll("uiBorder");
+  k.destroyAll("uiSpacer");
 }
 
 // ============================
 // NEW WIDGET-BASED UI SYSTEM
 // ============================
 
-// Internal helper to draw UI border
-function drawUIBorder(): void {
+// Helper to calculate UI border width (used by spacer and border)
+function calculateUIWidth(): number {
   const spacing = 8;
   const statsWidth = 80;
 
   const equipmentWidth = EQUIPMENT.SLOTS_X * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
-  const equipmentHeight = EQUIPMENT.SLOTS_Y * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
-  const inventoryHeight = INVENTORY.SLOTS_Y * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING;
   const inventoryWidth = INVENTORY.SLOTS_X * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING;
 
   const topSectionWidth = equipmentWidth + spacing + statsWidth;
-  const totalWidth = Math.max(topSectionWidth, inventoryWidth) + 2 * UI.PADDING;
+  return Math.max(topSectionWidth, inventoryWidth) + 2 * UI.PADDING;
+}
 
+// Internal helper to draw UI border
+function drawUIBorder(): void {
+  const equipmentHeight = EQUIPMENT.SLOTS_Y * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
+  const inventoryHeight = INVENTORY.SLOTS_Y * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING;
+  const spacing = 8;
+
+  const totalWidth = calculateUIWidth();
   const totalHeight =
     UI.PADDING +
     equipmentHeight +
@@ -412,6 +419,24 @@ function drawUIBorder(): void {
     k.pos(UI.X, UI.Y),
     k.z(90),
     "uiBorder",
+  ]);
+}
+
+/**
+ * Draws a horizontal spacer line centered within the UI
+ * @param x X coordinate (left edge of UI)
+ * @param y Y coordinate for the spacer
+ */
+export function drawSpacer(x: number, y: number): void {
+  const totalWidth = calculateUIWidth();
+  const spacerWidth = totalWidth - 20; // 20 pixels narrower than UI
+  const spacerX = x + 10; // Center by offsetting 10 pixels (half of 20)
+
+  k.add([
+    k.sprite("spacer", { width: spacerWidth, height: 1 }),
+    k.pos(spacerX, y),
+    k.z(100),
+    "uiSpacer",
   ]);
 }
 
