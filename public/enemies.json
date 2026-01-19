@@ -10,7 +10,8 @@
       },
       "movementSpeed": 1,
       "aiType": "Hunter",
-      "sprite": "goblin"
+      "sprite": "goblin",
+      "flying": false
     }
   },
   "player": {
@@ -20,6 +21,7 @@
       "atk": 3,
       "def": 1,
       "agi": 2
-    }
+    },
+    "flying": false
   }
 }

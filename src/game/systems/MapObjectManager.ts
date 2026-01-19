@@ -33,7 +33,8 @@ export class MapObjectManager {
     stats?: Stats,
     spriteOffset: { x: number; y: number } = { x: 0, y: 0 },
     onEnter?: MapObjectCallback,
-    onExit?: MapObjectCallback
+    onExit?: MapObjectCallback,
+    flying: boolean = false
   ): MapObject {
     const obj: MapObject = {
       id: nextId++,
@@ -53,6 +54,7 @@ export class MapObjectManager {
       stats: stats ? { ...stats } : undefined,
       baseStats: stats ? { ...stats } : undefined,  // Store base stats before equipment bonuses
       currentHP: stats ? stats.hp : undefined,
+      flying,
       onEnter,
       onExit,
     };
@@ -70,7 +72,10 @@ export class MapObjectManager {
       100,
       1,
       playerDef.stats,
-      { x: 0, y: -4 }  // Sprite offset to lift player sprite up
+      { x: 0, y: -4 },  // Sprite offset to lift player sprite up
+      undefined,  // onEnter
+      undefined,  // onExit
+      playerDef.flying || false  // flying
     );
     player.isInStartLevelSequence = true;  // Will be managed by StartLevelSequence
     console.log(`[MapObjectManager] Created player with stats:`, player.stats);
@@ -91,7 +96,11 @@ export class MapObjectManager {
       enemyDef.sprite,
       90,
       enemyDef.movementSpeed,
-      enemyDef.stats
+      enemyDef.stats,
+      { x: 0, y: 0 },  // spriteOffset
+      undefined,  // onEnter
+      undefined,  // onExit
+      enemyDef.flying || false  // flying
     );
 
     enemy.aiType = enemyDef.aiType;

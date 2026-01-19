@@ -6,6 +6,7 @@ export interface EnemyDefinition {
   movementSpeed: number;
   aiType: AIType;
   sprite: string;
+  flying?: boolean;  // True if enemy is flying (immune to ground hazards), defaults to false
   color?: {
     r: number;
     g: number;
@@ -16,6 +17,7 @@ export interface EnemyDefinition {
 export interface PlayerDefinition {
   name: string;
   stats: Stats;
+  flying?: boolean;  // True if player is flying (immune to ground hazards), defaults to false
 }
 
 export interface EnemyDatabaseData {
