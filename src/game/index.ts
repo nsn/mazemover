@@ -389,6 +389,9 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
           });
         });
 
+        // Reset animating flag before scene transition
+        isAnimating = false;
+
         // Transition to next level (going deeper)
         fallThroughFloor(turnManager.getState());
 
@@ -842,6 +845,11 @@ export function initializeGameHandlers(
   ic: InputController,
   cm: CursorManager
 ): void {
+  // Reset module-level state (in case scene reloaded)
+  isAnimating = false;
+  lastHoveredItemId = null;
+  lastHighlightedSlots = [];
+
   // Initialize click manager with callbacks
   const clickCallbacks: ClickCallbacks = {
     onSkipTurn: () => {
