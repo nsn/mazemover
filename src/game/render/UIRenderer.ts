@@ -36,6 +36,7 @@ export function drawPlayerStats(player: MapObject, x: number, y: number): void {
     k.text(`HP: ${player.currentHP}/${player.stats.hp}`, { font: "saga", size: 16 }),
     k.pos(x, y),
     k.color(255, 100, 100),
+    k.z(100),
     "playerStats",
   ]);
 
@@ -44,6 +45,7 @@ export function drawPlayerStats(player: MapObject, x: number, y: number): void {
     k.text(`ATK: ${player.stats.atk}`, { font: "saga", size: 16 }),
     k.pos(x, y + lineHeight),
     k.color(255, 200, 100),
+    k.z(100),
     "playerStats",
   ]);
 
@@ -52,6 +54,7 @@ export function drawPlayerStats(player: MapObject, x: number, y: number): void {
     k.text(`DEF: ${player.stats.def}`, { font: "saga", size: 16 }),
     k.pos(x, y + lineHeight * 2),
     k.color(100, 200, 255),
+    k.z(100),
     "playerStats",
   ]);
 
@@ -60,6 +63,7 @@ export function drawPlayerStats(player: MapObject, x: number, y: number): void {
     k.text(`AGI: ${player.stats.agi}`, { font: "saga", size: 16 }),
     k.pos(x, y + lineHeight * 3),
     k.color(100, 255, 100),
+    k.z(100),
     "playerStats",
   ]);
 }
