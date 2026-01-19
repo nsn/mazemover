@@ -782,7 +782,7 @@ async function tryMovePlayerInDirection(rowDelta: number, colDelta: number): Pro
   const state = turnManager.getState();
   const targetPos = { row: targetRow, col: targetCol };
   const moves = turnManager.getObjectManager().getAvailableMoves(player);
-  const reachable = findReachableTiles(state.grid, player.gridPosition, moves, [], false);
+  const reachable = findReachableTiles(state.grid, player.gridPosition, moves, [], true);
 
   const target = reachable.find(
     (t) => t.position.row === targetRow && t.position.col === targetCol
@@ -1136,7 +1136,7 @@ export function render(): void {
       // Draw darkening overlay on non-active tiles
       if (state.rotatingTilePosition && player) {
         const moves = turnManager.getObjectManager().getAvailableMoves(player);
-        const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves, [], false);
+        const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves, [], true);
         drawRotationOverlay(state.rotatingTilePosition, reachable, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
       }
 
