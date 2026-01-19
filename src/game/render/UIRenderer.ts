@@ -574,6 +574,10 @@ export function drawUI(
   const descriptionX = UI.X + UI.PADDING;
   const descriptionY = inventorySlotsY + inventoryHeight + spacing;
 
+  // Calculate spacer positions (centered in the spacing gaps)
+  const spacer1Y = equipmentSlotsY + equipmentHeight + spacing / 2;
+  const spacer2Y = inventorySlotsY + inventoryHeight + spacing / 2;
+
   // Draw all UI components
   drawUIBorder();
   drawEquipmentSlots(equipmentSlotsX, equipmentSlotsY, [], state.equipment, itemDatabase);
@@ -583,8 +587,15 @@ export function drawUI(
     drawPlayerStats(player, playerStatsX, playerStatsY);
   }
 
+  // Spacer between equipment and inventory
+  drawSpacer(UI.X, spacer1Y);
+
   drawInventorySlots(inventorySlotsX, inventorySlotsY);
   drawInventoryItems(inventorySlotsX, inventorySlotsY, state.inventory, itemDatabase);
+
+  // Spacer between inventory and description
+  drawSpacer(UI.X, spacer2Y);
+
   drawDescription(descriptionX, descriptionY);
 }
 
