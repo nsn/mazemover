@@ -151,7 +151,7 @@ export class ClickManager {
 
       if (!isClickingRotatingTile) {
         const moves = turnManager.getObjectManager().getAvailableMoves(player);
-        const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves);
+        const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves, [], player.flying);
         const target = reachable.find(
           (t) => t.position.row === gridPos.row && t.position.col === gridPos.col
         );
@@ -241,7 +241,7 @@ export class ClickManager {
       const gridPos = screenToGrid(mousePos.x, mousePos.y);
       if (gridPos) {
         const moves = turnManager.getObjectManager().getAvailableMoves(player);
-        const reachable = findReachableTiles(state.grid, player.gridPosition, moves);
+        const reachable = findReachableTiles(state.grid, player.gridPosition, moves, [], player.flying);
         const target = reachable.find(
           (t) => t.position.row === gridPos.row && t.position.col === gridPos.col
         );

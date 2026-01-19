@@ -22,7 +22,7 @@ function calculateHunterMove(
     return null;
   }
 
-  const reachable = findReachableTiles(grid, enemy.gridPosition, moves, blockedPositions);
+  const reachable = findReachableTiles(grid, enemy.gridPosition, moves, blockedPositions, enemy.flying);
   if (reachable.length === 0) {
     return null;
   }

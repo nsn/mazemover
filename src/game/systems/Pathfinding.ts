@@ -1,5 +1,6 @@
 import { type TileInstance, type GridPosition } from "../types";
 import { getTileEdges } from "../core/Tile";
+import { getFallChance, AI } from "../config";
 
 export interface ReachableTile {
   position: GridPosition;
@@ -49,7 +50,8 @@ export function findReachableTiles(
   grid: TileInstance[][],
   start: GridPosition,
   maxDistance: number,
-  blockedPositions: GridPosition[] = []
+  blockedPositions: GridPosition[] = [],
+  isFlying: boolean = false
 ): ReachableTile[] {
   if (maxDistance <= 0) {
     return [];
@@ -63,7 +65,7 @@ export function findReachableTiles(
   const key = (pos: GridPosition) => `${pos.row},${pos.col}`;
   const visited = new Set<string>();
   visited.add(key(start));
-  
+
   const blockedSet = new Set(blockedPositions.map(p => key(p)));
 
   while (queue.length > 0) {
@@ -90,9 +92,24 @@ export function findReachableTiles(
       if (visited.has(neighborKey)) {
         continue;
       }
-      
+
       if (blockedSet.has(neighborKey)) {
         continue;
+      }
+
+      // Non-flying entities avoid tiles with high fall chance
+      if (!isFlying) {
+        const rows = grid.length;
+        const cols = grid[0].length;
+        if (neighbor.row >= 0 && neighbor.row < rows && neighbor.col >= 0 && neighbor.col < cols) {
+          const neighborTile = grid[neighbor.row][neighbor.col];
+          if (neighborTile) {
+            const fallChance = getFallChance(neighborTile.decayLevel);
+            if (fallChance >= AI.FALL_AVOIDANCE_THRESHOLD) {
+              continue; // Skip this tile - too dangerous
+            }
+          }
+        }
       }
 
       if (canMove(grid, current.position, neighbor)) {
@@ -113,9 +130,10 @@ export function getPathTo(
   grid: TileInstance[][],
   start: GridPosition,
   target: GridPosition,
-  maxDistance: number
+  maxDistance: number,
+  isFlying: boolean = false
 ): GridPosition[] | null {
-  const reachable = findReachableTiles(grid, start, maxDistance);
+  const reachable = findReachableTiles(grid, start, maxDistance, [], isFlying);
   const targetKey = `${target.row},${target.col}`;
 
   for (const tile of reachable) {

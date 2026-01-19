@@ -47,6 +47,22 @@ export const DECAY_PROGRESSION = {
   ON_TILE_ROTATION: 2,             // Number of tiles to decay when rotating player's tile
 } as const;
 
+// Decay Fall Chance Configuration - maps decay level to probability of falling through floor
+export const DECAY_FALL_CHANCE: Record<number, number> = {
+  0: 0.0,   // No decay - no chance of falling
+  1: 0.0,   // Light decay - no chance of falling
+  2: 0.0,   // Moderate decay - no chance of falling
+  3: 0.0,   // Heavy decay - no chance of falling
+  4: 0.5,   // Critical decay - 50% chance of falling
+  5: 1.0,   // Maximum decay - 100% chance of falling (and beyond)
+};
+
+// Get fall chance for a given decay level
+export function getFallChance(decayLevel: number): number {
+  if (decayLevel >= 5) return 1.0;
+  return DECAY_FALL_CHANCE[decayLevel] ?? 0.0;
+}
+
 // Combat Configuration
 export const COMBAT = {
   BASE_HIT: 70,           // Base hit chance percentage
@@ -54,6 +70,11 @@ export const COMBAT = {
   TO_HIT: 100,            // Threshold for successful hit (toHitRoll must be <= this)
   CRIT_CHANCE: 75,        // Threshold for critical hit (toHitRoll must be >= this) - 25% crit chance
   CRIT_MULT: 2,           // Critical hit damage multiplier
+} as const;
+
+// AI Configuration
+export const AI = {
+  FALL_AVOIDANCE_THRESHOLD: 0.75,  // Non-flying enemies avoid tiles with fall chance >= this value
 } as const;
 
 // Start Level Sequence Configuration
