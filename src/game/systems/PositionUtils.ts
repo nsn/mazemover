@@ -1,4 +1,4 @@
-import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, INVENTORY, EQUIPMENT } from "../config";
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, INVENTORY, EQUIPMENT, UI } from "../config";
 import { type GridPosition, type PlotPosition, Direction } from "../types";
 import { type TurnManager } from "./TurnManager";
 import { inventorySlotPos, equipmentSlotPos, getEquipmentSlotGridPos } from "../render/UIRenderer";
@@ -83,13 +83,21 @@ export function isMouseOverPlayer(mouseX: number, mouseY: number, turnManager: T
 export function getInventoryItemAtPosition(mouseX: number, mouseY: number, turnManager: TurnManager): { item: any, index: number } | null {
   const state = turnManager.getState();
 
+  // Calculate inventory base position (same as in render function)
+  const headerHeight = 16;
+  const spacing = 8;
+  const equipmentHeight = EQUIPMENT.SLOTS_Y * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
+  const inventoryHeaderY = UI.Y + UI.PADDING + headerHeight + equipmentHeight + spacing;
+  const inventorySlotsX = UI.X + UI.PADDING;
+  const inventorySlotsY = inventoryHeaderY + headerHeight;
+
   for (let i = 0; i < state.inventory.length; i++) {
     const item = state.inventory[i];
     if (!item) continue;
 
     const col = i % INVENTORY.SLOTS_X;
     const row = Math.floor(i / INVENTORY.SLOTS_X);
-    const pos = inventorySlotPos(col, row, INVENTORY.PATCH_SIZE);
+    const pos = inventorySlotPos(col, row, inventorySlotsX, inventorySlotsY);
 
     if (mouseX >= pos.x && mouseX <= pos.x + INVENTORY.SLOT_SIZE &&
         mouseY >= pos.y && mouseY <= pos.y + INVENTORY.SLOT_SIZE) {
@@ -103,11 +111,16 @@ export function getInventoryItemAtPosition(mouseX: number, mouseY: number, turnM
  * Get the equipment slot index at the mouse position (regardless of whether there's an item)
  */
 export function getEquipmentSlotAtPosition(mouseX: number, mouseY: number): number | null {
+  // Calculate equipment base position (same as in render function)
+  const headerHeight = 16;
+  const equipmentSlotsX = UI.X + UI.PADDING;
+  const equipmentSlotsY = UI.Y + UI.PADDING + headerHeight;
+
   for (let i = 0; i < 5; i++) {
     const gridPos = getEquipmentSlotGridPos(i);
     if (!gridPos) continue;
 
-    const pos = equipmentSlotPos(gridPos.col, gridPos.row, EQUIPMENT.PATCH_SIZE);
+    const pos = equipmentSlotPos(gridPos.col, gridPos.row, equipmentSlotsX, equipmentSlotsY);
 
     if (mouseX >= pos.x && mouseX <= pos.x + EQUIPMENT.SLOT_SIZE &&
         mouseY >= pos.y && mouseY <= pos.y + EQUIPMENT.SLOT_SIZE) {
@@ -124,6 +137,11 @@ export function getEquipmentSlotAtPosition(mouseX: number, mouseY: number): numb
 export function getEquipmentItemAtPosition(mouseX: number, mouseY: number, turnManager: TurnManager): { item: any, index: number } | null {
   const state = turnManager.getState();
 
+  // Calculate equipment base position (same as in render function)
+  const headerHeight = 16;
+  const equipmentSlotsX = UI.X + UI.PADDING;
+  const equipmentSlotsY = UI.Y + UI.PADDING + headerHeight;
+
   for (let i = 0; i < state.equipment.length; i++) {
     const item = state.equipment[i];
     if (!item) continue;
@@ -131,7 +149,7 @@ export function getEquipmentItemAtPosition(mouseX: number, mouseY: number, turnM
     const gridPos = getEquipmentSlotGridPos(i);
     if (!gridPos) continue;
 
-    const pos = equipmentSlotPos(gridPos.col, gridPos.row, EQUIPMENT.PATCH_SIZE);
+    const pos = equipmentSlotPos(gridPos.col, gridPos.row, equipmentSlotsX, equipmentSlotsY);
 
     if (mouseX >= pos.x && mouseX <= pos.x + EQUIPMENT.SLOT_SIZE &&
         mouseY >= pos.y && mouseY <= pos.y + EQUIPMENT.SLOT_SIZE) {

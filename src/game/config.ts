@@ -85,35 +85,34 @@ export const START_LEVEL = {
   FADE_IN_DURATION: 0.15,         // Duration of fade-in for each tile/object
 } as const;
 
+// UI Configuration - Main position of the entire UI panel
+export const UI = {
+  X: GRID_OFFSET_X + GRID_COLS * TILE_SIZE + (640 - (GRID_OFFSET_X + GRID_COLS * TILE_SIZE)) / 2,
+  Y: 20,
+  PATCH_SIZE: 8,  // 9-patch border size
+  PADDING: 8,     // Padding inside the UI border
+}
+
 // Inventory Configuration
 export const INVENTORY = {
-  X: GRID_OFFSET_X + GRID_COLS * TILE_SIZE + (640 - (GRID_OFFSET_X + GRID_COLS * TILE_SIZE)) / 2,
-  Y: 180,
   SLOTS_X: 5,
   SLOTS_Y: 2,
   SLOT_SIZE: 26,
   SLOT_SPACING: 2,
-  PATCH_SIZE: 8,  // 9-patch border size
 }
 
 // Equipment Configuration
 export const EQUIPMENT = {
-  X: GRID_OFFSET_X + GRID_COLS * TILE_SIZE + (640 - (GRID_OFFSET_X + GRID_COLS * TILE_SIZE)) / 2,
-  Y: 80,
   SLOTS_X: 3,
   SLOTS_Y: 3,
   SLOT_SIZE: 26,
   SLOT_SPACING: 2,
-  PATCH_SIZE: 8,  // 9-patch border size
 }
 
 // Item Description Widget Configuration
 export const DESCRIPTION = {
-  X: GRID_OFFSET_X + GRID_COLS * TILE_SIZE + (640 - (GRID_OFFSET_X + GRID_COLS * TILE_SIZE)) / 2,
-  Y: 260,
   WIDTH: 140,
   HEIGHT: 80,
-  PATCH_SIZE: 8,  // 9-patch border size
   PADDING: 4,     // Text padding inside widget
   LINE_HEIGHT: 14, // Height between text lines
 }

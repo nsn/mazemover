@@ -17,19 +17,14 @@ import {
   clearMapObjects,
 } from "./render/MapObjectRenderer";
 import {
-  drawPlayerStats,
   drawPreviewTile,
   drawSkipButton,
   drawDebugInfo,
   drawLevelInfo,
   drawStateMachineInfo,
-  drawInventoryBackground,
-  drawInventoryItems,
-  drawEquipmentBackground,
-  drawEquipmentItems,
-  drawEquipmentSlots,
-  drawDescriptionBackground,
-  drawItemDescription,
+  drawUI,
+  updateEquipmentSlotHighlighting,
+  updateDescription,
   clearUI,
 } from "./render/UIRenderer";
 import { getInventoryItemAtPosition, getEquipmentItemAtPosition, getEquipmentSlotAtPosition } from "./systems/PositionUtils";
@@ -946,7 +941,7 @@ export function initializeGameHandlers(
       }
       if (lastHighlightedSlots.length > 0) {
         lastHighlightedSlots = [];
-        drawEquipmentSlots([], state.equipment, itemDatabase);
+        updateEquipmentSlotHighlighting([], state.equipment, itemDatabase);
       }
       return;
     }
@@ -980,23 +975,20 @@ export function initializeGameHandlers(
 
     if (slotsChanged) {
       lastHighlightedSlots = highlightedSlots;
-      drawEquipmentSlots(highlightedSlots, state.equipment, itemDatabase);
+      updateEquipmentSlotHighlighting(highlightedSlots, state.equipment, itemDatabase);
     }
 
     // Only update description if hovered item changed
     if (hoveredItemId !== lastHoveredItemId) {
       lastHoveredItemId = hoveredItemId;
 
-      // Clear previous description text
+      // Clear previous description
       k.destroyAll("descriptionText");
+      k.destroyAll("descriptionBackground");
 
-      // Draw item description if hovering over an item
-      if (hoveredItemId) {
-        const itemDef = itemDatabase.getItem(hoveredItemId);
-        if (itemDef) {
-          drawItemDescription(itemDef);
-        }
-      }
+      // Update description with hovered item (or empty if no item)
+      const itemDef = hoveredItemId ? itemDatabase.getItem(hoveredItemId) : undefined;
+      updateDescription(itemDef);
     }
   });
 }
@@ -1097,26 +1089,14 @@ export function render(): void {
   const player = turnManager.getObjectManager().getPlayer();
 
   // Calculate UI positions
-  const statsX = 8;
-  const statsY = 8;
   const skipButtonX = GRID_OFFSET_X + GRID_COLS * TILE_SIZE + TILE_SIZE * 3;
   const skipButtonY = 360 / 2 + 80;
 
   // Get item database for UI rendering
   const itemDatabase = turnManager.getObjectManager().getItemDatabase();
 
-  // Draw equipment background
-  drawEquipmentBackground(state.equipment, itemDatabase);
-
-  // Draw inventory background
-  drawInventoryBackground();
-
-  // Draw inventory and equipment items
-  drawInventoryItems(state.inventory, itemDatabase);
-  drawEquipmentItems(state.equipment, itemDatabase);
-
-  // Draw description widget background (text will be drawn by onDraw callback)
-  drawDescriptionBackground();
+  // Draw the entire UI panel
+  drawUI(player || null, state, itemDatabase);
 
   // Draw level info
   drawLevelInfo(state.currentLevel);
@@ -1129,11 +1109,6 @@ export function render(): void {
     k.z(100),
     "sagaText",
   ]);
-
-  // Draw player stats UI
-  if (player) {
-    drawPlayerStats(player, statsX, statsY);
-  }
 
   if (state.turnOwner === TurnOwner.Player) {
     if (state.playerPhase === PlayerPhase.RotatingTile) {

@@ -1,7 +1,7 @@
 import { k } from "../../kaplayCtx";
 import { type TileInstance, type MapObject, type GameState, TileType, Direction, type ItemInstance, type ItemDefinition } from "../types";
 import { TileFrames, BrickFrames } from "../assets";
-import { INVENTORY, EQUIPMENT, DESCRIPTION } from "../config";
+import { UI, INVENTORY, EQUIPMENT, DESCRIPTION } from "../config";
 import { type ItemDatabase } from "../systems/ItemDatabase";
 import { isSlotBlocked } from "../systems/EquipmentManager";
 
@@ -194,17 +194,19 @@ export function drawStateMachineInfo(state: GameState, player: MapObject | null)
  * Calculates the position of an inventory slot
  * @param slotCol Slot column index (0-based)
  * @param slotRow Slot row index (0-based)
- * @param padding Border padding (defaults to PATCH_SIZE)
+ * @param baseX Base X coordinate for the inventory widget
+ * @param baseY Base Y coordinate for the inventory widget
  * @returns Object with x and y coordinates for the slot
  */
 export function inventorySlotPos(
   slotCol: number,
   slotRow: number,
-  padding: number = INVENTORY.PATCH_SIZE
+  baseX: number,
+  baseY: number
 ): { x: number; y: number } {
   return {
-    x: INVENTORY.X + slotCol * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) + padding,
-    y: INVENTORY.Y + slotRow * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) + padding,
+    x: baseX + slotCol * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING),
+    y: baseY + slotRow * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING),
   };
 }
 
@@ -212,46 +214,22 @@ export function inventorySlotPos(
  * Calculates the position of an equipment slot
  * @param slotCol Slot column index (0-based)
  * @param slotRow Slot row index (0-based)
- * @param padding Border padding (defaults to PATCH_SIZE)
+ * @param baseX Base X coordinate for the equipment widget
+ * @param baseY Base Y coordinate for the equipment widget
  * @returns Object with x and y coordinates for the slot
  */
 export function equipmentSlotPos(
   slotCol: number,
   slotRow: number,
-  padding: number = EQUIPMENT.PATCH_SIZE
+  baseX: number,
+  baseY: number
 ): { x: number; y: number } {
   return {
-    x: EQUIPMENT.X + slotCol * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) + padding,
-    y: EQUIPMENT.Y + slotRow * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) + padding,
+    x: baseX + slotCol * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING),
+    y: baseY + slotRow * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING),
   };
 }
 
-/**
- * Draws the inventory background sprite
- */
-export function drawInventoryBackground(): void {
-  const width = INVENTORY.SLOTS_X * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING + 2 * INVENTORY.PATCH_SIZE
-  const height = INVENTORY.SLOTS_Y * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING + 2 * INVENTORY.PATCH_SIZE
-  k.add([
-    k.sprite("woodframe", {
-      width: width,
-      height: height,
-    }),
-    k.pos(INVENTORY.X, INVENTORY.Y),
-    "inventoryBackground",
-  ]);
-
-  for (let i = 0; i < INVENTORY.SLOTS_X; i++) {
-    for (let j = 0; j < INVENTORY.SLOTS_Y; j++) {
-      const pos = inventorySlotPos(i, j, INVENTORY.PATCH_SIZE);
-      k.add([
-        k.sprite("inventoryslot"),
-        k.pos(pos.x, pos.y),
-        "inventorySlot",
-      ]);
-    }
-  }
-}
 
 /**
  * Maps equipment slot index to grid position in cross layout
@@ -273,74 +251,20 @@ export function getEquipmentSlotGridPos(slotIndex: number): { col: number; row: 
   }
 }
 
-/**
- * Draws the equipment background sprite
- * @param equipment Current equipment array to check for multi-slot items
- * @param itemDatabase ItemDatabase to look up item definitions
- */
-export function drawEquipmentBackground(
-  equipment?: (ItemInstance | null)[],
-  itemDatabase?: ItemDatabase
-): void {
-  const width = EQUIPMENT.SLOTS_X * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING + 2 * EQUIPMENT.PATCH_SIZE
-  const height = EQUIPMENT.SLOTS_Y * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING + 2 * EQUIPMENT.PATCH_SIZE
-  k.add([
-    k.sprite("woodframe", {
-      width: width,
-      height: height,
-    }),
-    k.pos(EQUIPMENT.X, EQUIPMENT.Y),
-    "equipmentBackground",
-  ]);
-
-  // Draw the 5 equipment slots in cross pattern with proper disabled state
-  drawEquipmentSlots([], equipment, itemDatabase);
-}
-
-/**
- * Draws equipment slots with optional highlighting
- * @param highlightedSlots Array of slot indices to highlight (frame 1)
- * @param equipment Current equipment array to check for multi-slot items
- * @param itemDatabase ItemDatabase to look up item definitions
- */
-export function drawEquipmentSlots(
-  highlightedSlots: number[],
-  equipment?: (ItemInstance | null)[],
-  itemDatabase?: ItemDatabase
-): void {
-  // Clear existing slots
-  k.destroyAll("equipmentSlot");
-
-  // Draw the 5 equipment slots in cross pattern
-  for (let slotIndex = 0; slotIndex < 5; slotIndex++) {
-    const gridPos = getEquipmentSlotGridPos(slotIndex);
-    if (!gridPos) continue;
-
-    const pos = equipmentSlotPos(gridPos.col, gridPos.row, EQUIPMENT.PATCH_SIZE);
-    const isHighlighted = highlightedSlots.includes(slotIndex);
-
-    let frame = 0; // Frame 0 = default
-    if (isHighlighted) {
-      frame = 1; // Frame 1 = highlighted
-    } else if (equipment && itemDatabase && isSlotBlocked(equipment, slotIndex, itemDatabase)) {
-      // Check if this slot is blocked by a multi-slot item in another slot
-      frame = 2; // Frame 2 = disabled
-    }
-
-    k.add([
-      k.sprite("inventoryslot", { frame }),
-      k.pos(pos.x, pos.y),
-      "equipmentSlot",
-    ]);
-  }
-}
 
 /**
  * Draws inventory items in their slots
+ * @param x Base X coordinate for inventory slots
+ * @param y Base Y coordinate for inventory slots
  * @param inventory Array of item instances or null for empty slots
  * @param itemDatabase ItemDatabase to get item definitions
  */
-export function drawInventoryItems(inventory: (ItemInstance | null)[], itemDatabase: ItemDatabase): void {
+export function drawInventoryItems(
+  x: number,
+  y: number,
+  inventory: (ItemInstance | null)[],
+  itemDatabase: ItemDatabase
+): void {
   for (let i = 0; i < inventory.length; i++) {
     const item = inventory[i];
     if (!item) continue;
@@ -354,14 +278,14 @@ export function drawInventoryItems(inventory: (ItemInstance | null)[], itemDatab
     // Calculate row and column from index (5 columns, 2 rows)
     const col = i % INVENTORY.SLOTS_X;
     const row = Math.floor(i / INVENTORY.SLOTS_X);
-    const pos = inventorySlotPos(col, row, INVENTORY.PATCH_SIZE);
+    const pos = inventorySlotPos(col, row, x, y);
 
     // Draw item sprite at slot position (centered)
     k.add([
       k.sprite(itemDef.sprite, { frame: itemDef.frame }),
       k.pos(pos.x + INVENTORY.SLOT_SIZE / 2, pos.y + INVENTORY.SLOT_SIZE / 2),
       k.anchor("center"),
-      k.z(1),
+      k.z(101),
       "inventoryItem",
     ]);
   }
@@ -369,10 +293,17 @@ export function drawInventoryItems(inventory: (ItemInstance | null)[], itemDatab
 
 /**
  * Draws equipment items in their slots
+ * @param x Base X coordinate for equipment slots
+ * @param y Base Y coordinate for equipment slots
  * @param equipment Array of item instances or null for empty slots
  * @param itemDatabase ItemDatabase to get item definitions
  */
-export function drawEquipmentItems(equipment: (ItemInstance | null)[], itemDatabase: ItemDatabase): void {
+export function drawEquipmentItems(
+  x: number,
+  y: number,
+  equipment: (ItemInstance | null)[],
+  itemDatabase: ItemDatabase
+): void {
   for (let i = 0; i < equipment.length; i++) {
     const item = equipment[i];
     if (!item) continue;
@@ -406,82 +337,19 @@ export function drawEquipmentItems(equipment: (ItemInstance | null)[], itemDatab
     const gridPos = getEquipmentSlotGridPos(i);
     if (!gridPos) continue;
 
-    const pos = equipmentSlotPos(gridPos.col, gridPos.row, EQUIPMENT.PATCH_SIZE);
+    const pos = equipmentSlotPos(gridPos.col, gridPos.row, x, y);
 
     // Draw item sprite at slot position (centered)
     k.add([
       k.sprite(itemDef.sprite, { frame: itemDef.frame }),
       k.pos(pos.x + EQUIPMENT.SLOT_SIZE / 2, pos.y + EQUIPMENT.SLOT_SIZE / 2),
       k.anchor("center"),
-      k.z(1),
+      k.z(101),
       "equipmentItem",
     ]);
   }
 }
 
-/**
- * Draws the item description background widget
- */
-export function drawDescriptionBackground(): void {
-  k.add([
-    k.sprite("woodframe", {
-      width: DESCRIPTION.WIDTH,
-      height: DESCRIPTION.HEIGHT,
-    }),
-    k.pos(DESCRIPTION.X, DESCRIPTION.Y),
-    k.z(100),
-    "descriptionBackground",
-  ]);
-}
-
-/**
- * Draws item description text
- * @param itemDef Item definition to display
- */
-export function drawItemDescription(itemDef: ItemDefinition): void {
-  const x = DESCRIPTION.X + DESCRIPTION.PADDING + DESCRIPTION.PATCH_SIZE;
-  const y = DESCRIPTION.Y + DESCRIPTION.PADDING + DESCRIPTION.PATCH_SIZE;
-
-  // Line 1: Item name
-  k.add([
-    k.text(itemDef.name, { font: "saga", size: 12 }),
-    k.pos(x, y),
-    k.color(255, 255, 255),
-    k.z(101),
-    "descriptionText",
-  ]);
-
-  // Line 2: Description (if exists)
-  if (itemDef.description) {
-    k.add([
-      k.text(itemDef.description, { font: "saga", size: 10, width: DESCRIPTION.WIDTH - 2 * (DESCRIPTION.PADDING + DESCRIPTION.PATCH_SIZE) }),
-      k.pos(x, y + DESCRIPTION.LINE_HEIGHT),
-      k.color(200, 200, 200),
-      k.z(101),
-      "descriptionText",
-    ]);
-  }
-
-  // Line 3: Stat bonuses (if exists)
-  if (itemDef.statBonuses) {
-    const bonuses: string[] = [];
-    if (itemDef.statBonuses.hp) bonuses.push(`+${itemDef.statBonuses.hp} HP`);
-    if (itemDef.statBonuses.atk) bonuses.push(`+${itemDef.statBonuses.atk} ATK`);
-    if (itemDef.statBonuses.def) bonuses.push(`+${itemDef.statBonuses.def} DEF`);
-    if (itemDef.statBonuses.agi) bonuses.push(`+${itemDef.statBonuses.agi} AGI`);
-
-    if (bonuses.length > 0) {
-      const bonusText = bonuses.join(", ");
-      k.add([
-        k.text(bonusText, { font: "saga", size: 10 }),
-        k.pos(x, y + DESCRIPTION.LINE_HEIGHT * 2),
-        k.color(100, 255, 100),
-        k.z(101),
-        "descriptionText",
-      ]);
-    }
-  }
-}
 
 /**
  * Clears all UI elements
@@ -503,4 +371,259 @@ export function clearUI(): void {
   k.destroyAll("descriptionBackground");
   k.destroyAll("descriptionText");
   k.destroyAll("sagaText");
+  k.destroyAll("uiBorder");
+  k.destroyAll("equipmentHeader");
+  k.destroyAll("inventoryHeader");
+}
+
+// ============================
+// NEW WIDGET-BASED UI SYSTEM
+// ============================
+
+// Internal helper to draw UI border
+function drawUIBorder(): void {
+  const headerHeight = 16;
+  const spacing = 8;
+  const statsWidth = 80;
+
+  const equipmentWidth = EQUIPMENT.SLOTS_X * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
+  const equipmentHeight = EQUIPMENT.SLOTS_Y * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
+  const inventoryHeight = INVENTORY.SLOTS_Y * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING;
+  const inventoryWidth = INVENTORY.SLOTS_X * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING;
+
+  const topSectionWidth = equipmentWidth + spacing + statsWidth;
+  const totalWidth = Math.max(topSectionWidth, inventoryWidth) + 2 * UI.PADDING;
+
+  const totalHeight =
+    UI.PADDING +
+    headerHeight +
+    equipmentHeight +
+    spacing +
+    headerHeight +
+    inventoryHeight +
+    spacing +
+    DESCRIPTION.HEIGHT +
+    UI.PADDING;
+
+  k.add([
+    k.sprite("woodframe", {
+      width: totalWidth,
+      height: totalHeight,
+    }),
+    k.pos(UI.X, UI.Y),
+    k.z(90),
+    "uiBorder",
+  ]);
+}
+
+// Internal helper to draw equipment header
+function drawEquipmentHeader(x: number, y: number): void {
+  k.add([
+    k.text("Equipment", { size: 12, font: "saga" }),
+    k.pos(x, y),
+    k.color(255, 255, 255),
+    k.z(100),
+    "equipmentHeader",
+  ]);
+}
+
+// Internal helper to draw equipment slots
+function drawEquipmentSlots(
+  x: number,
+  y: number,
+  highlightedSlots: number[],
+  equipment?: (ItemInstance | null)[],
+  itemDatabase?: ItemDatabase
+): void {
+  for (let slotIndex = 0; slotIndex < 5; slotIndex++) {
+    const gridPos = getEquipmentSlotGridPos(slotIndex);
+    if (!gridPos) continue;
+
+    const slotX = x + gridPos.col * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING);
+    const slotY = y + gridPos.row * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING);
+
+    let frame = 0;
+    const isHighlighted = highlightedSlots.includes(slotIndex);
+    if (isHighlighted) {
+      frame = 1;
+    } else if (equipment && itemDatabase && isSlotBlocked(equipment, slotIndex, itemDatabase)) {
+      frame = 2;
+    }
+
+    k.add([
+      k.sprite("inventoryslot", { frame }),
+      k.pos(slotX, slotY),
+      k.z(100),
+      "equipmentSlot",
+    ]);
+  }
+}
+
+// Internal helper to draw inventory header
+function drawInventoryHeader(x: number, y: number): void {
+  k.add([
+    k.text("Inventory", { size: 12, font: "saga" }),
+    k.pos(x, y),
+    k.color(255, 255, 255),
+    k.z(100),
+    "inventoryHeader",
+  ]);
+}
+
+// Internal helper to draw inventory slots
+function drawInventorySlots(x: number, y: number): void {
+  for (let col = 0; col < INVENTORY.SLOTS_X; col++) {
+    for (let row = 0; row < INVENTORY.SLOTS_Y; row++) {
+      const slotX = x + col * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING);
+      const slotY = y + row * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING);
+
+      k.add([
+        k.sprite("inventoryslot"),
+        k.pos(slotX, slotY),
+        k.z(100),
+        "inventorySlot",
+      ]);
+    }
+  }
+}
+
+// Internal helper to draw description widget
+function drawDescription(x: number, y: number, itemDef?: ItemDefinition): void {
+  k.add([
+    k.rect(DESCRIPTION.WIDTH, DESCRIPTION.HEIGHT),
+    k.pos(x, y),
+    k.color(20, 20, 20),
+    k.opacity(0.8),
+    k.z(100),
+    "descriptionBackground",
+  ]);
+
+  if (itemDef) {
+    const textX = x + DESCRIPTION.PADDING;
+    const textY = y + DESCRIPTION.PADDING;
+
+    k.add([
+      k.text(itemDef.name, { size: 12, font: "saga", width: DESCRIPTION.WIDTH - 2 * DESCRIPTION.PADDING }),
+      k.pos(textX, textY),
+      k.color(255, 255, 255),
+      k.z(101),
+      "descriptionText",
+    ]);
+
+    if (itemDef.description) {
+      k.add([
+        k.text(itemDef.description, {
+          size: 10,
+          font: "saga",
+          width: DESCRIPTION.WIDTH - 2 * DESCRIPTION.PADDING,
+        }),
+        k.pos(textX, textY + DESCRIPTION.LINE_HEIGHT),
+        k.color(200, 200, 200),
+        k.z(101),
+        "descriptionText",
+      ]);
+    }
+
+    if (itemDef.statBonuses) {
+      const bonuses: string[] = [];
+      if (itemDef.statBonuses.hp) bonuses.push(`+${itemDef.statBonuses.hp} HP`);
+      if (itemDef.statBonuses.atk) bonuses.push(`+${itemDef.statBonuses.atk} ATK`);
+      if (itemDef.statBonuses.def) bonuses.push(`+${itemDef.statBonuses.def} DEF`);
+      if (itemDef.statBonuses.agi) bonuses.push(`+${itemDef.statBonuses.agi} AGI`);
+
+      if (bonuses.length > 0) {
+        const bonusText = bonuses.join(", ");
+        k.add([
+          k.text(bonusText, { font: "saga", size: 10 }),
+          k.pos(textX, textY + DESCRIPTION.LINE_HEIGHT * 2),
+          k.color(100, 255, 100),
+          k.z(101),
+          "descriptionText",
+        ]);
+      }
+    }
+  }
+}
+
+/**
+ * Draws the entire UI panel including equipment, inventory, stats, and description
+ */
+export function drawUI(
+  player: MapObject | null,
+  state: GameState,
+  itemDatabase: ItemDatabase
+): void {
+  const headerHeight = 16;
+  const spacing = 8;
+
+  const equipmentWidth = EQUIPMENT.SLOTS_X * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
+  const equipmentHeight = EQUIPMENT.SLOTS_Y * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
+  const inventoryHeight = INVENTORY.SLOTS_Y * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING;
+
+  // Calculate positions for each widget
+  const equipmentHeaderX = UI.X + UI.PADDING;
+  const equipmentHeaderY = UI.Y + UI.PADDING;
+
+  const equipmentSlotsX = UI.X + UI.PADDING;
+  const equipmentSlotsY = equipmentHeaderY + headerHeight;
+
+  const playerStatsX = equipmentSlotsX + equipmentWidth + spacing;
+  const playerStatsY = equipmentSlotsY;
+
+  const inventoryHeaderX = UI.X + UI.PADDING;
+  const inventoryHeaderY = equipmentSlotsY + equipmentHeight + spacing;
+
+  const inventorySlotsX = UI.X + UI.PADDING;
+  const inventorySlotsY = inventoryHeaderY + headerHeight;
+
+  const descriptionX = UI.X + UI.PADDING;
+  const descriptionY = inventorySlotsY + inventoryHeight + spacing;
+
+  // Draw all UI components
+  drawUIBorder();
+  drawEquipmentHeader(equipmentHeaderX, equipmentHeaderY);
+  drawEquipmentSlots(equipmentSlotsX, equipmentSlotsY, [], state.equipment, itemDatabase);
+  drawEquipmentItems(equipmentSlotsX, equipmentSlotsY, state.equipment, itemDatabase);
+
+  if (player) {
+    drawPlayerStats(player, playerStatsX, playerStatsY);
+  }
+
+  drawInventoryHeader(inventoryHeaderX, inventoryHeaderY);
+  drawInventorySlots(inventorySlotsX, inventorySlotsY);
+  drawInventoryItems(inventorySlotsX, inventorySlotsY, state.inventory, itemDatabase);
+  drawDescription(descriptionX, descriptionY);
+}
+
+/**
+ * Updates equipment slot highlighting (for hover effects in onDraw callback)
+ * @internal Used by hover effect system
+ */
+export function updateEquipmentSlotHighlighting(
+  highlightedSlots: number[],
+  equipment: (ItemInstance | null)[],
+  itemDatabase: ItemDatabase
+): void {
+  const headerHeight = 16;
+  const equipmentSlotsX = UI.X + UI.PADDING;
+  const equipmentSlotsY = UI.Y + UI.PADDING + headerHeight;
+
+  drawEquipmentSlots(equipmentSlotsX, equipmentSlotsY, highlightedSlots, equipment, itemDatabase);
+}
+
+/**
+ * Updates item description widget (for hover effects in onDraw callback)
+ * @internal Used by hover effect system
+ */
+export function updateDescription(itemDef?: ItemDefinition): void {
+  const headerHeight = 16;
+  const spacing = 8;
+  const equipmentHeight = EQUIPMENT.SLOTS_Y * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
+  const inventoryHeight = INVENTORY.SLOTS_Y * (INVENTORY.SLOT_SIZE + INVENTORY.SLOT_SPACING) - INVENTORY.SLOT_SPACING;
+  const inventoryHeaderY = UI.Y + UI.PADDING + headerHeight + equipmentHeight + spacing;
+  const inventorySlotsY = inventoryHeaderY + headerHeight;
+  const descriptionX = UI.X + UI.PADDING;
+  const descriptionY = inventorySlotsY + inventoryHeight + spacing;
+
+  drawDescription(descriptionX, descriptionY, itemDef);
 }
