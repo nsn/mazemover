@@ -4,7 +4,7 @@ import { TurnManager } from "./systems/TurnManager";
 import { InputController } from "./systems/InputController";
 import { CursorManager } from "./systems/CursorManager";
 import { StartLevelSequence } from "./systems/StartLevelSequence";
-import { GRID_ROWS, GRID_COLS, STARTING_LEVEL } from "./config";
+import { GRID_ROWS, GRID_COLS, STARTING_LEVEL, STARTING_ITEMS } from "./config";
 import { getImmovableEdgeTiles, getOppositeSide, getRandomTileOnSide } from "./core/Grid";
 import { applyEquipmentBonuses } from "./systems/EquipmentManager";
 import {
@@ -53,9 +53,9 @@ export function createMainScene(): void {
     if (globalInventory === null || globalEquipment === null) {
       // First time starting the game - initialize with starting items
       console.log("[MainScene] First game start - initializing inventory with starting items");
-      state.inventory[0] = { definitionId: "mell", remainingCharges: -1 };
-      state.inventory[1] = { definitionId: "pickaxe", remainingCharges: -1 };
-      state.inventory[2] = { definitionId: "punch", remainingCharges: -1 };
+      STARTING_ITEMS.forEach((itemId, index) => {
+        state.inventory[index] = { definitionId: itemId, remainingCharges: -1 };
+      });
 
       // Save to global state
       globalInventory = [...state.inventory];
