@@ -26,6 +26,20 @@ export function resetGlobalLevel(): void {
   globalEquipment = null;
 }
 
+export function fallThroughFloor(currentState: import("./types").GameState): void {
+  // Save current inventory and equipment before falling
+  globalInventory = [...currentState.inventory];
+  globalEquipment = [...currentState.equipment];
+  console.log("[Game] Player fell through the floor! Saved inventory and equipment state");
+
+  // Increment global level counter (going deeper into dungeon)
+  globalCurrentLevel++;
+  console.log(`[Game] Falling to level: ${globalCurrentLevel}`);
+
+  // Generate new level
+  k.go("main");
+}
+
 export function createMainScene(): void {
   k.scene("main", async () => {
     console.log("[MainScene] Loading assets...");

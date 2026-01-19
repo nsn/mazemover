@@ -134,8 +134,9 @@ export class CursorManager {
       }
 
       // Calculate reachable tiles (no caching)
+      // Note: Player doesn't avoid dangerous tiles - they can walk onto them and risk falling
       const moves = turnManager.getObjectManager().getAvailableMoves(player);
-      const reachableTiles = findReachableTiles(state.grid, player.gridPosition, moves, [], player.flying);
+      const reachableTiles = findReachableTiles(state.grid, player.gridPosition, moves, [], false);
       const target = reachableTiles.find(t => t.position.row === gridPos.row && t.position.col === gridPos.col);
 
       // Check if enemy at position (attack cursor)
@@ -180,7 +181,7 @@ export class CursorManager {
     if (!player) return "cancel";
 
     const moves = turnManager.getObjectManager().getAvailableMoves(player);
-    const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves, [], player.flying);
+    const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves, [], false);
     const isReachable = reachable.some(t => t.position.row === gridPos.row && t.position.col === gridPos.col && t.path.length > 1);
 
     return isReachable ? "confirm" : "cancel";

@@ -37,11 +37,12 @@ import { equipItemFromInventory, unequipItemToInventory, applyEquipmentBonuses, 
 import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
-import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION } from "./config";
+import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION, getFallChance } from "./config";
 import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
 import { executeCombat, checkForCombat } from "./systems/Combat";
 import { isWallBlocking, openWall } from "./systems/WallBump";
 import { applyRandomDecayToTile } from "./core/Grid";
+import { fallThroughFloor } from "./mainScene";
 
 let turnManager: TurnManager;
 let clickManager: ClickManager;
@@ -352,6 +353,51 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
   isAnimating = false;
   logger.debug("[movePlayerAlongPath] isAnimating set to false");
+
+  // Check if player falls through the floor (if not flying)
+  if (!player.flying) {
+    const currentTile = turnManager.getState().grid[player.gridPosition.row][player.gridPosition.col];
+    const fallChance = getFallChance(currentTile.decay);
+
+    if (fallChance > 0) {
+      const roll = Math.random();
+      logger.debug(`[movePlayerAlongPath] Fall check: decay=${currentTile.decay}, chance=${fallChance}, roll=${roll}`);
+
+      if (roll < fallChance) {
+        console.log(`[Game] Player fell through the floor! (decay=${currentTile.decay}, chance=${fallChance}, roll=${roll})`);
+
+        // Set animating to prevent other actions during fall
+        isAnimating = true;
+
+        // Play fall animation
+        const playerX = GRID_OFFSET_X + player.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
+        const playerY = GRID_OFFSET_Y + player.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 - 4;
+
+        const fallSprite = k.add([
+          k.sprite("mason", { anim: "fall" }),
+          k.pos(playerX, playerY),
+          k.anchor("center"),
+          k.z(player.renderOrder),
+          "fallingPlayer",
+        ]);
+
+        // Wait for fall animation to complete
+        await new Promise<void>((resolve) => {
+          fallSprite.onAnimEnd(() => {
+            k.destroy(fallSprite);
+            resolve();
+          });
+        });
+
+        // Transition to next level (going deeper)
+        fallThroughFloor(turnManager.getState());
+
+        // Don't continue with normal turn flow
+        logger.debug("[movePlayerAlongPath] END (player fell)");
+        return;
+      }
+    }
+  }
 
   turnManager.completeMove();
   logger.debug("[movePlayerAlongPath] Move completed, executing enemy turns");
@@ -736,7 +782,7 @@ async function tryMovePlayerInDirection(rowDelta: number, colDelta: number): Pro
   const state = turnManager.getState();
   const targetPos = { row: targetRow, col: targetCol };
   const moves = turnManager.getObjectManager().getAvailableMoves(player);
-  const reachable = findReachableTiles(state.grid, player.gridPosition, moves, [], player.flying);
+  const reachable = findReachableTiles(state.grid, player.gridPosition, moves, [], false);
 
   const target = reachable.find(
     (t) => t.position.row === targetRow && t.position.col === targetCol
@@ -1090,7 +1136,7 @@ export function render(): void {
       // Draw darkening overlay on non-active tiles
       if (state.rotatingTilePosition && player) {
         const moves = turnManager.getObjectManager().getAvailableMoves(player);
-        const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves, [], player.flying);
+        const reachable = findReachableTiles(state.grid, state.rotatingTilePosition, moves, [], false);
         drawRotationOverlay(state.rotatingTilePosition, reachable, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
       }
 

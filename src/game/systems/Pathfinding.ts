@@ -104,7 +104,7 @@ export function findReachableTiles(
         if (neighbor.row >= 0 && neighbor.row < rows && neighbor.col >= 0 && neighbor.col < cols) {
           const neighborTile = grid[neighbor.row][neighbor.col];
           if (neighborTile) {
-            const fallChance = getFallChance(neighborTile.decayLevel);
+            const fallChance = getFallChance(neighborTile.decay);
             if (fallChance >= AI.FALL_AVOIDANCE_THRESHOLD) {
               continue; // Skip this tile - too dangerous
             }
