@@ -433,7 +433,7 @@ export function drawSpacer(x: number, y: number): void {
   const spacerX = x + 10; // Center by offsetting 10 pixels (half of 20)
 
   k.add([
-    k.sprite("spacer", { width: spacerWidth, height: 1 }),
+    k.sprite("spacer", { width: spacerWidth, height: 5 }),
     k.pos(spacerX, y),
     k.z(100),
     "uiSpacer",
@@ -556,6 +556,7 @@ export function drawUI(
   itemDatabase: ItemDatabase
 ): void {
   const spacing = 8;
+  const spacerHeight = 5;
 
   const equipmentWidth = EQUIPMENT.SLOTS_X * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
   const equipmentHeight = EQUIPMENT.SLOTS_Y * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
@@ -568,15 +569,17 @@ export function drawUI(
   const playerStatsX = equipmentSlotsX + equipmentWidth + spacing;
   const playerStatsY = equipmentSlotsY;
 
+  // Spacer 1 positioned after equipment
+  const spacer1Y = equipmentSlotsY + equipmentHeight + (spacing - spacerHeight) / 2;
+
   const inventorySlotsX = UI.X + UI.PADDING;
   const inventorySlotsY = equipmentSlotsY + equipmentHeight + spacing;
 
+  // Spacer 2 positioned after inventory
+  const spacer2Y = inventorySlotsY + inventoryHeight + (spacing - spacerHeight) / 2;
+
   const descriptionX = UI.X + UI.PADDING;
   const descriptionY = inventorySlotsY + inventoryHeight + spacing;
-
-  // Calculate spacer positions (centered in the spacing gaps)
-  const spacer1Y = equipmentSlotsY + equipmentHeight + spacing / 2;
-  const spacer2Y = inventorySlotsY + inventoryHeight + spacing / 2;
 
   // Draw all UI components
   drawUIBorder();

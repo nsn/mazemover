@@ -48,8 +48,8 @@ export async function loadAssets(): Promise<void> {
     slice9: {
         left: 10,
         right: 10,
-        top: 0,
-        bottom: 0,
+        top: 1,
+        bottom: 1
     },
   });
 
