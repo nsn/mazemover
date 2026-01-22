@@ -306,6 +306,19 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
       // Remove dead enemy and bounce player back to previous position
       if (combatResult.attackerAttack.defenderDied) {
+        // Play poof animation at enemy position
+        const poofSprite = k.add([
+          k.sprite("poof", { anim: "poof" }),
+          k.pos(defenderX, defenderY),
+          k.anchor("center"),
+          k.z(150),
+        ]);
+
+        // Destroy poof sprite when animation completes
+        poofSprite.onAnimEnd(() => {
+          k.destroy(poofSprite);
+        });
+
         objectManager.destroyObject(enemy);
         logger.debug("[Game] Enemy defeated - bouncing player back");
       } else {

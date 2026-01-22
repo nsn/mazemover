@@ -95,7 +95,7 @@ export const UI = {
 
 // Inventory Configuration
 export const INVENTORY = {
-  SLOTS_X: 5,
+  SLOTS_X: 6,
   SLOTS_Y: 2,
   SLOT_SIZE: 26,
   SLOT_SPACING: 2,
