@@ -43,7 +43,7 @@ export function drawMapObjects(
     let spriteName = obj.sprite;
 
     if (obj.type === ObjectType.Player) {
-      const anim = obj.isPlayingDropAnimation ? "drop" : "idle";
+      const anim = obj.isPlayingDropAnimation ? (obj.entryAnimationName || "drop") : "idle";
       spriteConfig = { anim, flipX: obj.flipX };
     } else if (obj.type === ObjectType.Enemy) {
       spriteConfig = { anim: "idle", flipX: obj.flipX };

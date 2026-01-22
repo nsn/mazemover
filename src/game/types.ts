@@ -73,6 +73,7 @@ export interface GameState {
   wallBumpCount: number;  // Number of consecutive wall bumps
   wallBumpTarget: GridPosition | null;  // Target tile of current wall bump sequence
   currentLevel: number;  // Current dungeon level (counts down from STARTING_LEVEL to 0)
+  isAscending: boolean;  // True if player is ascending (going toward surface), false if descending (going deeper)
   inventory: (ItemInstance | null)[];  // Player inventory - array of item instances or null for empty slots
   equipment: (ItemInstance | null)[];  // Player equipment - 5 slots: [0=Head, 1=LeftHand, 2=RightHand, 3=Legs, 4=Torso]
 }
@@ -146,6 +147,7 @@ export interface MapObject {
   flipX: boolean;  // True if sprite is flipped horizontally (facing left)
   isInStartLevelSequence: boolean;  // True if object is part of start level sequence
   isPlayingDropAnimation: boolean;  // True if player is currently playing drop animation
+  entryAnimationName?: string;  // Name of entry animation to play ("drop" or "rise")
   renderOrder: number;
   sprite: string;
   frame?: number;  // Frame index for items (optional, used when sprite is an atlas)

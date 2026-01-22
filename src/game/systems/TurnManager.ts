@@ -99,6 +99,7 @@ export class TurnManager {
       wallBumpCount: 0,
       wallBumpTarget: null,
       currentLevel: STARTING_LEVEL,
+      isAscending: false,  // Initially false, set based on level transitions
       inventory: Array(10).fill(null),  // Initialize 10 empty inventory slots (5x2 grid)
       equipment: Array(5).fill(null),  // Initialize 5 empty equipment slots: [Head, MainHand, OffHand, Legs, Torso]
     };

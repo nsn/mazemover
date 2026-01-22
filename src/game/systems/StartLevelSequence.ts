@@ -190,7 +190,7 @@ export class StartLevelSequence {
   }
 
   /**
-   * Plays the player drop animation
+   * Plays the player entry animation (rise or drop based on direction)
    */
   private async playPlayerDropAnimation(): Promise<void> {
     const player = this.objectManager.getPlayer();
@@ -199,30 +199,33 @@ export class StartLevelSequence {
       return;
     }
 
-    console.log("[StartLevelSequence] Playing player drop animation");
+    // Choose animation based on whether player is ascending or descending
+    const animationName = this.state.isAscending ? "rise" : "drop";
+    console.log(`[StartLevelSequence] Playing player ${animationName} animation`);
 
-    // Wait before starting drop
+    // Wait before starting animation
     await this.wait(START_LEVEL.PLAYER_DROP_DELAY * 1000);
 
     // Create a temporary sprite to track animation duration
-    const dropSprite = k.add([
-      k.sprite("mason", { anim: "drop" }),
+    const entrySprite = k.add([
+      k.sprite("mason", { anim: animationName }),
       k.pos(-1000, -1000), // Off-screen
       k.opacity(0),
-      "dropAnimationTracker",
+      "entryAnimationTracker",
     ]);
 
-    // Mark player as no longer in sequence and playing drop animation
+    // Mark player as no longer in sequence and playing entry animation
     player.isInStartLevelSequence = false;
     player.isPlayingDropAnimation = true;
+    player.entryAnimationName = animationName;  // Store which animation to play
 
-    // Trigger render to show the player with drop animation
+    // Trigger render to show the player with entry animation
     this.onRender();
 
-    // Wait for drop animation to complete
+    // Wait for animation to complete
     return new Promise<void>((resolve) => {
-      dropSprite.onAnimEnd(() => {
-        console.log("[StartLevelSequence] Drop animation completed");
+      entrySprite.onAnimEnd(() => {
+        console.log(`[StartLevelSequence] ${animationName} animation completed`);
         player.isPlayingDropAnimation = false;
         this.onRender(); // Render to show idle animation
         resolve();

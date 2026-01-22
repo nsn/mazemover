@@ -17,11 +17,13 @@ import {
 
 // Global state that persists across scene reloads
 let globalCurrentLevel = STARTING_LEVEL;
+let globalIsAscending = false;  // True if ascending toward surface, false if descending deeper
 let globalInventory: (import("./types").ItemInstance | null)[] | null = null;
 let globalEquipment: (import("./types").ItemInstance | null)[] | null = null;
 
 export function resetGlobalLevel(): void {
   globalCurrentLevel = STARTING_LEVEL;
+  globalIsAscending = false;
   globalInventory = null;
   globalEquipment = null;
 }
@@ -34,6 +36,7 @@ export function fallThroughFloor(currentState: import("./types").GameState): voi
 
   // Increment global level counter (going deeper into dungeon)
   globalCurrentLevel++;
+  globalIsAscending = false;  // Falling deeper (descending)
   console.log(`[Game] Falling to level: ${globalCurrentLevel}`);
 
   // Generate new level
@@ -57,10 +60,11 @@ export function createMainScene(): void {
     const turnManager = new TurnManager(render, enemyDatabase, itemDatabase);
     setTurnManager(turnManager);
 
-    // Set current level from global counter
+    // Set current level and direction from global counter
     const state = turnManager.getState();
     state.currentLevel = globalCurrentLevel;
-    console.log(`[MainScene] Starting at level ${globalCurrentLevel}`);
+    state.isAscending = globalIsAscending;
+    console.log(`[MainScene] Starting at level ${globalCurrentLevel}, ascending: ${globalIsAscending}`);
 
     // Initialize or restore inventory and equipment
     let restoredEquipment = false;
@@ -108,7 +112,8 @@ export function createMainScene(): void {
 
           // Decrement global level counter
           globalCurrentLevel--;
-          console.log(`[Game] Player reached the exit! Descending to level: ${globalCurrentLevel}`);
+          globalIsAscending = true;  // Ascending toward surface
+          console.log(`[Game] Player reached the exit! Ascending to level: ${globalCurrentLevel}`);
 
           if (globalCurrentLevel === 0) {
             // Victory - reached the surface!
