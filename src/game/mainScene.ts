@@ -175,11 +175,15 @@ export function createMainScene(): void {
     const goblin1 = objManager.createEnemy({ row: 3, col: 3 }, "goblin");
     const goblin2 = objManager.createEnemy({ row: 3, col: 2 }, "goblin");
     const goblin3 = objManager.createEnemy({ row: 2, col: 3 }, "goblin");
+    const bat1 = objManager.createEnemy({ row: 4, col: 4 }, "bat");
+    const bat2 = objManager.createEnemy({ row: 2, col: 4 }, "bat");
 
     // Mark all objects as part of start level sequence
     goblin1.isInStartLevelSequence = true;
     goblin2.isInStartLevelSequence = true;
     goblin3.isInStartLevelSequence = true;
+    bat1.isInStartLevelSequence = true;
+    bat2.isInStartLevelSequence = true;
 
     // Spawn random items on empty tiles (5% chance per tile)
     objManager.spawnRandomItems(0.05);

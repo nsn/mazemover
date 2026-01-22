@@ -3,7 +3,7 @@ export const DOOR_SIZE = 8;
 export const GRID_COLS = 7;
 export const GRID_ROWS = 7;
 
-export const GRID_OFFSET_X = 96;
+export const GRID_OFFSET_X = 40;
 export const GRID_OFFSET_Y = Math.floor((360 - GRID_ROWS * TILE_SIZE) / 2);
 
 export const PLOT_SIZE = TILE_SIZE;
@@ -88,7 +88,7 @@ export const START_LEVEL = {
 // UI Configuration - Main position of the entire UI panel
 export const UI = {
   X: GRID_OFFSET_X + GRID_COLS * TILE_SIZE + (640 - (GRID_OFFSET_X + GRID_COLS * TILE_SIZE)) / 2,
-  Y: 20,
+  Y: GRID_OFFSET_Y,
   PATCH_SIZE: 8,  // 9-patch border size
   PADDING: 8,     // Padding inside the UI border
 }

@@ -12,6 +12,19 @@
       "aiType": "Hunter",
       "sprite": "goblin",
       "flying": false
+    },
+    "bat": {
+      "name": "Bat",
+      "stats": {
+        "hp": 4,
+        "atk": 1,
+        "def": 1,
+        "agi": 1
+      },
+      "movementSpeed": 2,
+      "aiType": "Hunter",
+      "sprite": "bat",
+      "flying": true
     }
   },
   "player": {

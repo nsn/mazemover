@@ -44,6 +44,15 @@ export async function loadAssets(): Promise<void> {
     },
   });
 
+  await k.loadSprite("hframe", "/hframe.png", {
+    slice9: {
+        left: 8,
+        right: 8,
+        top: 0,
+        bottom: 0,
+    },
+  });
+
   await k.loadSprite("spacer", "/spacer.png", {
     sliceX: 3,
     sliceY: 1,
@@ -88,6 +97,7 @@ export async function loadAssets(): Promise<void> {
 
   await k.loadSpriteAtlas("/enemies.png", {
     goblin: {x: 0, y: 0, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
+    bat: {x: 0, y: 64, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
   });
 
   await k.loadBitmapFont("3x5", "/font_3x5.png", 4, 6, {
@@ -97,10 +107,10 @@ export async function loadAssets(): Promise<void> {
   // await k.loadFont("saga","saga_8.ttf", {size: 16});
   await k.loadFont("saga","saga_8.ttf", {
     size: 16, 
-    // outline: {
-    //   width: 0, 
-    //   color: k.Color.fromArray([64,64,64])
-    // }
+    outline: {
+      width: 0, 
+      color: k.Color.fromArray([0,0,0,64])
+    }
   });
 
   await k.loadFont("sctfont","saga_8.ttf", {

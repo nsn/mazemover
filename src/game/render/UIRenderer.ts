@@ -416,6 +416,7 @@ function drawUIBorder(): void {
       width: totalWidth,
       height: totalHeight,
     }),
+    k.area(),
     k.pos(UI.X, UI.Y),
     k.z(90),
     "uiBorder",
@@ -427,32 +428,19 @@ function drawUIBorder(): void {
  * @param x X coordinate (left edge of UI)
  * @param y Y coordinate for the spacer
  */
-export function drawSpacer(x: number, y: number): void {
+export function drawSpacer(y: number): void {
   const ramp = 10;
-  const margin = 10;
+  const height = 5;
   const totalWidth = calculateUIWidth();
-  const spacerWidth = totalWidth - 2 * margin;
-  const spacerX = x + margin; // Center by offsetting 10 pixels (half of 20)
-  const innerWidth = spacerWidth - 2 * ramp;
 
-  k.add([
-    k.sprite("spacer", { width: ramp, height: 4, frame: 0 }),
-    k.pos(spacerX, y),
-    k.z(100),
-    "uiSpacer",
-  ]);
-  k.add([
-    k.sprite("spacer", { width: innerWidth, height: 3, frame: 1 }),
-    k.pos(spacerX + ramp, y),
-    k.z(100),
-    "uiSpacer",
-  ]);
-  k.add([
-    k.sprite("spacer", { width: ramp, height: 3, frame: 2 }),
-    k.pos(spacerX + innerWidth , y),
-    k.z(100),
-    "uiSpacer",
-  ]);
+    k.add([
+      k.sprite("hframe", { width: totalWidth, height: 9}), 
+      k.pos(Math.round(UI.X), Math.round(y)), 
+      // k.pos(490, 110), 
+      k.z(100), 
+      k.area(),
+      "uiSpacer"
+    ]);
 }
 
 // Internal helper to draw equipment slots
@@ -562,8 +550,8 @@ export function drawUI(
   state: GameState,
   itemDatabase: ItemDatabase
 ): void {
-  const spacing = 8;
-  const spacerHeight = 5;
+  const spacing = 13;
+  const spacerHeight = 7;
 
   const equipmentWidth = EQUIPMENT.SLOTS_X * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
   const equipmentHeight = EQUIPMENT.SLOTS_Y * (EQUIPMENT.SLOT_SIZE + EQUIPMENT.SLOT_SPACING) - EQUIPMENT.SLOT_SPACING;
@@ -598,13 +586,13 @@ export function drawUI(
   }
 
   // Spacer between equipment and inventory
-  drawSpacer(UI.X, spacer1Y);
+  drawSpacer(spacer1Y);
 
   drawInventorySlots(inventorySlotsX, inventorySlotsY);
   drawInventoryItems(inventorySlotsX, inventorySlotsY, state.inventory, itemDatabase);
 
   // Spacer between inventory and description
-  drawSpacer(UI.X, spacer2Y);
+  drawSpacer(spacer2Y);
 
   drawDescription(descriptionX, descriptionY);
 }
