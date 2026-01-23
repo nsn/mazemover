@@ -4,9 +4,11 @@ import { TurnManager } from "./systems/TurnManager";
 import { InputController } from "./systems/InputController";
 import { CursorManager } from "./systems/CursorManager";
 import { StartLevelSequence } from "./systems/StartLevelSequence";
-import { GRID_ROWS, GRID_COLS, STARTING_LEVEL, STARTING_ITEMS, ITEM_DROP_PROBABILITY } from "./config";
+import { GRID_ROWS, GRID_COLS, STARTING_LEVEL, STARTING_ITEMS, ITEM_DROP_PROBABILITY, ENEMY_BUDGET_MODIFIER } from "./config";
 import { getImmovableEdgeTiles, getOppositeSide, getRandomTileOnSide } from "./core/Grid";
 import { applyEquipmentBonuses } from "./systems/EquipmentManager";
+import type { GridPosition } from "./types";
+import type { EnemyDatabase } from "./systems/EnemyDatabase";
 import {
   initializeGameHandlers,
   setTurnManager,
@@ -26,6 +28,85 @@ export function resetGlobalLevel(): void {
   globalIsAscending = false;
   globalInventory = null;
   globalEquipment = null;
+}
+
+/**
+ * Generates a list of enemies for a given level based on budget formula
+ * Budget = Math.max(STARTING_LEVEL - current_level + ENEMY_BUDGET_MODIFIER, ENEMY_BUDGET_MODIFIER)
+ * Randomly selects enemies whose tier sum doesn't exceed the budget
+ * Places them on random non-edge tiles
+ */
+function generateEnemiesForLevel(level: number, enemyDb: EnemyDatabase): { enemyId: string, position: GridPosition }[] {
+  // Calculate enemy budget
+  const budget = Math.max(STARTING_LEVEL - level + ENEMY_BUDGET_MODIFIER, ENEMY_BUDGET_MODIFIER);
+  console.log(`[GenerateEnemies] Level ${level}, Budget: ${budget}`);
+
+  // Get all available enemy types
+  const allEnemyIds = enemyDb.getAllEnemyIds();
+  if (allEnemyIds.length === 0) {
+    console.warn("[GenerateEnemies] No enemies in database");
+    return [];
+  }
+
+  // Get tier for each enemy type
+  const enemyTiers = new Map<string, number>();
+  for (const enemyId of allEnemyIds) {
+    const enemyDef = enemyDb.getEnemyDefinition(enemyId);
+    if (enemyDef) {
+      enemyTiers.set(enemyId, enemyDef.tier);
+    }
+  }
+
+  // Randomly select enemies until budget is exhausted
+  const selectedEnemies: string[] = [];
+  let remainingBudget = budget;
+
+  while (remainingBudget > 0) {
+    // Filter enemies that fit in remaining budget
+    const affordableEnemies = allEnemyIds.filter(id => {
+      const tier = enemyTiers.get(id) || 1;
+      return tier <= remainingBudget;
+    });
+
+    if (affordableEnemies.length === 0) {
+      // No more enemies fit in budget
+      break;
+    }
+
+    // Randomly select one affordable enemy
+    const selectedId = affordableEnemies[Math.floor(Math.random() * affordableEnemies.length)];
+    const tier = enemyTiers.get(selectedId) || 1;
+
+    selectedEnemies.push(selectedId);
+    remainingBudget -= tier;
+  }
+
+  console.log(`[GenerateEnemies] Selected ${selectedEnemies.length} enemies:`, selectedEnemies);
+
+  // Generate non-edge tile positions
+  const nonEdgePositions: GridPosition[] = [];
+  for (let row = 1; row < GRID_ROWS - 1; row++) {
+    for (let col = 1; col < GRID_COLS - 1; col++) {
+      nonEdgePositions.push({ row, col });
+    }
+  }
+
+  // Shuffle positions
+  for (let i = nonEdgePositions.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [nonEdgePositions[i], nonEdgePositions[j]] = [nonEdgePositions[j], nonEdgePositions[i]];
+  }
+
+  // Assign positions to enemies
+  const result: { enemyId: string, position: GridPosition }[] = [];
+  for (let i = 0; i < selectedEnemies.length && i < nonEdgePositions.length; i++) {
+    result.push({
+      enemyId: selectedEnemies[i],
+      position: nonEdgePositions[i]
+    });
+  }
+
+  return result;
 }
 
 export function fallThroughFloor(currentState: import("./types").GameState): void {
@@ -176,19 +257,13 @@ export function createMainScene(): void {
       }
     }
 
-    // Create enemies (will be spawned by StartLevelSequence)
-    const goblin1 = objManager.createEnemy({ row: 3, col: 3 }, "goblin");
-    const goblin2 = objManager.createEnemy({ row: 3, col: 2 }, "goblin");
-    const goblin3 = objManager.createEnemy({ row: 2, col: 3 }, "goblin");
-    const bat1 = objManager.createEnemy({ row: 4, col: 4 }, "bat");
-    const bat2 = objManager.createEnemy({ row: 2, col: 4 }, "bat");
-
-    // Mark all objects as part of start level sequence
-    goblin1.isInStartLevelSequence = true;
-    goblin2.isInStartLevelSequence = true;
-    goblin3.isInStartLevelSequence = true;
-    bat1.isInStartLevelSequence = true;
-    bat2.isInStartLevelSequence = true;
+    // Generate and create enemies based on level budget
+    const enemiesToSpawn = generateEnemiesForLevel(globalCurrentLevel, enemyDatabase);
+    const spawnedEnemies = enemiesToSpawn.map(({ enemyId, position }) => {
+      const enemy = objManager.createEnemy(position, enemyId);
+      enemy.isInStartLevelSequence = true;
+      return enemy;
+    });
 
     // Spawn random items on empty tiles
     objManager.spawnRandomItems(ITEM_DROP_PROBABILITY);
