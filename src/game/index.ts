@@ -922,6 +922,35 @@ export function initializeGameHandlers(
   k.onButtonPress("left", handleMoveLeft);
   k.onButtonPress("right", handleMoveRight);
 
+  // Debug button - play rise animation
+  k.onButtonPress("debug", () => {
+    const player = objectManager.getPlayer();
+    if (!player || isAnimating) return;
+
+    // Set player to play rise animation
+    player.isPlayingDropAnimation = true;
+    player.entryAnimationName = "rise";
+
+    // Create temporary sprite to track animation duration
+    const riseSprite = k.add([
+      k.sprite("mason", { anim: "rise" }),
+      k.pos(-1000, -1000), // Off-screen
+      k.opacity(0),
+      "debugRiseAnimationTracker",
+    ]);
+
+    // Trigger render to show the animation
+    render();
+
+    // Reset when animation completes
+    riseSprite.onAnimEnd(() => {
+      player.isPlayingDropAnimation = false;
+      player.entryAnimationName = undefined;
+      k.destroy(riseSprite);
+      render();
+    });
+  });
+
   // Set up input controller callback
   ic.setOnPushRequested(() => {
     if (!isAnimating && tm.canPush()) {
