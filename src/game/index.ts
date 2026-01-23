@@ -924,7 +924,7 @@ export function initializeGameHandlers(
 
   // Debug button - play rise animation
   k.onButtonPress("debug", () => {
-    const player = objectManager.getPlayer();
+    const player = tm.getObjectManager().getPlayer();
     if (!player || isAnimating) return;
 
     // Set player to play rise animation
