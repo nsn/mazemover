@@ -21,6 +21,7 @@ import type { TileDeck } from "../../core/TileDeck";
  * @property objectManager - Manages map objects (player, enemies)
  * @property deck - Tile deck for drawing/discarding tiles
  * @property onStateChange - Callback to trigger re-render
+ * @property resetAnimation - Callback to forcefully reset animation flag
  *
  * @example
  * ```typescript
@@ -29,6 +30,7 @@ import type { TileDeck } from "../../core/TileDeck";
  *   objectManager: manager,
  *   deck: tileDeck,
  *   onStateChange: renderCallback,
+ *   resetAnimation: () => { isAnimating = false; },
  * };
  * state.onEnter(context);
  * ```
@@ -38,6 +40,7 @@ export interface StateContext {
   objectManager: MapObjectManager;
   deck: TileDeck;
   onStateChange: () => void;
+  resetAnimation: () => void;
 }
 
 /**

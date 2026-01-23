@@ -79,7 +79,7 @@ export class TurnManager {
    */
   private useStatePattern: boolean = true;
 
-  constructor(onStateChange: TurnManagerCallback, enemyDatabase: EnemyDatabase, itemDatabase: ItemDatabase, extraTiles: number = 1) {
+  constructor(onStateChange: TurnManagerCallback, enemyDatabase: EnemyDatabase, itemDatabase: ItemDatabase, resetAnimation: TurnManagerCallback = () => {}, extraTiles: number = 1) {
     this.onStateChange = onStateChange;
     const n = Math.max(1, extraTiles);
     const totalTiles = GRID_ROWS * GRID_COLS + n;
@@ -110,6 +110,7 @@ export class TurnManager {
       objectManager: this.objectManager,
       deck: this.deck,
       onStateChange: this.onStateChange,
+      resetAnimation: resetAnimation,
     };
     this.currentTurnState = new PlayerTurnState(new AwaitingActionState());
   }

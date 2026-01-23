@@ -123,7 +123,7 @@ export const STARTING_ITEMS = ["mell", "pickaxe", "punch"];  // Items given to p
 
 // Enemy Spawn Configuration
 export const ENEMY_BUDGET_MODIFIER = 1.0;  // Multiplier for enemy budget per level (budget = level * modifier)
-export const ITEM_DROP_PROBABILITY = 0.05;  // Probability (0.0 - 1.0) of an item spawning on each empty tile
+export const ITEM_DROP_PROBABILITY = 0.02;  // Probability (0.0 - 1.0) of an item spawning on each empty tile
 
 // Logging Configuration
 export const LOG_LEVEL = {

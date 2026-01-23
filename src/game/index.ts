@@ -911,6 +911,11 @@ export function setCursorManager(_cm: CursorManager): void {
   // Stored in scene scope
 }
 
+export function resetAnimationFlag(): void {
+  isAnimating = false;
+  console.log("[Game] Animation flag forcefully reset");
+}
+
 // Initialize all game event handlers
 export function initializeGameHandlers(
   tm: TurnManager,

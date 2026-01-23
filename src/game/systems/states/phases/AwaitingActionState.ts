@@ -62,15 +62,17 @@ export class AwaitingActionState implements PlayerPhaseState {
    * @param context - State context with dependencies
    *
    * @remarks
-   * Sets the player phase flag and triggers render.
+   * Sets the player phase flag, resets animation flag, and triggers render.
    *
    * **Side Effects:**
    * - Sets `context.state.playerPhase = PlayerPhase.AwaitingAction`
+   * - Calls `context.resetAnimation()` to forcefully reset animation flag
    * - Calls `context.onStateChange()` to trigger render
    */
   onEnter(context: StateContext): void {
     console.log("[AwaitingActionState] Entering AwaitingAction phase");
     context.state.playerPhase = PlayerPhase.AwaitingAction;
+    context.resetAnimation();
     context.onStateChange();
   }
 

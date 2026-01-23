@@ -15,6 +15,7 @@ import {
   setInputController,
   setCursorManager,
   render,
+  resetAnimationFlag,
 } from "./index";
 
 // Global state that persists across scene reloads
@@ -138,7 +139,7 @@ export function createMainScene(): void {
     cursorManager.initialize();
     setCursorManager(cursorManager);
 
-    const turnManager = new TurnManager(render, enemyDatabase, itemDatabase);
+    const turnManager = new TurnManager(render, enemyDatabase, itemDatabase, resetAnimationFlag);
     setTurnManager(turnManager);
 
     // Set current level and direction from global counter
