@@ -157,11 +157,14 @@ export function drawDebugInfo(): void {
 /**
  * Draws state machine information at the bottom center of the canvas
  */
-export function drawStateMachineInfo(state: GameState, player: MapObject | null): void {
+export function drawStateMachineInfo(state: GameState, player: MapObject | null, isAnimating: boolean = false): void {
   const lines: string[] = [];
 
   // Turn owner and phase
   lines.push(`Turn: ${state.turnOwner} | Phase: ${state.playerPhase}`);
+
+  // Animation state
+  lines.push(`Animating: ${isAnimating}`);
 
   // Player moves
   if (player) {
@@ -173,9 +176,6 @@ export function drawStateMachineInfo(state: GameState, player: MapObject | null)
     const target = state.wallBumpTarget ? `(${state.wallBumpTarget.row},${state.wallBumpTarget.col})` : "none";
     lines.push(`Wall Bumps: ${state.wallBumpCount}/3 Target: ${target}`);
   }
-
-  // Animation state (from external)
-  // We'll pass this as a parameter
 
   const text = lines.join(" | ");
   const textObj = k.make([

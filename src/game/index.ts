@@ -440,6 +440,7 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
         // Set animating to prevent other actions during fall
         isAnimating = true;
+        console.log("[Fall] isAnimating set to true - fall animation starting");
 
         // Play fall animation
         const playerX = GRID_OFFSET_X + player.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
@@ -497,6 +498,7 @@ async function animateWallBump(player: MapObject, targetPos: GridPosition): Prom
   logger.debug(`[WallBump] Animating bump from ${player.gridPosition.row},${player.gridPosition.col} toward ${targetPos.row},${targetPos.col}`);
 
   isAnimating = true;
+  console.log("[WallBump] isAnimating set to true - wall bump animation starting");
 
   // Remove player from map objects (will be rendered as moving sprite)
   const mapObjs = k.get("mapObject");
@@ -645,6 +647,7 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
   if (path.length <= 1) return;
 
   isAnimating = true;
+  console.log(`[EnemyMove] isAnimating set to true - enemy ${enemy.id} moving`);
   const stepDuration = 0.12;
 
   const mapObjs = k.get("mapObject");
@@ -1120,6 +1123,7 @@ async function executePushWithAnimation(): Promise<void> {
   if (!state.currentTile || !state.selectedPlot) return;
 
   isAnimating = true;
+  console.log("[Push] isAnimating set to true - tile push animation starting");
   clearAll();
 
   const mapObjects = turnManager.getMapObjects();
@@ -1283,7 +1287,7 @@ export function render(): void {
 
   // Draw debug info
   drawDebugInfo();
-  drawStateMachineInfo(state, player || null);
+  drawStateMachineInfo(state, player || null, isAnimating);
 }
 
 export function getGameState() {
