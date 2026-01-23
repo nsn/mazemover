@@ -7,6 +7,7 @@ export interface EnemyDefinition {
   aiType: AIType;
   sprite: string;
   flying?: boolean;  // True if enemy is flying (immune to ground hazards), defaults to false
+  tier: number;  // Enemy tier (1, 2, 3, etc.)
   color?: {
     r: number;
     g: number;

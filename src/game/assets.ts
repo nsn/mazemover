@@ -91,7 +91,7 @@ export async function loadAssets(): Promise<void> {
       idle: {from : 0, to: 3, loop: true},
       walk: {from : 110, to: 113, loop: true},
       drop: {from : 186, to: 197, loop: false, speed: 10},
-      rise: {from : 682, to: 682, loop: false, speed: 10},
+      rise: {from : 682, to: 689, loop: false, speed: 15},
       fall: {from : 803, to: 810, loop: false, speed: 60},
     }
   });

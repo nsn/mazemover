@@ -104,6 +104,7 @@ export class MapObjectManager {
     );
 
     enemy.aiType = enemyDef.aiType;
+    enemy.tier = enemyDef.tier;
     if (enemyDef.color) {
       (enemy as any).color = enemyDef.color;
     }

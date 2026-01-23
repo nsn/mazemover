@@ -158,6 +158,7 @@ export interface MapObject {
   baseStats?: Stats;  // Base stats before equipment bonuses
   currentHP?: number;
   flying: boolean;  // True if entity is flying (immune to ground hazards)
+  tier?: number;  // Enemy tier (only for enemies)
   onEnter?: MapObjectCallback;
   onExit?: MapObjectCallback;
   aiType?: AIType;

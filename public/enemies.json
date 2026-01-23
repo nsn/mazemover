@@ -11,7 +11,8 @@
       "movementSpeed": 1,
       "aiType": "Hunter",
       "sprite": "goblin",
-      "flying": false
+      "flying": false,
+      "tier": 1
     },
     "bat": {
       "name": "Bat",
@@ -24,7 +25,8 @@
       "movementSpeed": 2,
       "aiType": "Hunter",
       "sprite": "bat",
-      "flying": true
+      "flying": true,
+      "tier": 1
     }
   },
   "player": {
