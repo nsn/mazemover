@@ -4,7 +4,7 @@ import { TurnManager } from "./systems/TurnManager";
 import { InputController } from "./systems/InputController";
 import { CursorManager } from "./systems/CursorManager";
 import { StartLevelSequence } from "./systems/StartLevelSequence";
-import { GRID_ROWS, GRID_COLS, STARTING_LEVEL, STARTING_ITEMS } from "./config";
+import { GRID_ROWS, GRID_COLS, STARTING_LEVEL, STARTING_ITEMS, ITEM_DROP_PROBABILITY } from "./config";
 import { getImmovableEdgeTiles, getOppositeSide, getRandomTileOnSide } from "./core/Grid";
 import { applyEquipmentBonuses } from "./systems/EquipmentManager";
 import {
@@ -190,8 +190,8 @@ export function createMainScene(): void {
     bat1.isInStartLevelSequence = true;
     bat2.isInStartLevelSequence = true;
 
-    // Spawn random items on empty tiles (5% chance per tile)
-    objManager.spawnRandomItems(0.05);
+    // Spawn random items on empty tiles
+    objManager.spawnRandomItems(ITEM_DROP_PROBABILITY);
 
     // Create and start the level sequence
     console.log("[MainScene] Starting level sequence...");

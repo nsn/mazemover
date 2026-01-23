@@ -1,5 +1,4 @@
 
-- poof animation, play on enemy death
 - add tiers to enemies
 - make enemies spawn according to tier and level
 - add drop chance to enemies
