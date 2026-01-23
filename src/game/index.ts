@@ -45,6 +45,42 @@ let isAnimating = false;
 let lastHoveredItemId: string | null = null;
 let lastHighlightedSlots: number[] = [];
 
+/**
+ * Selects a random item with tier <= maxTier, preferring items close to maxTier
+ * Uses weighted distribution: items with tier == maxTier are 3x more likely,
+ * tier == maxTier-1 are 2x more likely, others are 1x
+ */
+function selectItemByTier(maxTier: number, itemDatabase: any): string | null {
+  const allItems = itemDatabase.getAllItems();
+  const eligibleItems = allItems.filter((item: any) => item.tier <= maxTier);
+
+  if (eligibleItems.length === 0) {
+    return null;
+  }
+
+  // Create weighted array based on tier proximity to maxTier
+  const weightedItems: string[] = [];
+  for (const item of eligibleItems) {
+    const tierDiff = maxTier - item.tier;
+    let weight = 1;
+
+    if (tierDiff === 0) {
+      weight = 3; // Same tier: 3x weight
+    } else if (tierDiff === 1) {
+      weight = 2; // One tier below: 2x weight
+    }
+    // tierDiff >= 2: 1x weight (default)
+
+    for (let i = 0; i < weight; i++) {
+      weightedItems.push(item.id);
+    }
+  }
+
+  // Select random item from weighted array
+  const selectedId = weightedItems[Math.floor(Math.random() * weightedItems.length)];
+  return selectedId;
+}
+
 async function handleClick(): Promise<void> {
   const pos = k.mousePos();
 
@@ -318,6 +354,29 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
         poofSprite.onAnimEnd(() => {
           k.destroy(poofSprite);
         });
+
+        // Check for item drop
+        const enemyPos = enemy.gridPosition;
+        const dropChance = enemy.dropChance ?? 0.1;
+        const enemyTier = enemy.tier ?? 1;
+
+        // Check if tile is empty (no other MapObjects)
+        const objectsAtPosition = objectManager.getAllObjects().filter(obj =>
+          obj.gridPosition.row === enemyPos.row &&
+          obj.gridPosition.col === enemyPos.col &&
+          obj.id !== enemy.id
+        );
+
+        if (objectsAtPosition.length === 0 && Math.random() < dropChance) {
+          // Drop an item
+          const itemDatabase = objectManager.getItemDatabase();
+          const selectedItemId = selectItemByTier(enemyTier, itemDatabase);
+
+          if (selectedItemId) {
+            objectManager.createItem(enemyPos, selectedItemId);
+            console.log(`[Combat] Enemy dropped item: ${selectedItemId} (tier ${enemyTier})`);
+          }
+        }
 
         objectManager.destroyObject(enemy);
         logger.debug("[Game] Enemy defeated - bouncing player back");
