@@ -12,7 +12,8 @@
       "aiType": "Hunter",
       "sprite": "goblin",
       "flying": false,
-      "tier": 1
+      "tier": 1,
+      "dropChance": 0.1
     },
     "bat": {
       "name": "Bat",
@@ -26,7 +27,8 @@
       "aiType": "Hunter",
       "sprite": "bat",
       "flying": true,
-      "tier": 1
+      "tier": 1,
+      "dropChance": 0.1
     }
   },
   "player": {

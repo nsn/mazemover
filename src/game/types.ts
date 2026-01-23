@@ -159,6 +159,7 @@ export interface MapObject {
   currentHP?: number;
   flying: boolean;  // True if entity is flying (immune to ground hazards)
   tier?: number;  // Enemy tier (only for enemies)
+  dropChance?: number;  // Item drop probability on death (only for enemies)
   onEnter?: MapObjectCallback;
   onExit?: MapObjectCallback;
   aiType?: AIType;

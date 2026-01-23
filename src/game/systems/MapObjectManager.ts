@@ -105,6 +105,7 @@ export class MapObjectManager {
 
     enemy.aiType = enemyDef.aiType;
     enemy.tier = enemyDef.tier;
+    enemy.dropChance = enemyDef.dropChance ?? 0.1;  // Default to 0.1 if not specified
     if (enemyDef.color) {
       (enemy as any).color = enemyDef.color;
     }

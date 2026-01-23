@@ -8,6 +8,7 @@ export interface EnemyDefinition {
   sprite: string;
   flying?: boolean;  // True if enemy is flying (immune to ground hazards), defaults to false
   tier: number;  // Enemy tier (1, 2, 3, etc.)
+  dropChance?: number;  // Probability (0.0 - 1.0) of dropping an item on death, defaults to 0.1
   color?: {
     r: number;
     g: number;
