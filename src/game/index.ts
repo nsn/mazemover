@@ -82,6 +82,11 @@ function selectItemByTier(maxTier: number, itemDatabase: any): string | null {
 }
 
 async function handleClick(): Promise<void> {
+  // Block all input during animations
+  if (isAnimating) {
+    return;
+  }
+
   const pos = k.mousePos();
 
   const state = turnManager.getState();
@@ -1010,12 +1015,14 @@ export function initializeGameHandlers(
     });
   });
 
-  // Set up input controller callback
+  // Set up input controller callbacks
   ic.setOnPushRequested(() => {
     if (!isAnimating && tm.canPush()) {
       executePushWithAnimation();
     }
   });
+
+  ic.setIsAnimating(() => isAnimating);
 
   // Register cursor update callback
   k.onDraw(() => {
