@@ -133,6 +133,13 @@ export class CursorManager {
         return "default";
       }
 
+      // Check if hovering over player's current tile (show rotate cursor in AwaitingAction state)
+      if (state.playerPhase === PlayerPhase.AwaitingAction &&
+          gridPos.row === player.gridPosition.row &&
+          gridPos.col === player.gridPosition.col) {
+        return "rotate";
+      }
+
       // Calculate reachable tiles (no caching)
       // Note: Player doesn't avoid dangerous tiles - treat as flying for pathfinding to allow all tiles
       const moves = turnManager.getObjectManager().getAvailableMoves(player);

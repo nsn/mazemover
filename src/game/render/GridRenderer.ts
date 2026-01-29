@@ -578,7 +578,10 @@ export async function animatePush(
     );
   }
 
-  await k.wait(duration);
+  await Promise.race([
+    k.wait(duration),
+    new Promise(resolve => setTimeout(resolve, 2000)) // 2s timeout (push can be slow)
+  ]);
 
   k.destroyAll("animatingTile");
   k.destroyAll("animatingObject");

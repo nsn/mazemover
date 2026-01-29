@@ -76,6 +76,7 @@ export interface GameState {
   isAscending: boolean;  // True if player is ascending (going toward surface), false if descending (going deeper)
   inventory: (ItemInstance | null)[];  // Player inventory - array of item instances or null for empty slots
   equipment: (ItemInstance | null)[];  // Player equipment - 5 slots: [0=Head, 1=LeftHand, 2=RightHand, 3=Legs, 4=Torso]
+  buffs: Buff[];  // Active buffs on the player
 }
 
 export const ObjectType = {
@@ -89,6 +90,8 @@ export type ObjectType = (typeof ObjectType)[keyof typeof ObjectType];
 
 export const AIType = {
   Hunter: "Hunter",
+  Ranged: "Ranged",
+  Healer: "Healer",
 } as const;
 
 export type AIType = (typeof AIType)[keyof typeof AIType];
@@ -135,6 +138,13 @@ export interface ItemInstance {
   remainingCharges: number;
 }
 
+export interface Buff {
+  id: string;           // Unique identifier for this buff instance
+  name: string;         // Display name
+  iconSprite: string;   // Sprite name for icon
+  iconFrame: number;    // Frame index for icon
+}
+
 export type MapObjectCallback = (mob: MapObject, isPlayer: boolean) => void;
 
 export interface MapObject {
@@ -160,7 +170,9 @@ export interface MapObject {
   flying: boolean;  // True if entity is flying (immune to ground hazards)
   tier?: number;  // Enemy tier (only for enemies)
   dropChance?: number;  // Item drop probability on death (only for enemies)
+  remainingCharges?: number;  // Remaining charges (only for items with charges)
   onEnter?: MapObjectCallback;
   onExit?: MapObjectCallback;
   aiType?: AIType;
+  projectile?: string;  // Projectile sprite name for ranged enemies (default: "arrow")
 }

@@ -81,6 +81,11 @@ export async function loadAssets(): Promise<void> {
       chemises: 60,
       shirt: 61,
       apron: 62,
+      feather: 80,
+      ham: 81,
+      apple: 82,
+      cement: 83,
+      bricks: 84,
     }
   });
 
@@ -98,7 +103,14 @@ export async function loadAssets(): Promise<void> {
 
   await k.loadSpriteAtlas("/enemies.png", {
     goblin: {x: 0, y: 0, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
+    archer: {x: 0, y: 16, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
+    brute: {x: 0, y: 32, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
+    shaman: {x: 0, y: 48, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
     bat: {x: 0, y: 64, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
+  });
+
+  await k.loadSpriteAtlas("/projectiles.png", {
+    arrow: {x: 0, y: 0, width: 5, height: 10, sliceX: 2, anims: {idle: {from: 0, to: 1, loop: true}}},
   });
 
   await k.loadSprite("poof", "/poof.png", {

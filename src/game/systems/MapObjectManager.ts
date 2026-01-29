@@ -106,6 +106,7 @@ export class MapObjectManager {
     enemy.aiType = enemyDef.aiType;
     enemy.tier = enemyDef.tier;
     enemy.dropChance = enemyDef.dropChance ?? 0.1;  // Default to 0.1 if not specified
+    enemy.projectile = enemyDef.projectile || "arrow";  // Default to "arrow" if not specified
     if (enemyDef.color) {
       (enemy as any).color = enemyDef.color;
     }
@@ -137,6 +138,9 @@ export class MapObjectManager {
 
     // Set the frame index for the item sprite
     item.frame = itemDef.frame;
+
+    // Set remaining charges from item definition
+    item.remainingCharges = itemDef.charges;
 
     // Store the item definition ID on the object for later reference
     (item as any).itemId = itemId;

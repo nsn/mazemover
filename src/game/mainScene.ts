@@ -154,7 +154,9 @@ export function createMainScene(): void {
       // First time starting the game - initialize with starting items
       console.log("[MainScene] First game start - initializing inventory with starting items");
       STARTING_ITEMS.forEach((itemId, index) => {
-        state.inventory[index] = { definitionId: itemId, remainingCharges: -1 };
+        const itemDef = itemDatabase.getItem(itemId);
+        const charges = itemDef ? itemDef.charges : -1;
+        state.inventory[index] = { definitionId: itemId, remainingCharges: charges };
       });
 
       // Save to global state
@@ -260,10 +262,9 @@ export function createMainScene(): void {
 
     // Generate and create enemies based on level budget
     const enemiesToSpawn = generateEnemiesForLevel(globalCurrentLevel, enemyDatabase);
-    const spawnedEnemies = enemiesToSpawn.map(({ enemyId, position }) => {
+    enemiesToSpawn.forEach(({ enemyId, position }) => {
       const enemy = objManager.createEnemy(position, enemyId);
       enemy.isInStartLevelSequence = true;
-      return enemy;
     });
 
     // Spawn random items on empty tiles

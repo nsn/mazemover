@@ -119,7 +119,7 @@ export const DESCRIPTION = {
 
 // Game Configuration
 export const STARTING_LEVEL = 10;  // Level the player starts at (counts down to 0)
-export const STARTING_ITEMS = ["mell", "pickaxe", "punch"];  // Items given to player at game start
+export const STARTING_ITEMS = ["mell", "pickaxe", "punch", "feather", "ham", "apple", "cement", "bricks"];  // Items given to player at game start
 
 // Enemy Spawn Configuration
 export const ENEMY_BUDGET_MODIFIER = 1.0;  // Multiplier for enemy budget per level (budget = level * modifier)

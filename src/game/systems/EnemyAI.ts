@@ -1,14 +1,127 @@
-import { type TileInstance, type GridPosition, type MapObject, ObjectType } from "../types";
+import { type TileInstance, type GridPosition, type MapObject, ObjectType, AIType } from "../types";
 import { findReachableTiles } from "./Pathfinding";
 import { MapObjectManager } from "./MapObjectManager";
+import { getTileEdges } from "../core/Tile";
 
 function manhattanDistance(a: GridPosition, b: GridPosition): number {
   return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
 }
 
+/**
+ * Checks if there's a straight line of sight between two positions with no blocking walls
+ * @param grid The game grid
+ * @param from Starting position
+ * @param to Target position
+ * @returns true if there's a clear line of sight, false otherwise
+ */
+function hasLineOfSight(
+  grid: TileInstance[][],
+  from: GridPosition,
+  to: GridPosition
+): boolean {
+  const rows = grid.length;
+  const cols = grid[0].length;
+
+  // Check if positions are in a straight line (same row or same column)
+  const isSameRow = from.row === to.row;
+  const isSameCol = from.col === to.col;
+
+  console.log(`[LOS] Checking from (${from.row},${from.col}) to (${to.row},${to.col}): sameRow=${isSameRow}, sameCol=${isSameCol}`);
+
+  if (!isSameRow && !isSameCol) {
+    console.log(`[LOS] Not in straight line - no LOS`);
+    return false; // Not a straight line
+  }
+
+  // Check each tile along the path
+  if (isSameRow) {
+    // Horizontal line of sight
+    const direction = from.col < to.col ? 1 : -1;
+
+    for (let col = from.col; col !== to.col; col += direction) {
+      const currentPos = { row: from.row, col };
+      const nextPos = { row: from.row, col: col + direction };
+
+      // Check bounds
+      if (nextPos.col < 0 || nextPos.col >= cols) {
+        return false;
+      }
+
+      const currentTile = grid[currentPos.row][currentPos.col];
+      const nextTile = grid[nextPos.row][nextPos.col];
+
+      if (!currentTile || !nextTile) {
+        return false;
+      }
+
+      // Check if there's an opening in the correct direction
+      const currentEdges = getTileEdges(currentTile.type, currentTile.orientation);
+      const nextEdges = getTileEdges(nextTile.type, nextTile.orientation);
+
+      if (direction > 0) {
+        // Moving east
+        if (!currentEdges.east || !nextEdges.west) {
+          console.log(`[LOS] Wall blocking at (${currentPos.row},${currentPos.col}) -> (${nextPos.row},${nextPos.col}) moving east`);
+          return false; // Wall blocking
+        }
+      } else {
+        // Moving west
+        if (!currentEdges.west || !nextEdges.east) {
+          console.log(`[LOS] Wall blocking at (${currentPos.row},${currentPos.col}) -> (${nextPos.row},${nextPos.col}) moving west`);
+          return false; // Wall blocking
+        }
+      }
+    }
+  } else {
+    // Vertical line of sight
+    const direction = from.row < to.row ? 1 : -1;
+
+    for (let row = from.row; row !== to.row; row += direction) {
+      const currentPos = { row, col: from.col };
+      const nextPos = { row: row + direction, col: from.col };
+
+      // Check bounds
+      if (nextPos.row < 0 || nextPos.row >= rows) {
+        return false;
+      }
+
+      const currentTile = grid[currentPos.row][currentPos.col];
+      const nextTile = grid[nextPos.row][nextPos.col];
+
+      if (!currentTile || !nextTile) {
+        return false;
+      }
+
+      // Check if there's an opening in the correct direction
+      const currentEdges = getTileEdges(currentTile.type, currentTile.orientation);
+      const nextEdges = getTileEdges(nextTile.type, nextTile.orientation);
+
+      if (direction > 0) {
+        // Moving south
+        if (!currentEdges.south || !nextEdges.north) {
+          console.log(`[LOS] Wall blocking at (${currentPos.row},${currentPos.col}) -> (${nextPos.row},${nextPos.col}) moving south`);
+          return false; // Wall blocking
+        }
+      } else {
+        // Moving north
+        if (!currentEdges.north || !nextEdges.south) {
+          console.log(`[LOS] Wall blocking at (${currentPos.row},${currentPos.col}) -> (${nextPos.row},${nextPos.col}) moving north`);
+          return false; // Wall blocking
+        }
+      }
+    }
+  }
+
+  console.log(`[LOS] Clear line of sight!`);
+  return true; // Clear line of sight
+}
+
 export interface EnemyMove {
   enemy: MapObject;
   path: GridPosition[];
+  isRangedAttack?: boolean;  // True if this is a ranged attack instead of movement
+  isHealingAction?: boolean;  // True if this is a healing action instead of movement
+  healTarget?: MapObject;  // Target to heal (only for healing actions)
 }
 
 function calculateHunterMove(
@@ -43,12 +156,102 @@ function calculateHunterMove(
   return bestMove;
 }
 
+/**
+ * Calculates ranged enemy behavior
+ * If line of sight exists, perform ranged attack instead of moving
+ * Otherwise, move toward player like Hunter
+ */
+function calculateRangedMove(
+  grid: TileInstance[][],
+  enemy: MapObject,
+  playerPos: GridPosition,
+  blockedPositions: GridPosition[]
+): EnemyMove | null {
+  // Check if we have line of sight to player
+  const hasLOS = hasLineOfSight(grid, enemy.gridPosition, playerPos);
+  console.log(`[RangedAI] Enemy ${enemy.id} at (${enemy.gridPosition.row},${enemy.gridPosition.col}) checking LOS to player at (${playerPos.row},${playerPos.col}): ${hasLOS}`);
+
+  if (hasLOS) {
+    // Perform ranged attack - no movement, just mark as ranged attack
+    console.log(`[RangedAI] Enemy ${enemy.id} has line of sight - performing ranged attack`);
+    return {
+      enemy,
+      path: [enemy.gridPosition], // Stay in place
+      isRangedAttack: true,
+    };
+  }
+
+  // No line of sight, behave like Hunter (move toward player)
+  console.log(`[RangedAI] Enemy ${enemy.id} no line of sight - moving toward player`);
+  return calculateHunterMove(grid, enemy, playerPos, blockedPositions);
+}
+
+/**
+ * Calculates healer enemy behavior
+ * If there's a wounded ally with LOS, heal them instead of moving
+ * Otherwise, move toward player like Hunter
+ */
+function calculateHealerMove(
+  grid: TileInstance[][],
+  enemy: MapObject,
+  playerPos: GridPosition,
+  blockedPositions: GridPosition[],
+  allEnemies: MapObject[]
+): EnemyMove | null {
+  // Find wounded allies (enemies that are not at full HP)
+  const woundedAllies = allEnemies.filter(ally =>
+    ally.id !== enemy.id &&
+    ally.currentHP !== undefined &&
+    ally.stats?.hp !== undefined &&
+    ally.currentHP < ally.stats.hp &&
+    ally.currentHP > 0  // Not dead
+  );
+
+  console.log(`[HealerAI] Enemy ${enemy.id} found ${woundedAllies.length} wounded allies`);
+
+  // Check each wounded ally for line of sight
+  for (const ally of woundedAllies) {
+    const hasLOS = hasLineOfSight(grid, enemy.gridPosition, ally.gridPosition);
+    console.log(`[HealerAI] Enemy ${enemy.id} checking LOS to wounded ally ${ally.id} at (${ally.gridPosition.row},${ally.gridPosition.col}): ${hasLOS}`);
+
+    if (hasLOS) {
+      // Heal this ally
+      console.log(`[HealerAI] Enemy ${enemy.id} has line of sight to wounded ally - performing heal`);
+      return {
+        enemy,
+        path: [enemy.gridPosition], // Stay in place
+        isHealingAction: true,
+        healTarget: ally,
+      };
+    }
+  }
+
+  // No wounded allies with LOS, behave like Hunter (move toward player and attack normally)
+  console.log(`[HealerAI] Enemy ${enemy.id} no wounded allies with LOS - moving toward player to attack`);
+  const hunterMove = calculateHunterMove(grid, enemy, playerPos, blockedPositions);
+  if (hunterMove) {
+    console.log(`[HealerAI] Enemy ${enemy.id} will move ${hunterMove.path.length - 1} tiles toward player`);
+  }
+  return hunterMove;
+}
+
 export function calculateEnemyMove(
   grid: TileInstance[][],
   enemy: MapObject,
   playerPos: GridPosition,
-  blockedPositions: GridPosition[] = []
+  blockedPositions: GridPosition[] = [],
+  allEnemies: MapObject[] = []
 ): EnemyMove | null {
+  // Check AI type and dispatch to appropriate function
+  if (enemy.aiType === AIType.Ranged) {
+    return calculateRangedMove(grid, enemy, playerPos, blockedPositions);
+  }
+
+  if (enemy.aiType === AIType.Healer) {
+    return calculateHealerMove(grid, enemy, playerPos, blockedPositions, allEnemies);
+  }
+
+  // Default to Hunter behavior
   return calculateHunterMove(grid, enemy, playerPos, blockedPositions);
 }
 
@@ -77,12 +280,19 @@ export function calculateAllEnemyMoves(
       }
     }
 
-    const move = calculateEnemyMove(grid, enemy, playerPos, otherEnemyPositions);
-    if (move && move.path.length > 1) {
-      moves.push(move);
-      // Update this enemy's position in the map
-      const finalPos = move.path[move.path.length - 1];
-      occupiedPositions.set(enemy.id, { ...finalPos });
+    const move = calculateEnemyMove(grid, enemy, playerPos, otherEnemyPositions, enemies);
+    if (move) {
+      console.log(`[calculateAllEnemyMoves] Enemy ${enemy.id}: isRangedAttack=${move.isRangedAttack}, isHealingAction=${move.isHealingAction}, path.length=${move.path.length}`);
+      // Include ranged attacks, healing actions, and movement
+      if (move.isRangedAttack || move.isHealingAction || move.path.length > 1) {
+        console.log(`[calculateAllEnemyMoves] Adding move for enemy ${enemy.id}`);
+        moves.push(move);
+        // Update this enemy's position in the map (only if actually moving)
+        if (!move.isRangedAttack && !move.isHealingAction) {
+          const finalPos = move.path[move.path.length - 1];
+          occupiedPositions.set(enemy.id, { ...finalPos });
+        }
+      }
     }
   }
 

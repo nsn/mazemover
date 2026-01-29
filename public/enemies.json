@@ -29,6 +29,52 @@
       "flying": true,
       "tier": 1,
       "dropChance": 0.1
+    },
+    "archer": {
+      "name": "Archer",
+      "stats": {
+        "hp": 3,
+        "atk": 2,
+        "def": 0,
+        "agi": 2
+      },
+      "movementSpeed": 1,
+      "aiType": "Ranged",
+      "sprite": "archer",
+      "flying": false,
+      "tier": 1,
+      "dropChance": 0.15,
+      "projectile": "arrow"
+    },
+    "brute": {
+      "name": "Brute",
+      "stats": {
+        "hp": 8,
+        "atk": 3,
+        "def": 2,
+        "agi": 0
+      },
+      "movementSpeed": 0.5,
+      "aiType": "Hunter",
+      "sprite": "brute",
+      "flying": false,
+      "tier": 2,
+      "dropChance": 0.2
+    },
+    "shaman": {
+      "name": "Shaman",
+      "stats": {
+        "hp": 4,
+        "atk": 1,
+        "def": 1,
+        "agi": 1
+      },
+      "movementSpeed": 1,
+      "aiType": "Healer",
+      "sprite": "shaman",
+      "flying": false,
+      "tier": 2,
+      "dropChance": 0.2
     }
   },
   "player": {

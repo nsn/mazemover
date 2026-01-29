@@ -5,7 +5,7 @@
       "sprite": "items",
       "frame": 0,
       "tier": 1,
-      "charges": -1,
+      "charges": 6,
       "slot": "OffHand",
       "statBonuses": {
         "atk": 1
@@ -17,7 +17,7 @@
       "sprite": "items",
       "frame": 1,
       "tier": 2,
-      "charges": -1,
+      "charges": 9,
       "slot": "OffHand",
       "statBonuses": {
         "atk": 2
@@ -116,7 +116,7 @@
       "sprite": "items",
       "frame": 9,
       "tier": 3,
-      "charges": -1,
+      "charges": 12,
       "slot": ["MainHand", "OffHand"],
       "statBonuses": {
         "atk": 4,
@@ -237,16 +237,55 @@
     }
   },
   "consumables": {
-    "health_potion": {
-      "name": "Health Potion",
+    "feather": {
+      "name": "Feather",
       "sprite": "items",
-      "frame": 0,
+      "frame": 80,
+      "tier": 1,
+      "charges": 1,
+      "description": "Grants ability to fly over decayed tiles"
+    },
+    "ham": {
+      "name": "Ham",
+      "sprite": "items",
+      "frame": 81,
+      "tier": 2,
+      "charges": 1,
+      "description": "Restores to full health"
+    },
+    "apple": {
+      "name": "Apple",
+      "sprite": "items",
+      "frame": 82,
       "tier": 1,
       "charges": 1,
       "statBonuses": {
         "hp": 5
       },
       "description": "Restores 5 HP"
+    },
+    "cement": {
+      "name": "Cement",
+      "sprite": "items",
+      "frame": 83,
+      "tier": 2,
+      "charges": 1,
+      "statBonuses": {
+        "def": 2
+      },
+      "description": "Hardening cement"
+    },
+    "bricks": {
+      "name": "Bricks",
+      "sprite": "items",
+      "frame": 84,
+      "tier": 2,
+      "charges": 1,
+      "statBonuses": {
+        "def": 1,
+        "hp": 1
+      },
+      "description": "Solid bricks"
     }
   }
 }

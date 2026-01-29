@@ -27,9 +27,9 @@ import {
   updateDescription,
   clearUI,
 } from "./render/UIRenderer";
-import { getInventoryItemAtPosition, getEquipmentItemAtPosition, getEquipmentSlotAtPosition } from "./systems/PositionUtils";
+import { getInventoryItemAtPosition, getEquipmentItemAtPosition, getEquipmentSlotAtPosition, screenToGrid } from "./systems/PositionUtils";
 import { equipItemFromInventory, unequipItemToInventory, applyEquipmentBonuses, getOccupiedSlots, isSlotBlocked } from "./systems/EquipmentManager";
-import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject } from "./types";
+import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject, type TileInstance } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION, getFallChance } from "./config";
@@ -38,12 +38,91 @@ import { executeCombat, checkForCombat } from "./systems/Combat";
 import { isWallBlocking, openWall } from "./systems/WallBump";
 import { applyRandomDecayToTile } from "./core/Grid";
 import { fallThroughFloor } from "./mainScene";
+import { getTileEdges } from "./core/Tile";
 
 let turnManager: TurnManager;
 let clickManager: ClickManager;
 let isAnimating = false;
 let lastHoveredItemId: string | null = null;
 let lastHighlightedSlots: number[] = [];
+let hoveredTilePosition: GridPosition | null = null;
+let connectedTiles: GridPosition[] = [];
+
+/**
+ * Finds all tiles connected to a given position without breaking walls
+ * Uses flood fill algorithm with canMove checks
+ */
+function findConnectedTiles(
+  grid: TileInstance[][],
+  start: GridPosition
+): GridPosition[] {
+  const connected: GridPosition[] = [];
+  const visited = new Set<string>();
+  const queue: GridPosition[] = [start];
+
+  const key = (pos: GridPosition) => `${pos.row},${pos.col}`;
+  visited.add(key(start));
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    connected.push(current);
+
+    // Check all four cardinal neighbors
+    const neighbors: GridPosition[] = [
+      { row: current.row - 1, col: current.col }, // North
+      { row: current.row + 1, col: current.col }, // South
+      { row: current.row, col: current.col - 1 }, // West
+      { row: current.row, col: current.col + 1 }, // East
+    ];
+
+    for (const neighbor of neighbors) {
+      const neighborKey = key(neighbor);
+
+      // Skip if already visited
+      if (visited.has(neighborKey)) {
+        continue;
+      }
+
+      // Skip if out of bounds
+      if (neighbor.row < 0 || neighbor.row >= GRID_ROWS ||
+          neighbor.col < 0 || neighbor.col >= GRID_COLS) {
+        continue;
+      }
+
+      // Check if we can move from current to neighbor (no wall blocking)
+      const fromTile = grid[current.row][current.col];
+      const toTile = grid[neighbor.row][neighbor.col];
+
+      if (!fromTile || !toTile) {
+        continue;
+      }
+
+      const fromEdges = getTileEdges(fromTile.type, fromTile.orientation);
+      const toEdges = getTileEdges(toTile.type, toTile.orientation);
+
+      const dRow = neighbor.row - current.row;
+      const dCol = neighbor.col - current.col;
+
+      let canMove = false;
+      if (dRow === -1 && dCol === 0) {
+        canMove = fromEdges.north && toEdges.south;
+      } else if (dRow === 1 && dCol === 0) {
+        canMove = fromEdges.south && toEdges.north;
+      } else if (dRow === 0 && dCol === -1) {
+        canMove = fromEdges.west && toEdges.east;
+      } else if (dRow === 0 && dCol === 1) {
+        canMove = fromEdges.east && toEdges.west;
+      }
+
+      if (canMove) {
+        visited.add(neighborKey);
+        queue.push(neighbor);
+      }
+    }
+  }
+
+  return connected;
+}
 
 /**
  * Selects a random item with tier <= maxTier, preferring items close to maxTier
@@ -93,9 +172,116 @@ async function handleClick(): Promise<void> {
   const itemDatabase = turnManager.getObjectManager().getItemDatabase();
   const player = turnManager.getObjectManager().getPlayer();
 
-  // Check for inventory item clicks first (equip item)
+  // Check for inventory item clicks first (equip or consume item)
   const inventoryItem = getInventoryItemAtPosition(pos.x, pos.y, turnManager);
   if (inventoryItem) {
+    const item = state.inventory[inventoryItem.index];
+    if (!item) return;
+
+    const itemDef = itemDatabase.getItem(item.definitionId);
+    if (!itemDef) return;
+
+    // Check if item is a consumable
+    if (itemDef.type === "Consumable") {
+      console.log(`[Consumable] Using ${itemDef.name}`);
+
+      // Consume the item based on its type
+      if (itemDef.id === "apple") {
+        if (player && player.currentHP !== undefined && player.stats) {
+          const maxHP = player.stats.hp;
+          const healAmount = 5;
+          const hpBefore = player.currentHP;
+          player.currentHP = Math.min(player.currentHP + healAmount, maxHP);
+          const actualHeal = player.currentHP - hpBefore;
+
+          console.log(`[Apple] Healed ${actualHeal} HP (${hpBefore} -> ${player.currentHP}/${maxHP})`);
+        }
+      } else if (itemDef.id === "ham") {
+        if (player && player.currentHP !== undefined && player.stats) {
+          const maxHP = player.stats.hp;
+          const hpBefore = player.currentHP;
+          player.currentHP = maxHP;
+          const actualHeal = player.currentHP - hpBefore;
+
+          console.log(`[Ham] Restored to full health: ${actualHeal} HP healed (${hpBefore} -> ${player.currentHP}/${maxHP})`);
+        }
+      } else if (itemDef.id === "feather") {
+        if (player) {
+          // Grant flying ability
+          player.flying = true;
+          console.log(`[Feather] Player can now fly over decayed tiles`);
+
+          // Add flying buff to state
+          state.buffs.push({
+            id: "flying",
+            name: "Flying",
+            iconSprite: itemDef.sprite,
+            iconFrame: itemDef.frame,
+          });
+        }
+      } else if (itemDef.id === "cement") {
+        if (player) {
+          const playerPos = player.gridPosition;
+
+          // Current tile plus adjacent tiles in four cardinal directions
+          const tilesToRestore = [
+            { row: playerPos.row, col: playerPos.col },     // Current tile
+            { row: playerPos.row - 1, col: playerPos.col }, // North
+            { row: playerPos.row + 1, col: playerPos.col }, // South
+            { row: playerPos.row, col: playerPos.col - 1 }, // West
+            { row: playerPos.row, col: playerPos.col + 1 }, // East
+          ];
+
+          // Remove decay from each tile
+          let restoredCount = 0;
+          tilesToRestore.forEach(pos => {
+            if (pos.row >= 0 && pos.row < GRID_ROWS &&
+                pos.col >= 0 && pos.col < GRID_COLS) {
+              const tile = state.grid[pos.row][pos.col];
+              if (tile && tile.decay > 0) {
+                tile.decay = 0;
+                restoredCount++;
+                console.log(`[Cement] Removed decay from tile (${pos.row},${pos.col})`);
+              }
+            }
+          });
+
+          console.log(`[Cement] Restored ${restoredCount} tiles (current + adjacent)`);
+        }
+      } else if (itemDef.id === "bricks") {
+        // Decrease all tiles' decay by a random value between 1 and 3
+        let restoredCount = 0;
+        for (let row = 0; row < GRID_ROWS; row++) {
+          for (let col = 0; col < GRID_COLS; col++) {
+            const tile = state.grid[row][col];
+            if (tile && tile.decay > 0) {
+              const decayReduction = Math.floor(Math.random() * 3) + 1; // Random 1-3
+              const oldDecay = tile.decay;
+              tile.decay = Math.max(0, tile.decay - decayReduction);
+              restoredCount++;
+              console.log(`[Bricks] Reduced decay at (${row},${col}) by ${decayReduction}: ${oldDecay} -> ${tile.decay}`);
+            }
+          }
+        }
+
+        console.log(`[Bricks] Reduced decay on ${restoredCount} tiles`);
+      }
+
+      // Decrease charges
+      item.remainingCharges--;
+      console.log(`[Consumable] Charges remaining: ${item.remainingCharges}`);
+
+      // Remove item if charges depleted
+      if (item.remainingCharges <= 0) {
+        console.log(`[Consumable] ${itemDef.name} depleted and removed from inventory`);
+        state.inventory[inventoryItem.index] = null;
+      }
+
+      render();
+      return; // Don't process other clicks if we clicked a consumable
+    }
+
+    // Try to equip if it's equipment
     const success = equipItemFromInventory(
       state.inventory,
       state.equipment,
@@ -218,6 +404,8 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
   isAnimating = true;
   logger.debug("[movePlayerAlongPath] isAnimating set to true");
+
+  try {
   const stepDuration = 0.15;
 
   k.destroyAll("reachableHighlight");
@@ -304,7 +492,10 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
     );
 
     logger.debug(`[movePlayerAlongPath] Waiting ${stepDuration}s for tween...`);
-    await k.wait(stepDuration);
+    await Promise.race([
+      k.wait(stepDuration),
+      new Promise(resolve => setTimeout(resolve, 1000)) // 1s timeout
+    ]);
     logger.debug(`[movePlayerAlongPath] Tween complete`);
 
     player.gridPosition.row = to.row;
@@ -404,7 +595,10 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
         k.easings.easeOutQuad
       );
 
-      await k.wait(stepDuration);
+      await Promise.race([
+        k.wait(stepDuration),
+        new Promise(resolve => setTimeout(resolve, 1000)) // 1s timeout
+      ]);
 
       player.gridPosition.row = previousPosition.row;
       player.gridPosition.col = previousPosition.col;
@@ -442,28 +636,34 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
         isAnimating = true;
         console.log("[Fall] isAnimating set to true - fall animation starting");
 
-        // Play fall animation
-        const playerX = GRID_OFFSET_X + player.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
-        const playerY = GRID_OFFSET_Y + player.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 - 4;
+        try {
+          // Play fall animation
+          const playerX = GRID_OFFSET_X + player.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
+          const playerY = GRID_OFFSET_Y + player.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 - 4;
 
-        const fallSprite = k.add([
-          k.sprite("mason", { anim: "fall" }),
-          k.pos(playerX, playerY),
-          k.anchor("center"),
-          k.z(player.renderOrder),
-          "fallingPlayer",
-        ]);
+          const fallSprite = k.add([
+            k.sprite("mason", { anim: "fall" }),
+            k.pos(playerX, playerY),
+            k.anchor("center"),
+            k.z(player.renderOrder),
+            "fallingPlayer",
+          ]);
 
-        // Wait for fall animation to complete
-        await new Promise<void>((resolve) => {
-          fallSprite.onAnimEnd(() => {
-            k.destroy(fallSprite);
-            resolve();
+          // Wait for fall animation to complete
+          await new Promise<void>((resolve) => {
+            fallSprite.onAnimEnd(() => {
+              k.destroy(fallSprite);
+              resolve();
+            });
           });
-        });
-
-        // Reset animating flag before scene transition
-        isAnimating = false;
+        } catch (error) {
+          console.error("[Fall] Error during fall animation:", error);
+          k.destroyAll("fallingPlayer");
+        } finally {
+          // Reset animating flag before scene transition
+          isAnimating = false;
+          console.log("[Fall] isAnimating set to false - fall animation complete");
+        }
 
         // Transition to next level (going deeper)
         fallThroughFloor(turnManager.getState());
@@ -481,6 +681,13 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
   logger.debug("[movePlayerAlongPath] Enemy turns complete");
   // startPlayerTurn() is now called inside executeEnemyTurns()
   logger.debug("[movePlayerAlongPath] END");
+  } catch (error) {
+    console.error("[movePlayerAlongPath] Error during player movement:", error);
+    k.destroyAll("movingPlayer");
+    isAnimating = false;
+    console.log("[movePlayerAlongPath] isAnimating set to false - error recovery");
+    render();
+  }
 }
 
 async function skipPlayerTurn(_player: MapObject): Promise<void> {
@@ -500,79 +707,118 @@ async function animateWallBump(player: MapObject, targetPos: GridPosition): Prom
   isAnimating = true;
   console.log("[WallBump] isAnimating set to true - wall bump animation starting");
 
-  // Remove player from map objects (will be rendered as moving sprite)
-  const mapObjs = k.get("mapObject");
-  for (const obj of mapObjs) {
-    const objData = (obj as any).objectData as MapObject;
-    if (objData.id === player.id) {
-      obj.destroy();
-      break;
+  try {
+    // Remove player from map objects (will be rendered as moving sprite)
+    const mapObjs = k.get("mapObject");
+    for (const obj of mapObjs) {
+      const objData = (obj as any).objectData as MapObject;
+      if (objData.id === player.id) {
+        obj.destroy();
+        break;
+      }
     }
+
+    const from = player.gridPosition;
+    const startX = GRID_OFFSET_X + from.col * TILE_SIZE + TILE_SIZE / 2 + player.spriteOffset.x;
+    const startY = GRID_OFFSET_Y + from.row * TILE_SIZE + TILE_SIZE / 2 + player.spriteOffset.y;
+
+    // Calculate bump direction - move 25% toward the wall
+    const dRow = targetPos.row - from.row;
+    const dCol = targetPos.col - from.col;
+    const bumpX = startX + (dCol * TILE_SIZE * 0.25);
+    const bumpY = startY + (dRow * TILE_SIZE * 0.25);
+
+    // Determine facing direction
+    if (dCol < 0) {
+      player.flipX = true;  // Moving left
+    } else if (dCol > 0) {
+      player.flipX = false;  // Moving right
+    }
+
+    const movingSprite = k.add([
+      k.sprite(player.sprite, { anim: "walk", flipX: player.flipX }),
+      k.pos(startX, startY),
+      k.anchor("center"),
+      k.z(2), // Above decay overlay and tiles
+      "movingPlayer",
+    ]);
+
+    const bumpDuration = 0.08;
+
+    // Bump forward with timeout fallback
+    const forwardPos = movingSprite.pos.clone();
+    k.tween(
+      forwardPos,
+      k.vec2(bumpX, bumpY),
+      bumpDuration,
+      (val) => {
+        movingSprite.pos = val;
+      },
+      k.easings.easeOutQuad
+    );
+
+    // Use Promise.race to add timeout protection
+    await Promise.race([
+      k.wait(bumpDuration),
+      new Promise(resolve => setTimeout(resolve, 500)) // 500ms timeout
+    ]);
+
+    // Bounce back with timeout fallback
+    const backPos = movingSprite.pos.clone();
+    k.tween(
+      backPos,
+      k.vec2(startX, startY),
+      bumpDuration,
+      (val) => {
+        movingSprite.pos = val;
+      },
+      k.easings.easeInQuad
+    );
+
+    await Promise.race([
+      k.wait(bumpDuration),
+      new Promise(resolve => setTimeout(resolve, 500)) // 500ms timeout
+    ]);
+  } catch (error) {
+    console.error("[WallBump] Error during wall bump animation:", error);
+  } finally {
+    // Guaranteed cleanup
+    k.destroyAll("movingPlayer");
+    isAnimating = false;
+    console.log("[WallBump] isAnimating set to false - wall bump animation complete");
+    render();
   }
-
-  const from = player.gridPosition;
-  const startX = GRID_OFFSET_X + from.col * TILE_SIZE + TILE_SIZE / 2 + player.spriteOffset.x;
-  const startY = GRID_OFFSET_Y + from.row * TILE_SIZE + TILE_SIZE / 2 + player.spriteOffset.y;
-
-  // Calculate bump direction - move 25% toward the wall
-  const dRow = targetPos.row - from.row;
-  const dCol = targetPos.col - from.col;
-  const bumpX = startX + (dCol * TILE_SIZE * 0.25);
-  const bumpY = startY + (dRow * TILE_SIZE * 0.25);
-
-  // Determine facing direction
-  if (dCol < 0) {
-    player.flipX = true;  // Moving left
-  } else if (dCol > 0) {
-    player.flipX = false;  // Moving right
-  }
-
-  const movingSprite = k.add([
-    k.sprite(player.sprite, { anim: "walk", flipX: player.flipX }),
-    k.pos(startX, startY),
-    k.anchor("center"),
-    k.z(2), // Above decay overlay and tiles
-    "movingPlayer",
-  ]);
-
-  const bumpDuration = 0.08;
-
-  // Bump forward
-  const forwardPos = movingSprite.pos.clone();
-  k.tween(
-    forwardPos,
-    k.vec2(bumpX, bumpY),
-    bumpDuration,
-    (val) => {
-      movingSprite.pos = val;
-    },
-    k.easings.easeOutQuad
-  );
-
-  await k.wait(bumpDuration);
-
-  // Bounce back
-  const backPos = movingSprite.pos.clone();
-  k.tween(
-    backPos,
-    k.vec2(startX, startY),
-    bumpDuration,
-    (val) => {
-      movingSprite.pos = val;
-    },
-    k.easings.easeInQuad
-  );
-
-  await k.wait(bumpDuration);
-
-  k.destroyAll("movingPlayer");
-  isAnimating = false;
-  render();
 }
 
 async function handleWallBump(player: MapObject, targetPos: GridPosition): Promise<void> {
   logger.debug("[handleWallBump] START - player moves:", player.movesRemaining);
   const state = turnManager.getState();
+
+  // Check if player has required equipment to break walls
+  // Need either: two-handed weapon OR both MainHand (index 1) AND OffHand (index 2)
+  const mainHandItem = state.equipment[1];
+  const offHandItem = state.equipment[2];
+
+  let hasRequiredEquipment = false;
+
+  if (mainHandItem !== null && offHandItem !== null) {
+    // Both hands have items (two separate weapons)
+    hasRequiredEquipment = true;
+  } else if (mainHandItem !== null && offHandItem === null) {
+    // Check if MainHand item is a two-handed weapon
+    const itemDb = turnManager.getObjectManager().getItemDatabase();
+    const itemDef = itemDb.getItem(mainHandItem.definitionId);
+    if (itemDef && Array.isArray(itemDef.slot)) {
+      // Two-handed weapon (occupies multiple slots)
+      hasRequiredEquipment = true;
+    }
+  }
+
+  if (!hasRequiredEquipment) {
+    logger.debug("[handleWallBump] No required equipment - wall bump has no effect");
+    console.log("[WallBump] Cannot break walls without a two-handed weapon or both MainHand and OffHand equipped");
+    return;
+  }
 
   // Check if this is the same wall as before
   const isSameTarget = state.wallBumpTarget &&
@@ -592,6 +838,29 @@ async function handleWallBump(player: MapObject, targetPos: GridPosition): Promi
   logger.debug("[handleWallBump] Starting animation...");
   await animateWallBump(player, targetPos);
   logger.debug("[handleWallBump] Animation complete");
+
+  // Decrease charges for equipped items
+  for (let i = 0; i < state.equipment.length; i++) {
+    const item = state.equipment[i];
+    if (item && item.remainingCharges > -1) {
+      item.remainingCharges--;
+      console.log(`[WallBump] Decreased charges for ${item.definitionId}: ${item.remainingCharges + 1} -> ${item.remainingCharges}`);
+
+      // Remove item if charges depleted
+      if (item.remainingCharges <= 0) {
+        console.log(`[WallBump] Item ${item.definitionId} depleted and removed from equipment`);
+        state.equipment[i] = null;
+
+        // Reapply equipment bonuses to update player stats
+        const objectManager = turnManager.getObjectManager();
+        const player = objectManager.getPlayer();
+        if (player) {
+          const itemDb = objectManager.getItemDatabase();
+          applyEquipmentBonuses(player, state.equipment, itemDb);
+        }
+      }
+    }
+  }
 
   // Apply decay to both tiles involved in the wall bump
   // Each gets a random decay increase from 0 to ON_WALL_BREAK
@@ -642,15 +911,235 @@ async function executeEnemyTurns(): Promise<void> {
   logger.debug("################ TURN COMPLETE ################");
 }
 
+/**
+ * Animates a healing action from healer to target enemy
+ */
+async function animateHealing(healer: MapObject, target: MapObject): Promise<void> {
+  isAnimating = true;
+  console.log(`[Healing] isAnimating set to true - enemy ${healer.id} healing ${target.id}`);
+
+  try {
+    const healDuration = 0.5;
+    const healAmount = Math.max(1, Math.floor(healer.stats?.agi || 1));  // Heal based on healer's agility stat
+
+    // Calculate positions
+    const healerX = GRID_OFFSET_X + healer.gridPosition.col * TILE_SIZE + TILE_SIZE / 2 + healer.spriteOffset.x;
+    const healerY = GRID_OFFSET_Y + healer.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 + healer.spriteOffset.y;
+
+    const targetX = GRID_OFFSET_X + target.gridPosition.col * TILE_SIZE + TILE_SIZE / 2 + target.spriteOffset.x;
+    const targetY = GRID_OFFSET_Y + target.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 + target.spriteOffset.y;
+
+    // Create visual effect - pulsing circle from healer to target
+    const effectStart = k.add([
+      k.circle(8),
+      k.pos(healerX, healerY),
+      k.anchor("center"),
+      k.color(0, 255, 100),  // Green for healing
+      k.opacity(0.8),
+      k.z(3),
+      "healEffect",
+    ]);
+
+    const effectEnd = k.add([
+      k.circle(8),
+      k.pos(targetX, targetY),
+      k.anchor("center"),
+      k.color(0, 255, 100),  // Green for healing
+      k.opacity(0),
+      k.z(3),
+      "healEffect",
+    ]);
+
+    // Fade out start effect, fade in end effect
+    k.tween(
+      0.8,
+      0,
+      healDuration,
+      (val) => {
+        effectStart.opacity = val;
+      },
+      k.easings.linear
+    );
+
+    k.tween(
+      0,
+      0.8,
+      healDuration,
+      (val) => {
+        effectEnd.opacity = val;
+      },
+      k.easings.linear
+    );
+
+    await Promise.race([
+      k.wait(healDuration),
+      new Promise(resolve => setTimeout(resolve, 1000))
+    ]);
+
+    // Apply healing
+    if (target.currentHP !== undefined && target.stats?.hp !== undefined) {
+      const hpBefore = target.currentHP;
+      target.currentHP = Math.min(target.currentHP + healAmount, target.stats.hp);
+      const actualHeal = target.currentHP - hpBefore;
+
+      console.log(`[Healing] Healed ${target.name} for ${actualHeal} HP (${hpBefore} -> ${target.currentHP}/${target.stats.hp})`);
+
+      // Show heal text
+      spawnScrollingText({
+        text: `+${actualHeal}`,
+        x: targetX,
+        y: targetY,
+        color: { r: 0, g: 255, b: 100 },  // Green for healing
+        fontSize: 16,
+        behavior: "static",
+      });
+    }
+
+    // Cleanup effects
+    effectStart.destroy();
+    effectEnd.destroy();
+
+  } catch (error) {
+    console.error("[Healing] Error during healing:", error);
+  } finally {
+    isAnimating = false;
+    console.log("[Healing] isAnimating set to false - healing complete");
+  }
+}
+
+/**
+ * Animates a ranged attack from enemy to player
+ */
+async function animateRangedAttack(enemy: MapObject): Promise<void> {
+  isAnimating = true;
+  console.log(`[RangedAttack] isAnimating set to true - enemy ${enemy.id} attacking`);
+
+  try {
+    const player = turnManager.getObjectManager().getPlayer();
+    if (!player) {
+      console.warn("[RangedAttack] No player found");
+      return;
+    }
+
+    const projectileSprite = enemy.projectile || "arrow";
+    const attackDuration = 0.3;
+
+    // Calculate start and end positions
+    const startX = GRID_OFFSET_X + enemy.gridPosition.col * TILE_SIZE + TILE_SIZE / 2 + enemy.spriteOffset.x;
+    const startY = GRID_OFFSET_Y + enemy.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 + enemy.spriteOffset.y;
+
+    const endX = GRID_OFFSET_X + player.gridPosition.col * TILE_SIZE + TILE_SIZE / 2 + player.spriteOffset.x;
+    const endY = GRID_OFFSET_Y + player.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 + player.spriteOffset.y;
+
+    // Calculate angle for projectile rotation
+    const deltaX = endX - startX;
+    const deltaY = endY - startY;
+    const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+
+    // Create projectile sprite
+    const projectile = k.add([
+      k.sprite(projectileSprite, { anim: "idle" }),
+      k.pos(startX, startY),
+      k.anchor("center"),
+      k.rotate(angle + 90), // Adjust for sprite orientation (assuming arrow points up by default)
+      k.z(3), // Above enemies and player
+      "projectile",
+    ]);
+
+    // Animate projectile movement
+    const projectilePos = projectile.pos.clone();
+    k.tween(
+      projectilePos,
+      k.vec2(endX, endY),
+      attackDuration,
+      (val) => {
+        projectile.pos = val;
+      },
+      k.easings.linear
+    );
+
+    await Promise.race([
+      k.wait(attackDuration),
+      new Promise(resolve => setTimeout(resolve, 1000))
+    ]);
+
+    // Projectile reached player, execute combat
+    const combatResult = executeCombat(enemy, player);
+
+    // Show damage text
+    if (combatResult.attackerAttack.hit) {
+      const damageText = combatResult.attackerAttack.critical
+        ? `${combatResult.attackerAttack.damage}!`
+        : `${combatResult.attackerAttack.damage}`;
+      const damageColor = combatResult.attackerAttack.critical
+        ? { r: 255, g: 255, b: 100 }  // Yellow for crits
+        : { r: 255, g: 100, b: 100 };  // Red for normal hits
+
+      spawnScrollingText({
+        text: damageText,
+        x: endX,
+        y: endY,
+        color: damageColor,
+        fontSize: combatResult.attackerAttack.critical ? 24 : 16,
+        behavior: combatResult.attackerAttack.critical ? "bounce" : "static",
+      });
+    } else {
+      spawnScrollingText({
+        text: "MISS",
+        x: endX,
+        y: endY,
+        color: { r: 150, g: 150, b: 150 },
+        fontSize: 16,
+        behavior: "fade",
+      });
+    }
+
+    // Destroy projectile
+    projectile.destroy();
+
+    // Check if player died
+    if (combatResult.attackerAttack.defenderDied) {
+      const objectManager = turnManager.getObjectManager();
+      objectManager.destroyObject(player);
+      logger.debug("[Game] Player was killed by ranged attack!");
+    }
+
+  } catch (error) {
+    console.error("[RangedAttack] Error during ranged attack:", error);
+  } finally {
+    isAnimating = false;
+    console.log("[RangedAttack] isAnimating set to false - ranged attack complete");
+  }
+}
+
 async function animateEnemyMove(move: EnemyMove): Promise<void> {
-  const { enemy, path } = move;
+  const { enemy, path, isRangedAttack, isHealingAction, healTarget } = move;
+
+  console.log(`[animateEnemyMove] Enemy ${enemy.id}: isRangedAttack=${isRangedAttack}, isHealingAction=${isHealingAction}, path.length=${path.length}`);
+
+  // Check if this is a healing action
+  if (isHealingAction && healTarget) {
+    console.log(`[animateEnemyMove] Calling animateHealing for enemy ${enemy.id} targeting ${healTarget.id}`);
+    await animateHealing(enemy, healTarget);
+    return;
+  }
+
+  // Check if this is a ranged attack
+  if (isRangedAttack) {
+    console.log(`[animateEnemyMove] Calling animateRangedAttack for enemy ${enemy.id}`);
+    await animateRangedAttack(enemy);
+    return;
+  }
+
   if (path.length <= 1) return;
 
   isAnimating = true;
   console.log(`[EnemyMove] isAnimating set to true - enemy ${enemy.id} moving`);
-  const stepDuration = 0.12;
 
-  const mapObjs = k.get("mapObject");
+  try {
+    const stepDuration = 0.12;
+
+    const mapObjs = k.get("mapObject");
   for (const obj of mapObjs) {
     const objData = (obj as any).objectData as MapObject;
     if (objData.id === enemy.id) {
@@ -744,7 +1233,10 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
       k.easings.easeOutQuad
     );
 
-    await k.wait(stepDuration);
+    await Promise.race([
+      k.wait(stepDuration),
+      new Promise(resolve => setTimeout(resolve, 1000)) // 1s timeout
+    ]);
 
     enemy.gridPosition.row = to.row;
     enemy.gridPosition.col = to.col;
@@ -800,7 +1292,10 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
           k.easings.easeOutQuad
         );
 
-        await k.wait(stepDuration * 0.3);
+        await Promise.race([
+          k.wait(stepDuration * 0.3),
+          new Promise(resolve => setTimeout(resolve, 1000)) // 1s timeout
+        ]);
       } else {
         // Defender survived - bounce enemy back to previous position
         logger.debug("[Game] Defender survived - bouncing enemy back");
@@ -818,7 +1313,10 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
           k.easings.easeOutQuad
         );
 
-        await k.wait(stepDuration);
+        await Promise.race([
+          k.wait(stepDuration),
+          new Promise(resolve => setTimeout(resolve, 1000)) // 1s timeout
+        ]);
 
         enemy.gridPosition.row = previousPos.row;
         enemy.gridPosition.col = previousPos.col;
@@ -828,17 +1326,106 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
       }
     }
   }
+  } catch (error) {
+    console.error("[animateEnemyMove] Error during enemy movement:", error);
+  } finally {
+    k.destroyAll("movingEnemy");
+    turnManager.getObjectManager().spendMovement(enemy, path.length - 1);
 
-  k.destroyAll("movingEnemy");
-  turnManager.getObjectManager().spendMovement(enemy, path.length - 1);
-
-  isAnimating = false;
-  render();
+    isAnimating = false;
+    console.log("[animateEnemyMove] isAnimating set to false - enemy animation complete");
+    render();
+  }
 }
 
 function handleRightClick(): void {
   const pos = k.mousePos();
   clickManager.handleRightClick(pos, turnManager, isAnimating);
+}
+
+function handleMouseMove(): void {
+  // Don't process during animations
+  if (isAnimating) {
+    return;
+  }
+
+  const state = turnManager.getState();
+  const mousePos = k.mousePos();
+
+  // Use the screenToGrid utility from PositionUtils
+  const gridPos = screenToGrid(mousePos.x, mousePos.y);
+
+  // If not over a grid tile, clear hover state
+  if (!gridPos) {
+    if (hoveredTilePosition !== null) {
+      hoveredTilePosition = null;
+      connectedTiles = [];
+      render();
+    }
+    return;
+  }
+
+  // Check if the cursor is showing "default" (no special action)
+  // We need to check the cursor manager's internal state
+  // For now, we'll check if we're in a state where tile highlighting makes sense
+  const isPlayerTurn = state.turnOwner === TurnOwner.Player;
+  const isTilePlacement = state.playerPhase === PlayerPhase.TilePlacement;
+  const isRotating = state.playerPhase === PlayerPhase.RotatingTile;
+
+  // Only highlight when:
+  // - Not in tile placement mode (plots would be showing)
+  // - Not in rotation mode (rotation overlay would be showing)
+  // - Not over a reachable/actionable tile
+  const shouldHighlight = isPlayerTurn && !isTilePlacement && !isRotating;
+
+  if (!shouldHighlight) {
+    if (hoveredTilePosition !== null) {
+      hoveredTilePosition = null;
+      connectedTiles = [];
+      render();
+    }
+    return;
+  }
+
+  // Check if we're hovering over a tile that would cause a cursor change
+  const player = turnManager.getObjectManager().getPlayer();
+  if (player && player.movesRemaining > 0) {
+    // Check if hovering over player's current tile (rotate cursor shows)
+    const isPlayerTile = (gridPos.row === player.gridPosition.row &&
+                         gridPos.col === player.gridPosition.col);
+
+    const moves = turnManager.getObjectManager().getAvailableMoves(player);
+    const reachable = findReachableTiles(state.grid, player.gridPosition, moves, [], true);
+    const isReachable = reachable.some(t => t.position.row === gridPos.row && t.position.col === gridPos.col && t.path.length > 1);
+
+    // Check if it's an adjacent wall that could be bumped
+    const dRow = Math.abs(gridPos.row - player.gridPosition.row);
+    const dCol = Math.abs(gridPos.col - player.gridPosition.col);
+    const isAdjacent = (dRow === 1 && dCol === 0) || (dRow === 0 && dCol === 1);
+    const isBlockedWall = isAdjacent && isWallBlocking(state.grid, player.gridPosition, gridPos);
+
+    // Don't highlight if cursor would change (player tile, reachable tile, or wall)
+    if (isPlayerTile || isReachable || isBlockedWall) {
+      if (hoveredTilePosition !== null) {
+        hoveredTilePosition = null;
+        connectedTiles = [];
+        render();
+      }
+      return;
+    }
+  }
+
+  // Check if position has changed
+  if (hoveredTilePosition &&
+      hoveredTilePosition.row === gridPos.row &&
+      hoveredTilePosition.col === gridPos.col) {
+    return; // Same tile, no update needed
+  }
+
+  // Update hovered tile and find connected tiles
+  hoveredTilePosition = gridPos;
+  connectedTiles = findConnectedTiles(state.grid, gridPos);
+  render();
 }
 
 async function tryMovePlayerInDirection(rowDelta: number, colDelta: number): Promise<void> {
@@ -929,6 +1516,8 @@ export function initializeGameHandlers(
   isAnimating = false;
   lastHoveredItemId = null;
   lastHighlightedSlots = [];
+  hoveredTilePosition = null;
+  connectedTiles = [];
 
   // Initialize click manager with callbacks
   const clickCallbacks: ClickCallbacks = {
@@ -987,6 +1576,7 @@ export function initializeGameHandlers(
   // Set up mouse event handlers
   k.onMousePress("left", handleClick);
   k.onMousePress("right", handleRightClick);
+  k.onMouseMove(handleMouseMove);
 
   // Set up keyboard event handlers using predefined buttons from kaplayCtx
   k.onButtonPress("up", handleMoveUp);
@@ -994,33 +1584,49 @@ export function initializeGameHandlers(
   k.onButtonPress("left", handleMoveLeft);
   k.onButtonPress("right", handleMoveRight);
 
-  // Debug button - play rise animation
+  // Debug button - spawn random brute or shaman
   k.onButtonPress("debug", () => {
     const player = tm.getObjectManager().getPlayer();
     if (!player || isAnimating) return;
 
-    // Set player to play rise animation
-    player.isPlayingDropAnimation = true;
-    player.entryAnimationName = "rise";
+    const objectManager = tm.getObjectManager();
 
-    // Create temporary sprite to track animation duration
-    const riseSprite = k.add([
-      k.sprite("mason", { anim: "rise" }),
-      k.pos(-1000, -1000), // Off-screen
-      k.opacity(0),
-      "debugRiseAnimationTracker",
-    ]);
+    // Random enemy type
+    const enemyType = Math.random() < 0.5 ? "brute" : "shaman";
 
-    // Trigger render to show the animation
-    render();
+    // Try to find an empty tile near the player
+    const playerPos = player.gridPosition;
+    const searchRadius = 3;
+    const potentialPositions: GridPosition[] = [];
 
-    // Reset when animation completes
-    riseSprite.onAnimEnd(() => {
-      player.isPlayingDropAnimation = false;
-      player.entryAnimationName = undefined;
-      k.destroy(riseSprite);
+    for (let rowOffset = -searchRadius; rowOffset <= searchRadius; rowOffset++) {
+      for (let colOffset = -searchRadius; colOffset <= searchRadius; colOffset++) {
+        const row = playerPos.row + rowOffset;
+        const col = playerPos.col + colOffset;
+
+        // Check bounds
+        if (row >= 0 && row < GRID_ROWS && col >= 0 && col < GRID_COLS) {
+          // Check if position is empty (no objects)
+          const objectsAtPos = objectManager.getObjectsAtPosition(row, col);
+          if (objectsAtPos.length === 0) {
+            potentialPositions.push({ row, col });
+          }
+        }
+      }
+    }
+
+    if (potentialPositions.length > 0) {
+      // Pick random empty position
+      const spawnPos = potentialPositions[Math.floor(Math.random() * potentialPositions.length)];
+
+      // Spawn enemy
+      objectManager.createEnemy(spawnPos, enemyType);
+      console.log(`[Debug] Spawned ${enemyType} at (${spawnPos.row},${spawnPos.col})`);
+
       render();
-    });
+    } else {
+      console.log("[Debug] No empty positions found near player");
+    }
   });
 
   // Set up input controller callbacks
@@ -1114,6 +1720,7 @@ function clearAll(): void {
   clearMapObjects();
   clearUI();
   k.destroyAll("rotationOverlay");
+  k.destroyAll("connectedTilesHighlight");
   lastHoveredItemId = null; // Reset hover state so description updates after render
   lastHighlightedSlots = []; // Reset equipment slot highlights
 }
@@ -1128,23 +1735,31 @@ async function executePushWithAnimation(): Promise<void> {
 
   const mapObjects = turnManager.getMapObjects();
 
-  await animatePush(
-    state.grid,
-    state.selectedPlot,
-    state.currentTile,
-    mapObjects,
-    GRID_OFFSET_X,
-    GRID_OFFSET_Y,
-    GRID_ROWS,
-    GRID_COLS,
-    TILE_SIZE,
-    () => {
-      isAnimating = false;
-      turnManager.executePush();
-    },
-    state.isInStartLevelSequence,
-    state.revealedTiles
-  );
+  try {
+    await animatePush(
+      state.grid,
+      state.selectedPlot,
+      state.currentTile,
+      mapObjects,
+      GRID_OFFSET_X,
+      GRID_OFFSET_Y,
+      GRID_ROWS,
+      GRID_COLS,
+      TILE_SIZE,
+      () => {
+        isAnimating = false;
+        turnManager.executePush();
+      },
+      state.isInStartLevelSequence,
+      state.revealedTiles
+    );
+  } catch (error) {
+    console.error("[executePushWithAnimation] Error during push animation:", error);
+    isAnimating = false;
+    console.log("[executePushWithAnimation] isAnimating set to false - error recovery");
+    turnManager.executePush();
+    render();
+  }
 }
 
 function drawRotationOverlay(
@@ -1183,6 +1798,30 @@ function drawRotationOverlay(
         ]);
       }
     }
+  }
+}
+
+/**
+ * Draws subtle highlight overlay on connected tiles
+ */
+function drawConnectedTilesHighlight(
+  connectedTiles: GridPosition[],
+  gridOffsetX: number,
+  gridOffsetY: number,
+  tileSize: number
+): void {
+  for (const tile of connectedTiles) {
+    const x = gridOffsetX + tile.col * tileSize;
+    const y = gridOffsetY + tile.row * tileSize;
+
+    k.add([
+      k.rect(tileSize, tileSize),
+      k.pos(x, y),
+      k.color(255, 255, 255),
+      k.opacity(0.1),
+      k.z(3), // Above tiles but below objects
+      "connectedTilesHighlight",
+    ]);
   }
 }
 
@@ -1261,6 +1900,11 @@ export function render(): void {
     } else {
       drawGridWithOverlay(state.grid, null, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360, state.isInStartLevelSequence, state.revealedTiles);
       drawDecayOverlay(state.grid, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
+
+      // Draw connected tiles highlight when hovering
+      if (connectedTiles.length > 0) {
+        drawConnectedTilesHighlight(connectedTiles, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE);
+      }
 
       drawMapObjects(mapObjects, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
       if (state.currentTile) {

@@ -69,6 +69,29 @@ export function drawMapObjects(
     }
 
     k.add(components);
+
+    // Draw charge count for items with charges
+    if (obj.type === ObjectType.Item && obj.remainingCharges !== undefined && obj.remainingCharges > -1) {
+      const chargeTextX = x + tileSize / 2 - 4;
+      const chargeTextY = y + tileSize / 2 - 3;
+
+      // Color based on remaining charges
+      let chargeColor = { r: 255, g: 255, b: 255 }; // White for 4+
+      if (obj.remainingCharges === 1) {
+        chargeColor = { r: 255, g: 0, b: 0 }; // Red
+      } else if (obj.remainingCharges === 2 || obj.remainingCharges === 3) {
+        chargeColor = { r: 255, g: 165, b: 0 }; // Orange
+      }
+
+      k.add([
+        k.text(obj.remainingCharges.toString(), { font: "3x5", size: 6 }),
+        k.pos(chargeTextX, chargeTextY),
+        k.anchor("botright"),
+        k.color(chargeColor.r, chargeColor.g, chargeColor.b),
+        k.z(3), // Above the item sprite
+        "itemCharge",
+      ]);
+    }
   }
   logger.timeEnd("[drawMapObjects] Total");
 }
@@ -111,4 +134,5 @@ export function clearMapObjects(): void {
   k.destroyAll("reachableHighlight");
   k.destroyAll("movingPlayer");
   k.destroyAll("movingEnemy");
+  k.destroyAll("itemCharge");
 }

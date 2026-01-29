@@ -1,5 +1,5 @@
 import { k } from "../../kaplayCtx";
-import { type TileInstance, type MapObject, type GameState, TileType, Direction, type ItemInstance, type ItemDefinition } from "../types";
+import { type TileInstance, type MapObject, type GameState, TileType, Direction, type ItemInstance, type ItemDefinition, type Buff } from "../types";
 import { TileFrames, BrickFrames } from "../assets";
 import { UI, INVENTORY, EQUIPMENT, DESCRIPTION } from "../config";
 import { type ItemDatabase } from "../systems/ItemDatabase";
@@ -292,6 +292,29 @@ export function drawInventoryItems(
       k.z(101),
       "inventoryItem",
     ]);
+
+    // Draw charge count if item has charges
+    if (item.remainingCharges !== undefined && item.remainingCharges > -1) {
+      const chargeTextX = pos.x + INVENTORY.SLOT_SIZE - 2;
+      const chargeTextY = pos.y + INVENTORY.SLOT_SIZE - 1;
+
+      // Color based on remaining charges
+      let chargeColor = { r: 255, g: 255, b: 255 }; // White for 4+
+      if (item.remainingCharges === 1) {
+        chargeColor = { r: 255, g: 0, b: 0 }; // Red
+      } else if (item.remainingCharges === 2 || item.remainingCharges === 3) {
+        chargeColor = { r: 255, g: 165, b: 0 }; // Orange
+      }
+
+      k.add([
+        k.text(item.remainingCharges.toString(), { font: "3x5", size: 6 }),
+        k.pos(chargeTextX, chargeTextY),
+        k.anchor("botright"),
+        k.color(chargeColor.r, chargeColor.g, chargeColor.b),
+        k.z(102), // Above the item sprite
+        "itemCharge",
+      ]);
+    }
   }
 }
 
@@ -351,6 +374,29 @@ export function drawEquipmentItems(
       k.z(101),
       "equipmentItem",
     ]);
+
+    // Draw charge count if item has charges
+    if (item.remainingCharges !== undefined && item.remainingCharges > -1) {
+      const chargeTextX = pos.x + EQUIPMENT.SLOT_SIZE - 2;
+      const chargeTextY = pos.y + EQUIPMENT.SLOT_SIZE - 1;
+
+      // Color based on remaining charges
+      let chargeColor = { r: 255, g: 255, b: 255 }; // White for 4+
+      if (item.remainingCharges === 1) {
+        chargeColor = { r: 255, g: 0, b: 0 }; // Red
+      } else if (item.remainingCharges === 2 || item.remainingCharges === 3) {
+        chargeColor = { r: 255, g: 165, b: 0 }; // Orange
+      }
+
+      k.add([
+        k.text(item.remainingCharges.toString(), { font: "3x5", size: 6 }),
+        k.pos(chargeTextX, chargeTextY),
+        k.anchor("botright"),
+        k.color(chargeColor.r, chargeColor.g, chargeColor.b),
+        k.z(102), // Above the item sprite
+        "itemCharge",
+      ]);
+    }
   }
 }
 
@@ -372,6 +418,8 @@ export function clearUI(): void {
   k.destroyAll("equipmentBackground");
   k.destroyAll("equipmentSlot");
   k.destroyAll("equipmentItem");
+  k.destroyAll("itemCharge");
+  k.destroyAll("buffIcon");
   k.destroyAll("descriptionBackground");
   k.destroyAll("descriptionText");
   k.destroyAll("sagaText");
@@ -429,15 +477,13 @@ function drawUIBorder(): void {
  * @param y Y coordinate for the spacer
  */
 export function drawSpacer(y: number): void {
-  const ramp = 10;
-  const height = 5;
   const totalWidth = calculateUIWidth();
 
     k.add([
-      k.sprite("hframe", { width: totalWidth, height: 9}), 
-      k.pos(Math.round(UI.X), Math.round(y)), 
-      // k.pos(490, 110), 
-      k.z(100), 
+      k.sprite("hframe", { width: totalWidth, height: 9}),
+      k.pos(Math.round(UI.X), Math.round(y)),
+      // k.pos(490, 110),
+      k.z(100),
       k.area(),
       "uiSpacer"
     ]);
@@ -543,6 +589,35 @@ function drawDescription(x: number, y: number, itemDef?: ItemDefinition): void {
 }
 
 /**
+ * Draws buff icons in the top right of the UI frame
+ * @param buffs Array of active buffs
+ */
+function drawBuffs(buffs: Buff[]): void {
+  if (buffs.length === 0) return;
+
+  const buffIconSize = 16;
+  const buffSpacing = 2;
+  const totalWidth = calculateUIWidth();
+
+  // Position buffs in top right corner of UI frame
+  const startX = UI.X + totalWidth - UI.PADDING - buffIconSize;
+  const startY = UI.Y + UI.PADDING;
+
+  buffs.forEach((buff, index) => {
+    const x = startX - (index * (buffIconSize + buffSpacing));
+    const y = startY;
+
+    k.add([
+      k.sprite(buff.iconSprite, { frame: buff.iconFrame }),
+      k.pos(x, y),
+      k.z(102), // Above other UI elements
+      k.scale(buffIconSize / 16), // Scale to 16x16 (assuming source is 16x16)
+      "buffIcon",
+    ]);
+  });
+}
+
+/**
  * Draws the entire UI panel including equipment, inventory, stats, and description
  */
 export function drawUI(
@@ -595,6 +670,9 @@ export function drawUI(
   drawSpacer(spacer2Y);
 
   drawDescription(descriptionX, descriptionY);
+
+  // Draw buffs in top right
+  drawBuffs(state.buffs);
 }
 
 /**
