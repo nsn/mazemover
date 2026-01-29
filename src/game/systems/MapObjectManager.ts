@@ -110,7 +110,11 @@ export class MapObjectManager {
     if (enemyDef.color) {
       (enemy as any).color = enemyDef.color;
     }
-    console.log(`[MapObjectManager] Created ${enemyDef.name} with stats:`, enemy.stats);
+
+    // Initialize movement so enemy can act immediately
+    this.resetTurnMovement(enemy);
+
+    console.log(`[MapObjectManager] Created ${enemyDef.name} with stats:`, enemy.stats, `movesRemaining: ${enemy.movesRemaining}`);
     return enemy;
   }
 

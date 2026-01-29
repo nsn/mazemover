@@ -242,6 +242,8 @@ export function calculateEnemyMove(
   blockedPositions: GridPosition[] = [],
   allEnemies: MapObject[] = []
 ): EnemyMove | null {
+  console.log(`[calculateEnemyMove] Enemy ${enemy.id} (${enemy.name}): aiType=${enemy.aiType}, movesRemaining=${enemy.movesRemaining}`);
+
   // Check AI type and dispatch to appropriate function
   if (enemy.aiType === AIType.Ranged) {
     return calculateRangedMove(grid, enemy, playerPos, blockedPositions);
