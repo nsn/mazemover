@@ -1314,12 +1314,20 @@ async function animateSummon(summoner: MapObject, summonPos: GridPosition): Prom
     const skeleton = objectManager.createEnemy(summonPos, "skeleton");
     console.log(`[Summon] Created skeleton ${skeleton.id} at (${summonPos.row},${summonPos.col})`);
 
-    // Set entry animation to "rise" so it plays when rendered
-    skeleton.entryAnimationName = "rise";
-    console.log(`[Summon] Set skeleton ${skeleton.id} entryAnimationName to "rise"`);
+    // Calculate skeleton sprite position
+    const skeletonX = GRID_OFFSET_X + summonPos.col * TILE_SIZE + TILE_SIZE / 2 + skeleton.spriteOffset.x;
+    const skeletonY = GRID_OFFSET_Y + summonPos.row * TILE_SIZE + TILE_SIZE / 2 + skeleton.spriteOffset.y;
 
-    // Render immediately to show the skeleton with rise animation
-    render();
+    // Manually create skeleton sprite with rise animation (since render() is blocked by isAnimating)
+    const skeletonSprite = k.add([
+      k.sprite("skeleton", { anim: "rise" }),
+      k.pos(skeletonX, skeletonY),
+      k.anchor("center"),
+      k.z(2),
+      "summonedSkeleton",
+    ]);
+
+    console.log(`[Summon] Created skeleton sprite playing rise animation`);
 
     // Wait for rise animation to complete
     // Rise animation is frames 4-7 (4 frames), assuming default animation speed
@@ -1329,10 +1337,11 @@ async function animateSummon(summoner: MapObject, summonPos: GridPosition): Prom
       new Promise(resolve => setTimeout(resolve, 1000))
     ]);
 
-    // Clear entry animation so skeleton uses idle animation on next render
-    console.log(`[Summon] Clearing skeleton ${skeleton.id} entryAnimationName`);
-    skeleton.entryAnimationName = undefined;
-    render();
+    // Destroy the temporary sprite
+    console.log(`[Summon] Destroying temporary skeleton sprite`);
+    skeletonSprite.destroy();
+
+    // The skeleton object exists in objectManager, it will be rendered normally on next render()
 
   } catch (error) {
     console.error("[Summon] Error during summon:", error);
