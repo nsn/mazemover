@@ -1275,15 +1275,12 @@ async function animateSummon(summoner: MapObject, summonPos: GridPosition): Prom
   try {
     const summonDuration = 0.5;
 
-    // Calculate positions
+    // Calculate summoner position
     const summonerX = GRID_OFFSET_X + summoner.gridPosition.col * TILE_SIZE + TILE_SIZE / 2 + summoner.spriteOffset.x;
     const summonerY = GRID_OFFSET_Y + summoner.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 + summoner.spriteOffset.y;
 
-    const summonX = GRID_OFFSET_X + summonPos.col * TILE_SIZE + TILE_SIZE / 2;
-    const summonY = GRID_OFFSET_Y + summonPos.row * TILE_SIZE + TILE_SIZE / 2;
-
-    // Create purple visual effect - pulsing circle from summoner to summon position
-    const effectStart = k.add([
+    // Create purple visual effect on summoner only
+    const summonEffect = k.add([
       k.circle(8),
       k.pos(summonerX, summonerY),
       k.anchor("center"),
@@ -1293,33 +1290,13 @@ async function animateSummon(summoner: MapObject, summonPos: GridPosition): Prom
       "summonEffect",
     ]);
 
-    const effectEnd = k.add([
-      k.circle(8),
-      k.pos(summonX, summonY),
-      k.anchor("center"),
-      k.color(150, 50, 200),  // Purple for summoning
-      k.opacity(0),
-      k.z(3),
-      "summonEffect",
-    ]);
-
-    // Fade out start effect, fade in end effect
+    // Pulse effect - fade out then back in
     k.tween(
       0.8,
       0,
       summonDuration,
       (val) => {
-        effectStart.opacity = val;
-      },
-      k.easings.linear
-    );
-
-    k.tween(
-      0,
-      0.8,
-      summonDuration,
-      (val) => {
-        effectEnd.opacity = val;
+        summonEffect.opacity = val;
       },
       k.easings.linear
     );
@@ -1329,9 +1306,8 @@ async function animateSummon(summoner: MapObject, summonPos: GridPosition): Prom
       new Promise(resolve => setTimeout(resolve, 1000))
     ]);
 
-    // Cleanup effects
-    effectStart.destroy();
-    effectEnd.destroy();
+    // Cleanup effect
+    summonEffect.destroy();
 
     // Create skeleton at summon position
     const objectManager = turnManager.getObjectManager();
