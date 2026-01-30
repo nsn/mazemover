@@ -109,7 +109,7 @@ export async function loadAssets(): Promise<void> {
     bat: {x: 0, y: 64, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
     assassin: {x: 0, y: 80, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
     summoner: {x: 0, y: 111, width: 64, height: 17, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
-    skeleton: {x: 0, y: 128, width: 128, height: 16, sliceX: 8, anims: {idle: {from: 4, to: 7, loop: true}, rise: {from: 4, to: 7, loop: true, speed: 5}}},
+    skeleton: {x: 0, y: 128, width: 128, height: 16, sliceX: 8, anims: {idle: {from: 0, to: 3, loop: true}, rise: {from: 4, to: 7, loop: false, speed: 5}}},
   });
 
   await k.loadSpriteAtlas("/projectiles.png", {

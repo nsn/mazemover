@@ -1783,9 +1783,12 @@ export function initializeGameHandlers(
       tm.rotatePlayerTile();
       render();
     },
-    onConfirmRotation: () => {
+    onConfirmRotation: async () => {
       tm.confirmRotation();
       render();
+      // Rotating a tile ends the player's turn - execute enemy turns
+      console.log("[Rotation] Tile rotated, executing enemy turns");
+      await executeEnemyTurns();
     },
     onCancelRotation: () => {
       tm.cancelRotation();
@@ -2007,6 +2010,10 @@ async function executePushWithAnimation(): Promise<void> {
       state.isInStartLevelSequence,
       state.revealedTiles
     );
+
+    // Pushing a tile ends the player's turn - execute enemy turns
+    console.log("[Push] Tile pushed, executing enemy turns");
+    await executeEnemyTurns();
   } catch (error) {
     console.error("[executePushWithAnimation] Error during push animation:", error);
     isAnimating = false;

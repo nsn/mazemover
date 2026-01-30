@@ -16,7 +16,7 @@ import {
 export interface ClickCallbacks {
   onSkipTurn: () => void;
   onRotatePlayerTile: () => void;
-  onConfirmRotation: () => void;
+  onConfirmRotation: () => void | Promise<void>;
   onCancelRotation: () => void;
   onPlayerClicked: () => void;
   onMovePlayer: (path: GridPosition[]) => void;
