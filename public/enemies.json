@@ -75,6 +75,21 @@
       "flying": false,
       "tier": 2,
       "dropChance": 0.2
+    },
+    "assassin": {
+      "name": "Assassin",
+      "stats": {
+        "hp": 5,
+        "atk": 3,
+        "def": 0,
+        "agi": 3
+      },
+      "movementSpeed": 1,
+      "aiType": "Teleporter",
+      "sprite": "assassin",
+      "flying": false,
+      "tier": 3,
+      "dropChance": 0.25
     }
   },
   "player": {

@@ -1112,10 +1112,163 @@ async function animateRangedAttack(enemy: MapObject): Promise<void> {
   }
 }
 
-async function animateEnemyMove(move: EnemyMove): Promise<void> {
-  const { enemy, path, isRangedAttack, isHealingAction, healTarget } = move;
+/**
+ * Animates a teleport from current position to target position
+ */
+async function animateTeleport(enemy: MapObject, targetPos: GridPosition): Promise<void> {
+  isAnimating = true;
+  console.log(`[Teleport] isAnimating set to true - enemy ${enemy.id} teleporting from (${enemy.gridPosition.row},${enemy.gridPosition.col}) to (${targetPos.row},${targetPos.col})`);
 
-  console.log(`[animateEnemyMove] Enemy ${enemy.id}: isRangedAttack=${isRangedAttack}, isHealingAction=${isHealingAction}, path.length=${path.length}`);
+  try {
+    const teleportDuration = 0.4;
+
+    // Calculate start and end positions
+    const startX = GRID_OFFSET_X + enemy.gridPosition.col * TILE_SIZE + TILE_SIZE / 2 + enemy.spriteOffset.x;
+    const startY = GRID_OFFSET_Y + enemy.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 + enemy.spriteOffset.y;
+
+    const endX = GRID_OFFSET_X + targetPos.col * TILE_SIZE + TILE_SIZE / 2 + enemy.spriteOffset.x;
+    const endY = GRID_OFFSET_Y + targetPos.row * TILE_SIZE + TILE_SIZE / 2 + enemy.spriteOffset.y;
+
+    // Find the enemy sprite
+    const mapObjs = k.get("mapObject");
+    let enemySprite: any = null;
+    for (const obj of mapObjs) {
+      const objData = (obj as any).objectData as MapObject;
+      if (objData && objData.id === enemy.id) {
+        enemySprite = obj;
+        break;
+      }
+    }
+
+    if (!enemySprite) {
+      console.warn(`[Teleport] Could not find sprite for enemy ${enemy.id}`);
+      return;
+    }
+
+    // Create poof effect at start position
+    const poofStart = k.add([
+      k.sprite("poof", { anim: "poof" }),
+      k.pos(startX, startY),
+      k.anchor("center"),
+      k.z(3),
+      "teleportEffect",
+    ]);
+
+    // Fade out enemy sprite
+    const originalOpacity = enemySprite.opacity ?? 1;
+    k.tween(
+      originalOpacity,
+      0,
+      teleportDuration / 2,
+      (val) => {
+        enemySprite.opacity = val;
+      },
+      k.easings.easeInQuad
+    );
+
+    await Promise.race([
+      k.wait(teleportDuration / 2),
+      new Promise(resolve => setTimeout(resolve, 500))
+    ]);
+
+    // Update enemy position
+    enemy.gridPosition = { ...targetPos };
+    enemy.pixelOffset = { x: 0, y: 0 };
+
+    // Move sprite to new position (instantly)
+    enemySprite.pos = k.vec2(endX, endY);
+
+    // Create poof effect at end position
+    const poofEnd = k.add([
+      k.sprite("poof", { anim: "poof" }),
+      k.pos(endX, endY),
+      k.anchor("center"),
+      k.z(3),
+      "teleportEffect",
+    ]);
+
+    // Fade in enemy sprite at new position
+    k.tween(
+      0,
+      originalOpacity,
+      teleportDuration / 2,
+      (val) => {
+        enemySprite.opacity = val;
+      },
+      k.easings.easeOutQuad
+    );
+
+    await Promise.race([
+      k.wait(teleportDuration / 2),
+      new Promise(resolve => setTimeout(resolve, 500))
+    ]);
+
+    // Cleanup effects
+    poofStart.destroy();
+    poofEnd.destroy();
+
+    // After teleporting, check if adjacent to player and attack if so
+    const player = turnManager.getObjectManager().getPlayer();
+    if (player) {
+      const distance = manhattanDistance(enemy.gridPosition, player.gridPosition);
+      if (distance === 1) {
+        console.log(`[Teleport] Enemy ${enemy.id} adjacent to player, executing combat`);
+        const combatResult = executeCombat(enemy, player);
+
+        // Show damage text
+        if (combatResult.attackerAttack.hit) {
+          const damageText = combatResult.attackerAttack.critical
+            ? `${combatResult.attackerAttack.damage}!`
+            : `${combatResult.attackerAttack.damage}`;
+          const damageColor = combatResult.attackerAttack.critical
+            ? { r: 255, g: 255, b: 100 }
+            : { r: 255, g: 100, b: 100 };
+
+          spawnScrollingText({
+            text: damageText,
+            x: endX + TILE_SIZE / 2,
+            y: endY,
+            color: damageColor,
+            fontSize: combatResult.attackerAttack.critical ? 24 : 16,
+            behavior: combatResult.attackerAttack.critical ? "bounce" : "static",
+          });
+        } else {
+          spawnScrollingText({
+            text: "MISS",
+            x: endX + TILE_SIZE / 2,
+            y: endY,
+            color: { r: 150, g: 150, b: 150 },
+            fontSize: 16,
+            behavior: "fade",
+          });
+        }
+
+        // Check if player died
+        if (combatResult.attackerAttack.defenderDied) {
+          const objectManager = turnManager.getObjectManager();
+          objectManager.destroyObject(player);
+          logger.debug("[Teleport] Player was killed by assassin!");
+        }
+      }
+    }
+
+  } catch (error) {
+    console.error("[Teleport] Error during teleport:", error);
+  } finally {
+    isAnimating = false;
+    console.log("[Teleport] isAnimating set to false - teleport complete");
+    render();
+  }
+}
+
+function manhattanDistance(a: GridPosition, b: GridPosition): number {
+  return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
+}
+
+async function animateEnemyMove(move: EnemyMove): Promise<void> {
+  const { enemy, path, isRangedAttack, isHealingAction, healTarget, isTeleportAction } = move;
+
+  console.log(`[animateEnemyMove] Enemy ${enemy.id}: isRangedAttack=${isRangedAttack}, isHealingAction=${isHealingAction}, isTeleportAction=${isTeleportAction}, path.length=${path.length}`);
 
   // Check if this is a healing action
   if (isHealingAction && healTarget) {
@@ -1128,6 +1281,13 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
   if (isRangedAttack) {
     console.log(`[animateEnemyMove] Calling animateRangedAttack for enemy ${enemy.id}`);
     await animateRangedAttack(enemy);
+    return;
+  }
+
+  // Check if this is a teleport action
+  if (isTeleportAction) {
+    console.log(`[animateEnemyMove] Calling animateTeleport for enemy ${enemy.id}`);
+    await animateTeleport(enemy, path[path.length - 1]);
     return;
   }
 
@@ -1584,7 +1744,7 @@ export function initializeGameHandlers(
   k.onButtonPress("left", handleMoveLeft);
   k.onButtonPress("right", handleMoveRight);
 
-  // Debug button - spawn random brute or shaman
+  // Debug button - spawn random brute, shaman, or assassin
   k.onButtonPress("debug", () => {
     const player = tm.getObjectManager().getPlayer();
     if (!player || isAnimating) return;
@@ -1592,7 +1752,8 @@ export function initializeGameHandlers(
     const objectManager = tm.getObjectManager();
 
     // Random enemy type
-    const enemyType = Math.random() < 0.5 ? "brute" : "shaman";
+    const rand = Math.random();
+    const enemyType = rand < 0.33 ? "brute" : rand < 0.66 ? "shaman" : "assassin";
 
     // Try to find an empty tile near the player
     const playerPos = player.gridPosition;

@@ -107,6 +107,7 @@ export async function loadAssets(): Promise<void> {
     brute: {x: 0, y: 32, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
     shaman: {x: 0, y: 48, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
     bat: {x: 0, y: 64, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
+    assassin: {x: 0, y: 80, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
   });
 
   await k.loadSpriteAtlas("/projectiles.png", {

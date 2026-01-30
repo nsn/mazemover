@@ -107,6 +107,12 @@ export class MapObjectManager {
     enemy.tier = enemyDef.tier;
     enemy.dropChance = enemyDef.dropChance ?? 0.1;  // Default to 0.1 if not specified
     enemy.projectile = enemyDef.projectile || "arrow";  // Default to "arrow" if not specified
+
+    // Initialize teleport counter for teleporter enemies
+    if (enemyDef.aiType === "Teleporter") {
+      enemy.teleportCounter = 0;
+    }
+
     if (enemyDef.color) {
       (enemy as any).color = enemyDef.color;
     }
