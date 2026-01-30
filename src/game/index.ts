@@ -1744,16 +1744,15 @@ export function initializeGameHandlers(
   k.onButtonPress("left", handleMoveLeft);
   k.onButtonPress("right", handleMoveRight);
 
-  // Debug button - spawn random brute, shaman, or assassin
+  // Debug button - spawn assassin at random position near player
   k.onButtonPress("debug", () => {
     const player = tm.getObjectManager().getPlayer();
     if (!player || isAnimating) return;
 
     const objectManager = tm.getObjectManager();
 
-    // Random enemy type
-    const rand = Math.random();
-    const enemyType = rand < 0.33 ? "brute" : rand < 0.66 ? "shaman" : "assassin";
+    // Spawn assassin
+    const enemyType = "assassin";
 
     // Try to find an empty tile near the player
     const playerPos = player.gridPosition;
