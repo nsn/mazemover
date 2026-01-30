@@ -155,3 +155,22 @@
 - Connected tiles highlighting when hovering
 - Rotate cursor indicator on player's tile
 - Debug button spawns brute or shaman for testing
+
+## 012.png (Jan 30, 23:14)
+**Advanced enemy AI: teleportation and summoning**
+
+- Fixed shaman and brute movement initialization bug (enemies now act immediately when spawned)
+- Added assassin enemy (tier 3) with teleportation ability
+- Teleporter AI type: teleports to adjacent tile next to player every 5 moves
+- Assassin stats: HP 5, ATK 3, DEF 0, AGI 3, drop chance 25%
+- Teleport animation with fade-out/fade-in and poof effects
+- Assassin attacks immediately after teleporting if adjacent to player
+- Added skeleton enemy (tier 1 hunter) with rise animation
+- Added summoner enemy (tier 3) with skeleton summoning ability
+- Summoner AI type: summons skeleton on any unoccupied tile every 5 moves
+- Skeleton stats: HP 3, ATK 2, DEF 0, AGI 1, drop chance 5%
+- Summoner stats: HP 6, ATK 1, DEF 1, AGI 2, drop chance 30%
+- Purple visual effect on summoner when casting summon
+- Skeleton plays rise animation when summoned (4-frame animation)
+- Fixed skeleton rise animation timing by bypassing render() block during animations
+- Debug button updated to spawn summoners for testing
