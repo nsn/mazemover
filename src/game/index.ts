@@ -1314,39 +1314,25 @@ async function animateSummon(summoner: MapObject, summonPos: GridPosition): Prom
     const skeleton = objectManager.createEnemy(summonPos, "skeleton");
     console.log(`[Summon] Created skeleton ${skeleton.id} at (${summonPos.row},${summonPos.col})`);
 
-    // Render immediately to show the skeleton
+    // Set entry animation to "rise" so it plays when rendered
+    skeleton.entryAnimationName = "rise";
+    console.log(`[Summon] Set skeleton ${skeleton.id} entryAnimationName to "rise"`);
+
+    // Render immediately to show the skeleton with rise animation
     render();
 
-    // Find the skeleton sprite that was just created
-    const mapObjs = k.get("mapObject");
-    let skeletonSprite: any = null;
-    for (const obj of mapObjs) {
-      const objData = (obj as any).objectData as MapObject;
-      if (objData && objData.id === skeleton.id) {
-        skeletonSprite = obj;
-        break;
-      }
-    }
+    // Wait for rise animation to complete
+    // Rise animation is frames 4-7 (4 frames), assuming default animation speed
+    const riseAnimDuration = 0.6;
+    await Promise.race([
+      k.wait(riseAnimDuration),
+      new Promise(resolve => setTimeout(resolve, 1000))
+    ]);
 
-    if (skeletonSprite) {
-      // Play rise animation
-      console.log(`[Summon] Playing rise animation for skeleton ${skeleton.id}`);
-      skeletonSprite.play("rise");
-
-      // Wait for animation to complete
-      // Rise animation is frames 4-7 (4 frames), assuming default animation speed
-      const riseAnimDuration = 0.6;
-      await Promise.race([
-        k.wait(riseAnimDuration),
-        new Promise(resolve => setTimeout(resolve, 1000))
-      ]);
-
-      // Switch back to idle animation
-      console.log(`[Summon] Switching skeleton ${skeleton.id} to idle animation`);
-      skeletonSprite.play("idle");
-    } else {
-      console.warn(`[Summon] Could not find sprite for skeleton ${skeleton.id}`);
-    }
+    // Clear entry animation so skeleton uses idle animation on next render
+    console.log(`[Summon] Clearing skeleton ${skeleton.id} entryAnimationName`);
+    skeleton.entryAnimationName = undefined;
+    render();
 
   } catch (error) {
     console.error("[Summon] Error during summon:", error);

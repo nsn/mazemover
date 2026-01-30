@@ -46,7 +46,9 @@ export function drawMapObjects(
       const anim = obj.isPlayingDropAnimation ? (obj.entryAnimationName || "drop") : "idle";
       spriteConfig = { anim, flipX: obj.flipX };
     } else if (obj.type === ObjectType.Enemy) {
-      spriteConfig = { anim: "idle", flipX: obj.flipX };
+      // Use entry animation if set, otherwise default to idle
+      const anim = obj.entryAnimationName || "idle";
+      spriteConfig = { anim, flipX: obj.flipX };
     } else if (obj.type === ObjectType.Item) {
       spriteConfig = { frame: obj.frame ?? 0, flipX: obj.flipX };
     } else {
