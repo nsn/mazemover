@@ -123,6 +123,8 @@ export interface EnemyMove {
   isHealingAction?: boolean;  // True if this is a healing action instead of movement
   healTarget?: MapObject;  // Target to heal (only for healing actions)
   isTeleportAction?: boolean;  // True if this is a teleport action
+  isSummonAction?: boolean;  // True if this is a summon action
+  summonPosition?: GridPosition;  // Position where skeleton will be summoned
 }
 
 function calculateHunterMove(
@@ -308,6 +310,80 @@ function calculateTeleporterMove(
   return calculateHunterMove(grid, enemy, playerPos, blockedPositions);
 }
 
+/**
+ * Calculates summoner enemy behavior
+ * Tracks movement count and summons a skeleton every 5 moves
+ * Between summons, moves toward player like Hunter
+ */
+function calculateSummonerMove(
+  grid: TileInstance[][],
+  enemy: MapObject,
+  playerPos: GridPosition,
+  blockedPositions: GridPosition[]
+): EnemyMove | null {
+  const SUMMON_THRESHOLD = 5;
+
+  // Initialize counter if not set
+  if (enemy.summonCounter === undefined) {
+    enemy.summonCounter = 0;
+  }
+
+  // Increment counter
+  enemy.summonCounter++;
+  console.log(`[SummonerAI] Enemy ${enemy.id} counter: ${enemy.summonCounter}/${SUMMON_THRESHOLD}`);
+
+  // Check if ready to summon
+  if (enemy.summonCounter >= SUMMON_THRESHOLD) {
+    // Find all unoccupied tiles in the grid
+    const unoccupiedPositions: GridPosition[] = [];
+
+    for (let row = 0; row < grid.length; row++) {
+      for (let col = 0; col < grid[0].length; col++) {
+        const pos = { row, col };
+
+        // Check if position is blocked by another enemy
+        const isBlocked = blockedPositions.some(blocked =>
+          blocked.row === pos.row && blocked.col === pos.col
+        );
+
+        // Check if position is the player's position
+        const isPlayer = pos.row === playerPos.row && pos.col === playerPos.col;
+
+        // Check if position is the summoner's own position
+        const isSelf = pos.row === enemy.gridPosition.row && pos.col === enemy.gridPosition.col;
+
+        if (!isBlocked && !isPlayer && !isSelf) {
+          unoccupiedPositions.push(pos);
+        }
+      }
+    }
+
+    if (unoccupiedPositions.length > 0) {
+      // Pick random unoccupied position
+      const summonPos = unoccupiedPositions[Math.floor(Math.random() * unoccupiedPositions.length)];
+      console.log(`[SummonerAI] Enemy ${enemy.id} summoning skeleton at (${summonPos.row},${summonPos.col})`);
+
+      // Reset counter
+      enemy.summonCounter = 0;
+
+      // Return summon action (summoner stays in place)
+      return {
+        enemy,
+        path: [enemy.gridPosition],
+        isSummonAction: true,
+        summonPosition: summonPos,
+      };
+    } else {
+      console.log(`[SummonerAI] Enemy ${enemy.id} has no valid summon positions`);
+      // No valid positions, don't reset counter - will try again next turn
+    }
+  }
+
+  // Not ready to summon or no valid positions, behave like Hunter
+  console.log(`[SummonerAI] Enemy ${enemy.id} moving normally toward player`);
+  return calculateHunterMove(grid, enemy, playerPos, blockedPositions);
+}
+
 export function calculateEnemyMove(
   grid: TileInstance[][],
   enemy: MapObject,
@@ -328,6 +404,10 @@ export function calculateEnemyMove(
 
   if (enemy.aiType === AIType.Teleporter) {
     return calculateTeleporterMove(grid, enemy, playerPos, blockedPositions);
+  }
+
+  if (enemy.aiType === AIType.Summoner) {
+    return calculateSummonerMove(grid, enemy, playerPos, blockedPositions);
   }
 
   // Default to Hunter behavior
@@ -361,13 +441,13 @@ export function calculateAllEnemyMoves(
 
     const move = calculateEnemyMove(grid, enemy, playerPos, otherEnemyPositions, enemies);
     if (move) {
-      console.log(`[calculateAllEnemyMoves] Enemy ${enemy.id}: isRangedAttack=${move.isRangedAttack}, isHealingAction=${move.isHealingAction}, isTeleportAction=${move.isTeleportAction}, path.length=${move.path.length}`);
-      // Include ranged attacks, healing actions, teleport actions, and movement
-      if (move.isRangedAttack || move.isHealingAction || move.isTeleportAction || move.path.length > 1) {
+      console.log(`[calculateAllEnemyMoves] Enemy ${enemy.id}: isRangedAttack=${move.isRangedAttack}, isHealingAction=${move.isHealingAction}, isTeleportAction=${move.isTeleportAction}, isSummonAction=${move.isSummonAction}, path.length=${move.path.length}`);
+      // Include ranged attacks, healing actions, teleport actions, summon actions, and movement
+      if (move.isRangedAttack || move.isHealingAction || move.isTeleportAction || move.isSummonAction || move.path.length > 1) {
         console.log(`[calculateAllEnemyMoves] Adding move for enemy ${enemy.id}`);
         moves.push(move);
         // Update this enemy's position in the map (only if actually moving or teleporting)
-        if (!move.isRangedAttack && !move.isHealingAction) {
+        if (!move.isRangedAttack && !move.isHealingAction && !move.isSummonAction) {
           const finalPos = move.path[move.path.length - 1];
           occupiedPositions.set(enemy.id, { ...finalPos });
         }

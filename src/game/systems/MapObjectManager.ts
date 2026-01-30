@@ -113,6 +113,11 @@ export class MapObjectManager {
       enemy.teleportCounter = 0;
     }
 
+    // Initialize summon counter for summoner enemies
+    if (enemyDef.aiType === "Summoner") {
+      enemy.summonCounter = 0;
+    }
+
     if (enemyDef.color) {
       (enemy as any).color = enemyDef.color;
     }

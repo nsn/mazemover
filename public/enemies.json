@@ -90,6 +90,36 @@
       "flying": false,
       "tier": 3,
       "dropChance": 0.25
+    },
+    "skeleton": {
+      "name": "Skeleton",
+      "stats": {
+        "hp": 3,
+        "atk": 2,
+        "def": 0,
+        "agi": 1
+      },
+      "movementSpeed": 1,
+      "aiType": "Hunter",
+      "sprite": "skeleton",
+      "flying": false,
+      "tier": 1,
+      "dropChance": 0.05
+    },
+    "summoner": {
+      "name": "Summoner",
+      "stats": {
+        "hp": 6,
+        "atk": 1,
+        "def": 1,
+        "agi": 2
+      },
+      "movementSpeed": 1,
+      "aiType": "Summoner",
+      "sprite": "summoner",
+      "flying": false,
+      "tier": 3,
+      "dropChance": 0.3
     }
   },
   "player": {

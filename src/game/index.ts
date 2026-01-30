@@ -1265,10 +1265,66 @@ function manhattanDistance(a: GridPosition, b: GridPosition): number {
   return Math.abs(a.row - b.row) + Math.abs(a.col - b.col);
 }
 
-async function animateEnemyMove(move: EnemyMove): Promise<void> {
-  const { enemy, path, isRangedAttack, isHealingAction, healTarget, isTeleportAction } = move;
+/**
+ * Animates a summon action - creates a skeleton with rise animation
+ */
+async function animateSummon(summoner: MapObject, summonPos: GridPosition): Promise<void> {
+  isAnimating = true;
+  console.log(`[Summon] isAnimating set to true - summoner ${summoner.id} summoning skeleton at (${summonPos.row},${summonPos.col})`);
 
-  console.log(`[animateEnemyMove] Enemy ${enemy.id}: isRangedAttack=${isRangedAttack}, isHealingAction=${isHealingAction}, isTeleportAction=${isTeleportAction}, path.length=${path.length}`);
+  try {
+    const objectManager = turnManager.getObjectManager();
+
+    // Create skeleton at summon position
+    const skeleton = objectManager.createEnemy(summonPos, "skeleton");
+    console.log(`[Summon] Created skeleton ${skeleton.id} at (${summonPos.row},${summonPos.col})`);
+
+    // Render immediately to show the skeleton
+    render();
+
+    // Find the skeleton sprite that was just created
+    const mapObjs = k.get("mapObject");
+    let skeletonSprite: any = null;
+    for (const obj of mapObjs) {
+      const objData = (obj as any).objectData as MapObject;
+      if (objData && objData.id === skeleton.id) {
+        skeletonSprite = obj;
+        break;
+      }
+    }
+
+    if (skeletonSprite) {
+      // Play rise animation
+      console.log(`[Summon] Playing rise animation for skeleton ${skeleton.id}`);
+      skeletonSprite.play("rise");
+
+      // Wait for animation to complete
+      // Rise animation is frames 4-7 (4 frames), assuming default animation speed
+      const animDuration = 0.6; // Adjust based on actual animation length
+      await Promise.race([
+        k.wait(animDuration),
+        new Promise(resolve => setTimeout(resolve, 1000))
+      ]);
+
+      // Switch back to idle animation
+      skeletonSprite.play("idle");
+    } else {
+      console.warn(`[Summon] Could not find sprite for skeleton ${skeleton.id}`);
+    }
+
+  } catch (error) {
+    console.error("[Summon] Error during summon:", error);
+  } finally {
+    isAnimating = false;
+    console.log("[Summon] isAnimating set to false - summon complete");
+    render();
+  }
+}
+
+async function animateEnemyMove(move: EnemyMove): Promise<void> {
+  const { enemy, path, isRangedAttack, isHealingAction, healTarget, isTeleportAction, isSummonAction, summonPosition } = move;
+
+  console.log(`[animateEnemyMove] Enemy ${enemy.id}: isRangedAttack=${isRangedAttack}, isHealingAction=${isHealingAction}, isTeleportAction=${isTeleportAction}, isSummonAction=${isSummonAction}, path.length=${path.length}`);
 
   // Check if this is a healing action
   if (isHealingAction && healTarget) {
@@ -1288,6 +1344,13 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
   if (isTeleportAction) {
     console.log(`[animateEnemyMove] Calling animateTeleport for enemy ${enemy.id}`);
     await animateTeleport(enemy, path[path.length - 1]);
+    return;
+  }
+
+  // Check if this is a summon action
+  if (isSummonAction && summonPosition) {
+    console.log(`[animateEnemyMove] Calling animateSummon for enemy ${enemy.id}`);
+    await animateSummon(enemy, summonPosition);
     return;
   }
 
@@ -1744,15 +1807,15 @@ export function initializeGameHandlers(
   k.onButtonPress("left", handleMoveLeft);
   k.onButtonPress("right", handleMoveRight);
 
-  // Debug button - spawn assassin at random position near player
+  // Debug button - spawn summoner at random position near player
   k.onButtonPress("debug", () => {
     const player = tm.getObjectManager().getPlayer();
     if (!player || isAnimating) return;
 
     const objectManager = tm.getObjectManager();
 
-    // Spawn assassin
-    const enemyType = "assassin";
+    // Spawn summoner
+    const enemyType = "summoner";
 
     // Try to find an empty tile near the player
     const playerPos = player.gridPosition;
