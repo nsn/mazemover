@@ -1273,9 +1273,68 @@ async function animateSummon(summoner: MapObject, summonPos: GridPosition): Prom
   console.log(`[Summon] isAnimating set to true - summoner ${summoner.id} summoning skeleton at (${summonPos.row},${summonPos.col})`);
 
   try {
-    const objectManager = turnManager.getObjectManager();
+    const summonDuration = 0.5;
+
+    // Calculate positions
+    const summonerX = GRID_OFFSET_X + summoner.gridPosition.col * TILE_SIZE + TILE_SIZE / 2 + summoner.spriteOffset.x;
+    const summonerY = GRID_OFFSET_Y + summoner.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 + summoner.spriteOffset.y;
+
+    const summonX = GRID_OFFSET_X + summonPos.col * TILE_SIZE + TILE_SIZE / 2;
+    const summonY = GRID_OFFSET_Y + summonPos.row * TILE_SIZE + TILE_SIZE / 2;
+
+    // Create purple visual effect - pulsing circle from summoner to summon position
+    const effectStart = k.add([
+      k.circle(8),
+      k.pos(summonerX, summonerY),
+      k.anchor("center"),
+      k.color(150, 50, 200),  // Purple for summoning
+      k.opacity(0.8),
+      k.z(3),
+      "summonEffect",
+    ]);
+
+    const effectEnd = k.add([
+      k.circle(8),
+      k.pos(summonX, summonY),
+      k.anchor("center"),
+      k.color(150, 50, 200),  // Purple for summoning
+      k.opacity(0),
+      k.z(3),
+      "summonEffect",
+    ]);
+
+    // Fade out start effect, fade in end effect
+    k.tween(
+      0.8,
+      0,
+      summonDuration,
+      (val) => {
+        effectStart.opacity = val;
+      },
+      k.easings.linear
+    );
+
+    k.tween(
+      0,
+      0.8,
+      summonDuration,
+      (val) => {
+        effectEnd.opacity = val;
+      },
+      k.easings.linear
+    );
+
+    await Promise.race([
+      k.wait(summonDuration),
+      new Promise(resolve => setTimeout(resolve, 1000))
+    ]);
+
+    // Cleanup effects
+    effectStart.destroy();
+    effectEnd.destroy();
 
     // Create skeleton at summon position
+    const objectManager = turnManager.getObjectManager();
     const skeleton = objectManager.createEnemy(summonPos, "skeleton");
     console.log(`[Summon] Created skeleton ${skeleton.id} at (${summonPos.row},${summonPos.col})`);
 
@@ -1300,13 +1359,14 @@ async function animateSummon(summoner: MapObject, summonPos: GridPosition): Prom
 
       // Wait for animation to complete
       // Rise animation is frames 4-7 (4 frames), assuming default animation speed
-      const animDuration = 0.6; // Adjust based on actual animation length
+      const riseAnimDuration = 0.6;
       await Promise.race([
-        k.wait(animDuration),
+        k.wait(riseAnimDuration),
         new Promise(resolve => setTimeout(resolve, 1000))
       ]);
 
       // Switch back to idle animation
+      console.log(`[Summon] Switching skeleton ${skeleton.id} to idle animation`);
       skeletonSprite.play("idle");
     } else {
       console.warn(`[Summon] Could not find sprite for skeleton ${skeleton.id}`);
