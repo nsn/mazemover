@@ -125,6 +125,9 @@ export interface EnemyMove {
   isTeleportAction?: boolean;  // True if this is a teleport action
   isSummonAction?: boolean;  // True if this is a summon action
   summonPosition?: GridPosition;  // Position where skeleton will be summoned
+  isBossSpawnAction?: boolean;  // True if this is a boss spawn action
+  bossSpawnEnemyType?: string;  // Type of enemy to spawn (only for boss spawn actions)
+  bossSpawnPosition?: GridPosition;  // Position where enemy will be spawned
 }
 
 function calculateHunterMove(
@@ -384,6 +387,85 @@ function calculateSummonerMove(
   return calculateHunterMove(grid, enemy, playerPos, blockedPositions);
 }
 
+/**
+ * Calculates king enemy behavior (final boss)
+ * Stays in place and spawns a random enemy every 3 turns
+ */
+function calculateKingMove(
+  grid: TileInstance[][],
+  enemy: MapObject,
+  playerPos: GridPosition,
+  blockedPositions: GridPosition[]
+): EnemyMove | null {
+  const SPAWN_THRESHOLD = 3;
+
+  // Initialize counter if not set
+  if (enemy.kingSpawnCounter === undefined) {
+    enemy.kingSpawnCounter = 0;
+  }
+
+  // Increment counter
+  enemy.kingSpawnCounter++;
+  console.log(`[KingAI] Enemy ${enemy.id} counter: ${enemy.kingSpawnCounter}/${SPAWN_THRESHOLD}`);
+
+  // Check if ready to spawn
+  if (enemy.kingSpawnCounter >= SPAWN_THRESHOLD) {
+    // Find all unoccupied tiles in the grid
+    const unoccupiedPositions: GridPosition[] = [];
+
+    for (let row = 0; row < grid.length; row++) {
+      for (let col = 0; col < grid[0].length; col++) {
+        const pos = { row, col };
+
+        // Check if position is blocked by another enemy
+        const isBlocked = blockedPositions.some(blocked =>
+          blocked.row === pos.row && blocked.col === pos.col
+        );
+
+        // Check if position is the player's position
+        const isPlayer = pos.row === playerPos.row && pos.col === playerPos.col;
+
+        // Check if position is the king's own position
+        const isSelf = pos.row === enemy.gridPosition.row && pos.col === enemy.gridPosition.col;
+
+        if (!isBlocked && !isPlayer && !isSelf) {
+          unoccupiedPositions.push(pos);
+        }
+      }
+    }
+
+    if (unoccupiedPositions.length > 0) {
+      // Pick random unoccupied position
+      const spawnPos = unoccupiedPositions[Math.floor(Math.random() * unoccupiedPositions.length)];
+
+      // Pick random enemy type (excluding king)
+      const enemyTypes = ["goblin", "bat", "archer", "brute", "shaman", "assassin", "skeleton", "summoner"];
+      const randomEnemyType = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
+
+      console.log(`[KingAI] Enemy ${enemy.id} spawning ${randomEnemyType} at (${spawnPos.row},${spawnPos.col})`);
+
+      // Reset counter
+      enemy.kingSpawnCounter = 0;
+
+      // Return boss spawn action (king stays in place)
+      return {
+        enemy,
+        path: [enemy.gridPosition],
+        isBossSpawnAction: true,
+        bossSpawnEnemyType: randomEnemyType,
+        bossSpawnPosition: spawnPos,
+      };
+    } else {
+      console.log(`[KingAI] Enemy ${enemy.id} has no valid spawn positions`);
+      // No valid positions, don't reset counter - will try again next turn
+    }
+  }
+
+  // King doesn't move - stay in place
+  console.log(`[KingAI] Enemy ${enemy.id} standing still`);
+  return null;
+}
+
 export function calculateEnemyMove(
   grid: TileInstance[][],
   enemy: MapObject,
@@ -408,6 +490,10 @@ export function calculateEnemyMove(
 
   if (enemy.aiType === AIType.Summoner) {
     return calculateSummonerMove(grid, enemy, playerPos, blockedPositions);
+  }
+
+  if (enemy.aiType === AIType.King) {
+    return calculateKingMove(grid, enemy, playerPos, blockedPositions);
   }
 
   // Default to Hunter behavior
@@ -441,13 +527,13 @@ export function calculateAllEnemyMoves(
 
     const move = calculateEnemyMove(grid, enemy, playerPos, otherEnemyPositions, enemies);
     if (move) {
-      console.log(`[calculateAllEnemyMoves] Enemy ${enemy.id}: isRangedAttack=${move.isRangedAttack}, isHealingAction=${move.isHealingAction}, isTeleportAction=${move.isTeleportAction}, isSummonAction=${move.isSummonAction}, path.length=${move.path.length}`);
-      // Include ranged attacks, healing actions, teleport actions, summon actions, and movement
-      if (move.isRangedAttack || move.isHealingAction || move.isTeleportAction || move.isSummonAction || move.path.length > 1) {
+      console.log(`[calculateAllEnemyMoves] Enemy ${enemy.id}: isRangedAttack=${move.isRangedAttack}, isHealingAction=${move.isHealingAction}, isTeleportAction=${move.isTeleportAction}, isSummonAction=${move.isSummonAction}, isBossSpawnAction=${move.isBossSpawnAction}, path.length=${move.path.length}`);
+      // Include ranged attacks, healing actions, teleport actions, summon actions, boss spawn actions, and movement
+      if (move.isRangedAttack || move.isHealingAction || move.isTeleportAction || move.isSummonAction || move.isBossSpawnAction || move.path.length > 1) {
         console.log(`[calculateAllEnemyMoves] Adding move for enemy ${enemy.id}`);
         moves.push(move);
         // Update this enemy's position in the map (only if actually moving or teleporting)
-        if (!move.isRangedAttack && !move.isHealingAction && !move.isSummonAction) {
+        if (!move.isRangedAttack && !move.isHealingAction && !move.isSummonAction && !move.isBossSpawnAction) {
           const finalPos = move.path[move.path.length - 1];
           occupiedPositions.set(enemy.id, { ...finalPos });
         }

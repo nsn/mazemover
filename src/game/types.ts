@@ -94,6 +94,7 @@ export const AIType = {
   Healer: "Healer",
   Teleporter: "Teleporter",
   Summoner: "Summoner",
+  King: "King",
 } as const;
 
 export type AIType = (typeof AIType)[keyof typeof AIType];
@@ -179,4 +180,5 @@ export interface MapObject {
   projectile?: string;  // Projectile sprite name for ranged enemies (default: "arrow")
   teleportCounter?: number;  // Counter for teleporter enemies - teleports when reaching threshold
   summonCounter?: number;  // Counter for summoner enemies - summons skeleton when reaching threshold
+  kingSpawnCounter?: number;  // Counter for king enemy - spawns random enemy when reaching threshold
 }

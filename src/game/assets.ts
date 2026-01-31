@@ -101,6 +101,14 @@ export async function loadAssets(): Promise<void> {
     }
   });
 
+  await k.loadSprite("king", "/king.png", {
+    sliceX: 7,
+    sliceY: 4,
+    anims: {
+      idle: {from : 8, to: 11, loop: true},
+    }
+  });
+
   await k.loadSpriteAtlas("/enemies.png", {
     goblin: {x: 0, y: 0, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
     archer: {x: 0, y: 16, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},

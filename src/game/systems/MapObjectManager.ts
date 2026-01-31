@@ -118,6 +118,11 @@ export class MapObjectManager {
       enemy.summonCounter = 0;
     }
 
+    // Initialize king spawn counter for king enemies
+    if (enemyDef.aiType === "King") {
+      enemy.kingSpawnCounter = 0;
+    }
+
     if (enemyDef.color) {
       (enemy as any).color = enemyDef.color;
     }

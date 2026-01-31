@@ -120,6 +120,21 @@
       "flying": false,
       "tier": 3,
       "dropChance": 0.3
+    },
+    "king": {
+      "name": "King",
+      "stats": {
+        "hp": 50,
+        "atk": 5,
+        "def": 5,
+        "agi": 0
+      },
+      "movementSpeed": 0,
+      "aiType": "King",
+      "sprite": "king",
+      "flying": false,
+      "tier": 999,
+      "dropChance": 1.0
     }
   },
   "player": {

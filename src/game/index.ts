@@ -1352,10 +1352,107 @@ async function animateSummon(summoner: MapObject, summonPos: GridPosition): Prom
   }
 }
 
-async function animateEnemyMove(move: EnemyMove): Promise<void> {
-  const { enemy, path, isRangedAttack, isHealingAction, healTarget, isTeleportAction, isSummonAction, summonPosition } = move;
+/**
+ * Animates a boss spawn action - king spawns a random enemy
+ */
+async function animateBossSpawn(king: MapObject, enemyType: string, spawnPos: GridPosition): Promise<void> {
+  isAnimating = true;
+  console.log(`[BossSpawn] isAnimating set to true - king ${king.id} spawning ${enemyType} at (${spawnPos.row},${spawnPos.col})`);
 
-  console.log(`[animateEnemyMove] Enemy ${enemy.id}: isRangedAttack=${isRangedAttack}, isHealingAction=${isHealingAction}, isTeleportAction=${isTeleportAction}, isSummonAction=${isSummonAction}, path.length=${path.length}`);
+  try {
+    const spawnDuration = 0.5;
+
+    // Calculate king position
+    const kingX = GRID_OFFSET_X + king.gridPosition.col * TILE_SIZE + TILE_SIZE / 2 + king.spriteOffset.x;
+    const kingY = GRID_OFFSET_Y + king.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 + king.spriteOffset.y;
+
+    // Create golden/orange visual effect on king
+    const bossEffect = k.add([
+      k.circle(12),
+      k.pos(kingX, kingY),
+      k.anchor("center"),
+      k.color(255, 215, 0),  // Gold for boss spawn
+      k.opacity(0.8),
+      k.z(3),
+      "bossSpawnEffect",
+    ]);
+
+    // Pulse effect - fade out then back in
+    k.tween(
+      0.8,
+      0,
+      spawnDuration,
+      (val) => {
+        bossEffect.opacity = val;
+      },
+      k.easings.linear
+    );
+
+    await Promise.race([
+      k.wait(spawnDuration),
+      new Promise(resolve => setTimeout(resolve, 1000))
+    ]);
+
+    // Cleanup effect
+    bossEffect.destroy();
+
+    // Create enemy at spawn position
+    const objectManager = turnManager.getObjectManager();
+    const spawnedEnemy = objectManager.createEnemy(spawnPos, enemyType);
+    console.log(`[BossSpawn] Created ${enemyType} ${spawnedEnemy.id} at (${spawnPos.row},${spawnPos.col})`);
+
+    // Calculate spawn position
+    const spawnX = GRID_OFFSET_X + spawnPos.col * TILE_SIZE + TILE_SIZE / 2 + spawnedEnemy.spriteOffset.x;
+    const spawnY = GRID_OFFSET_Y + spawnPos.row * TILE_SIZE + TILE_SIZE / 2 + spawnedEnemy.spriteOffset.y;
+
+    // Check if spawned enemy has a rise animation (like skeleton)
+    const hasRiseAnim = enemyType === "skeleton";
+
+    // Manually create enemy sprite (since render() is blocked by isAnimating)
+    const spawnedSprite = k.add([
+      k.sprite(enemyType, { anim: hasRiseAnim ? "rise" : "idle" }),
+      k.pos(spawnX, spawnY),
+      k.anchor("center"),
+      k.z(2),
+      "bossSpawnedEnemy",
+    ]);
+
+    console.log(`[BossSpawn] Created ${enemyType} sprite${hasRiseAnim ? ' with rise animation' : ''}`);
+
+    // If it has a rise animation, wait for it
+    if (hasRiseAnim) {
+      const riseAnimDuration = 0.6;
+      await Promise.race([
+        k.wait(riseAnimDuration),
+        new Promise(resolve => setTimeout(resolve, 1000))
+      ]);
+    } else {
+      // Brief pause for other enemies
+      await Promise.race([
+        k.wait(0.3),
+        new Promise(resolve => setTimeout(resolve, 500))
+      ]);
+    }
+
+    // Destroy the temporary sprite
+    console.log(`[BossSpawn] Destroying temporary ${enemyType} sprite`);
+    spawnedSprite.destroy();
+
+    // The enemy object exists in objectManager, it will be rendered normally on next render()
+
+  } catch (error) {
+    console.error("[BossSpawn] Error during boss spawn:", error);
+  } finally {
+    isAnimating = false;
+    console.log("[BossSpawn] isAnimating set to false - boss spawn complete");
+    render();
+  }
+}
+
+async function animateEnemyMove(move: EnemyMove): Promise<void> {
+  const { enemy, path, isRangedAttack, isHealingAction, healTarget, isTeleportAction, isSummonAction, summonPosition, isBossSpawnAction, bossSpawnEnemyType, bossSpawnPosition } = move;
+
+  console.log(`[animateEnemyMove] Enemy ${enemy.id}: isRangedAttack=${isRangedAttack}, isHealingAction=${isHealingAction}, isTeleportAction=${isTeleportAction}, isSummonAction=${isSummonAction}, isBossSpawnAction=${isBossSpawnAction}, path.length=${path.length}`);
 
   // Check if this is a healing action
   if (isHealingAction && healTarget) {
@@ -1382,6 +1479,13 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
   if (isSummonAction && summonPosition) {
     console.log(`[animateEnemyMove] Calling animateSummon for enemy ${enemy.id}`);
     await animateSummon(enemy, summonPosition);
+    return;
+  }
+
+  // Check if this is a boss spawn action
+  if (isBossSpawnAction && bossSpawnEnemyType && bossSpawnPosition) {
+    console.log(`[animateEnemyMove] Calling animateBossSpawn for enemy ${enemy.id}`);
+    await animateBossSpawn(enemy, bossSpawnEnemyType, bossSpawnPosition);
     return;
   }
 
@@ -1841,15 +1945,15 @@ export function initializeGameHandlers(
   k.onButtonPress("left", handleMoveLeft);
   k.onButtonPress("right", handleMoveRight);
 
-  // Debug button - spawn summoner at random position near player
+  // Debug button - spawn king at random position near player
   k.onButtonPress("debug", () => {
     const player = tm.getObjectManager().getPlayer();
     if (!player || isAnimating) return;
 
     const objectManager = tm.getObjectManager();
 
-    // Spawn summoner
-    const enemyType = "summoner";
+    // Spawn king
+    const enemyType = "king";
 
     // Try to find an empty tile near the player
     const playerPos = player.gridPosition;
