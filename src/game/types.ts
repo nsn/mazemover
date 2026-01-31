@@ -77,6 +77,7 @@ export interface GameState {
   inventory: (ItemInstance | null)[];  // Player inventory - array of item instances or null for empty slots
   equipment: (ItemInstance | null)[];  // Player equipment - 5 slots: [0=Head, 1=LeftHand, 2=RightHand, 3=Legs, 4=Torso]
   buffs: Buff[];  // Active buffs on the player
+  isBossRoom: boolean;  // True if in boss room (no decay applied)
 }
 
 export const ObjectType = {

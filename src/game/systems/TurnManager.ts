@@ -103,6 +103,7 @@ export class TurnManager {
       inventory: Array(10).fill(null),  // Initialize 10 empty inventory slots (5x2 grid)
       equipment: Array(5).fill(null),  // Initialize 5 empty equipment slots: [Head, MainHand, OffHand, Legs, Torso]
       buffs: [],  // Initialize empty buffs array
+      isBossRoom: false,  // Initialize to false, set by mainScene when entering boss room
     };
 
     // Initialize state pattern

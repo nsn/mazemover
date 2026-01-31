@@ -23,12 +23,19 @@ let globalCurrentLevel = STARTING_LEVEL;
 let globalIsAscending = false;  // True if ascending toward surface, false if descending deeper
 let globalInventory: (import("./types").ItemInstance | null)[] | null = null;
 let globalEquipment: (import("./types").ItemInstance | null)[] | null = null;
+let globalIsBossRoom = false;  // True if in boss room
 
 export function resetGlobalLevel(): void {
   globalCurrentLevel = STARTING_LEVEL;
   globalIsAscending = false;
   globalInventory = null;
   globalEquipment = null;
+  globalIsBossRoom = false;
+}
+
+export function enterBossRoom(): void {
+  globalIsBossRoom = true;
+  globalCurrentLevel = 0;  // Set to 0 for boss room
 }
 
 /**
@@ -146,7 +153,18 @@ export function createMainScene(): void {
     const state = turnManager.getState();
     state.currentLevel = globalCurrentLevel;
     state.isAscending = globalIsAscending;
-    console.log(`[MainScene] Starting at level ${globalCurrentLevel}, ascending: ${globalIsAscending}`);
+    state.isBossRoom = globalIsBossRoom;
+    console.log(`[MainScene] Starting at level ${globalCurrentLevel}, ascending: ${globalIsAscending}, bossRoom: ${globalIsBossRoom}`);
+
+    // If in boss room, set all tile decay to 0
+    if (globalIsBossRoom) {
+      console.log("[MainScene] Boss room - setting all tile decay to 0");
+      for (let row = 0; row < state.grid.length; row++) {
+        for (let col = 0; col < state.grid[row].length; col++) {
+          state.grid[row][col].decay = 0;
+        }
+      }
+    }
 
     // Initialize or restore inventory and equipment
     let restoredEquipment = false;
@@ -199,8 +217,13 @@ export function createMainScene(): void {
           globalIsAscending = true;  // Ascending toward surface
           console.log(`[Game] Player reached the exit! Ascending to level: ${globalCurrentLevel}`);
 
-          if (globalCurrentLevel === 0) {
-            // Victory - reached the surface!
+          if (globalCurrentLevel === 0 && !globalIsBossRoom) {
+            // Entering boss room!
+            console.log("[Game] Entering boss room!");
+            globalIsBossRoom = true;
+            k.go("main");
+          } else if (globalCurrentLevel < 0 || globalIsBossRoom) {
+            // Victory - escaped after defeating boss or went past level 0!
             console.log("[Game] VICTORY! Player escaped the dungeon!");
             k.add([
               k.rect(640, 360),
@@ -235,40 +258,67 @@ export function createMainScene(): void {
       }
     );
 
-    // Create player on opposite side from exit
-    const oppositeSide = getOppositeSide(exitTile.side);
-    const playerTile = getRandomTileOnSide(oppositeSide, GRID_ROWS, GRID_COLS);
-    objManager.createPlayer({ row: playerTile.row, col: playerTile.col }, "Player1");
+    // Boss room setup or normal level setup
+    if (globalIsBossRoom) {
+      console.log("[MainScene] Setting up BOSS ROOM");
+      // Boss room: spawn player at 2/6, king at 2/2
+      objManager.createPlayer({ row: 2, col: 6 }, "Player1");
 
-    // Apply equipment bonuses if we restored equipment from previous level
-    if (restoredEquipment) {
-      try {
-        const player = objManager.getPlayer();
-        if (player) {
-          console.log("[MainScene] Applying equipment bonuses...");
-          console.log("[MainScene] Player stats before:", player.stats);
-          console.log("[MainScene] Player baseStats:", player.baseStats);
-          console.log("[MainScene] Equipment:", state.equipment);
-          applyEquipmentBonuses(player, state.equipment, itemDatabase);
-          console.log("[MainScene] Applied equipment bonuses from restored equipment");
-          console.log("[MainScene] Player stats after:", player.stats);
-        } else {
-          console.error("[MainScene] Could not find player to apply equipment bonuses");
+      // Apply equipment bonuses if we restored equipment from previous level
+      if (restoredEquipment) {
+        try {
+          const player = objManager.getPlayer();
+          if (player) {
+            console.log("[MainScene] Applying equipment bonuses...");
+            applyEquipmentBonuses(player, state.equipment, itemDatabase);
+            console.log("[MainScene] Applied equipment bonuses from restored equipment");
+          }
+        } catch (error) {
+          console.error("[MainScene] Error applying equipment bonuses:", error);
         }
-      } catch (error) {
-        console.error("[MainScene] Error applying equipment bonuses:", error);
       }
+
+      // Spawn king at position 2/2
+      const king = objManager.createEnemy({ row: 2, col: 2 }, "king");
+      king.isInStartLevelSequence = true;
+      console.log("[MainScene] Spawned king at (2,2)");
+    } else {
+      // Normal level setup
+      // Create player on opposite side from exit
+      const oppositeSide = getOppositeSide(exitTile.side);
+      const playerTile = getRandomTileOnSide(oppositeSide, GRID_ROWS, GRID_COLS);
+      objManager.createPlayer({ row: playerTile.row, col: playerTile.col }, "Player1");
+
+      // Apply equipment bonuses if we restored equipment from previous level
+      if (restoredEquipment) {
+        try {
+          const player = objManager.getPlayer();
+          if (player) {
+            console.log("[MainScene] Applying equipment bonuses...");
+            console.log("[MainScene] Player stats before:", player.stats);
+            console.log("[MainScene] Player baseStats:", player.baseStats);
+            console.log("[MainScene] Equipment:", state.equipment);
+            applyEquipmentBonuses(player, state.equipment, itemDatabase);
+            console.log("[MainScene] Applied equipment bonuses from restored equipment");
+            console.log("[MainScene] Player stats after:", player.stats);
+          } else {
+            console.error("[MainScene] Could not find player to apply equipment bonuses");
+          }
+        } catch (error) {
+          console.error("[MainScene] Error applying equipment bonuses:", error);
+        }
+      }
+
+      // Generate and create enemies based on level budget
+      const enemiesToSpawn = generateEnemiesForLevel(globalCurrentLevel, enemyDatabase);
+      enemiesToSpawn.forEach(({ enemyId, position }) => {
+        const enemy = objManager.createEnemy(position, enemyId);
+        enemy.isInStartLevelSequence = true;
+      });
+
+      // Spawn random items on empty tiles
+      objManager.spawnRandomItems(ITEM_DROP_PROBABILITY);
     }
-
-    // Generate and create enemies based on level budget
-    const enemiesToSpawn = generateEnemiesForLevel(globalCurrentLevel, enemyDatabase);
-    enemiesToSpawn.forEach(({ enemyId, position }) => {
-      const enemy = objManager.createEnemy(position, enemyId);
-      enemy.isInStartLevelSequence = true;
-    });
-
-    // Spawn random items on empty tiles
-    objManager.spawnRandomItems(ITEM_DROP_PROBABILITY);
 
     // Create and start the level sequence
     console.log("[MainScene] Starting level sequence...");

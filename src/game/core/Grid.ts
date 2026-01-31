@@ -155,20 +155,22 @@ export function applyRandomDecayToTile(
  * Returns the appropriate L-shaped corner tile for grid corners.
  * Each corner has a specific orientation to form the grid perimeter.
  */
-function getCornerTile(row: number, col: number, rows: number, cols: number): TileInstance | null {
+function getCornerTile(row: number, col: number, rows: number, cols: number, isBossRoom: boolean = false): TileInstance | null {
   const isTopLeft = row === 0 && col === 0;
   const isTopRight = row === 0 && col === cols - 1;
   const isBottomLeft = row === rows - 1 && col === 0;
   const isBottomRight = row === rows - 1 && col === cols - 1;
 
+  const decay = isBossRoom ? 0 : getRandomDecay();
+
   if (isTopLeft) {
-    return { type: TileType.L, orientation: 1 as Orientation, decay: getRandomDecay() };
+    return { type: TileType.L, orientation: 1 as Orientation, decay };
   } else if (isTopRight) {
-    return { type: TileType.L, orientation: 2 as Orientation, decay: getRandomDecay() };
+    return { type: TileType.L, orientation: 2 as Orientation, decay };
   } else if (isBottomLeft) {
-    return { type: TileType.L, orientation: 0 as Orientation, decay: getRandomDecay() };
+    return { type: TileType.L, orientation: 0 as Orientation, decay };
   } else if (isBottomRight) {
-    return { type: TileType.L, orientation: 3 as Orientation, decay: getRandomDecay() };
+    return { type: TileType.L, orientation: 3 as Orientation, decay };
   }
 
   return null;
@@ -191,24 +193,26 @@ function isImmovableEdge(row: number, col: number, rows: number, cols: number): 
  * Returns a T-shaped tile with the closed side facing outward for edge positions.
  * T tile orientations: 0=south closed, 1=west closed, 2=north closed, 3=east closed
  */
-function getEdgeTTile(row: number, col: number, rows: number, cols: number): TileInstance {
+function getEdgeTTile(row: number, col: number, rows: number, cols: number, isBossRoom: boolean = false): TileInstance {
+  const decay = isBossRoom ? 0 : getRandomDecay();
+
   // Determine which edge and set orientation so closed side faces outward
   if (row === 0) {
     // Top edge: closed side should face north (outward)
-    return { type: TileType.T, orientation: 2 as Orientation, decay: getRandomDecay() };
+    return { type: TileType.T, orientation: 2 as Orientation, decay };
   } else if (row === rows - 1) {
     // Bottom edge: closed side should face south (outward)
-    return { type: TileType.T, orientation: 0 as Orientation, decay: getRandomDecay() };
+    return { type: TileType.T, orientation: 0 as Orientation, decay };
   } else if (col === 0) {
     // Left edge: closed side should face west (outward)
-    return { type: TileType.T, orientation: 1 as Orientation, decay: getRandomDecay() };
+    return { type: TileType.T, orientation: 1 as Orientation, decay };
   } else if (col === cols - 1) {
     // Right edge: closed side should face east (outward)
-    return { type: TileType.T, orientation: 3 as Orientation, decay: getRandomDecay() };
+    return { type: TileType.T, orientation: 3 as Orientation, decay };
   }
 
   // Fallback (should never reach here for valid edge positions)
-  return { type: TileType.T, orientation: 0 as Orientation, decay: getRandomDecay() };
+  return { type: TileType.T, orientation: 0 as Orientation, decay };
 }
 
 export type EdgeSide = "top" | "bottom" | "left" | "right";
@@ -293,20 +297,21 @@ function isInteriorImmovable(row: number, col: number, rows: number, cols: numbe
 /**
  * Creates the initial game grid with fixed corners, immovable edges, and random interior tiles.
  * Ensures immovable tiles (edges and interior) are never CulDeSac tiles to maintain accessibility.
+ * @param isBossRoom If true, all tiles are created with decay 0 (no decay in boss room)
  */
-export function createGrid(rows: number, cols: number, deck: TileDeck): TileInstance[][] {
+export function createGrid(rows: number, cols: number, deck: TileDeck, isBossRoom: boolean = false): TileInstance[][] {
   const grid: TileInstance[][] = [];
   for (let r = 0; r < rows; r++) {
     const row: TileInstance[] = [];
     for (let c = 0; c < cols; c++) {
       // Check if this position is one of the four corners (0,0), (0,6), (6,0), (6,6)
-      const cornerTile = getCornerTile(r, c, rows, cols);
+      const cornerTile = getCornerTile(r, c, rows, cols, isBossRoom);
       if (cornerTile) {
         // Corner position: place L-shaped tile with specific orientation
         row.push(cornerTile);
       } else if (isImmovableEdge(r, c, rows, cols)) {
         // Edge position at even row/col (but not corner): place T tile with closed side facing outward
-        row.push(getEdgeTTile(r, c, rows, cols));
+        row.push(getEdgeTTile(r, c, rows, cols, isBossRoom));
       } else if (isInteriorImmovable(r, c, rows, cols)) {
         // Interior immovable position (even row AND even col, not on perimeter): draw random tile but never CulDeSac
         let tile = deck.draw();
@@ -314,12 +319,12 @@ export function createGrid(rows: number, cols: number, deck: TileDeck): TileInst
           deck.discard(tile);
           tile = deck.draw();
         }
-        tile.decay = getRandomDecay();
+        tile.decay = isBossRoom ? 0 : getRandomDecay();
         row.push(tile);
       } else {
         // Movable position (odd row OR odd col): draw any random tile from deck
         const tile = deck.draw();
-        tile.decay = getRandomDecay();
+        tile.decay = isBossRoom ? 0 : getRandomDecay();
         row.push(tile);
       }
     }

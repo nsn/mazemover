@@ -219,14 +219,16 @@ export class TilePlacementState implements PlayerPhaseState {
     context.deck.discard(ejectedTile);
     context.state.grid = newGrid;
 
-    // Increase decay on all tiles in the pushed row/column
+    // Increase decay on all tiles in the pushed row/column (except in boss room)
     // Each tile gets a random decay increase from 0 to ON_TILE_PLACEMENT
-    increaseDecayInPushedLine(
-      context.state.grid,
-      context.state.selectedPlot,
-      DECAY_PROGRESSION.ON_TILE_PLACEMENT,
-      context.objectManager
-    );
+    if (!context.state.isBossRoom) {
+      increaseDecayInPushedLine(
+        context.state.grid,
+        context.state.selectedPlot,
+        DECAY_PROGRESSION.ON_TILE_PLACEMENT,
+        context.objectManager
+      );
+    }
 
     context.state.selectedPlot = null;
 

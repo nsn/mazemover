@@ -37,7 +37,7 @@ import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
 import { executeCombat, checkForCombat } from "./systems/Combat";
 import { isWallBlocking, openWall } from "./systems/WallBump";
 import { applyRandomDecayToTile } from "./core/Grid";
-import { fallThroughFloor } from "./mainScene";
+import { fallThroughFloor, enterBossRoom } from "./mainScene";
 import { getTileEdges } from "./core/Tile";
 
 let turnManager: TurnManager;
@@ -1945,49 +1945,17 @@ export function initializeGameHandlers(
   k.onButtonPress("left", handleMoveLeft);
   k.onButtonPress("right", handleMoveRight);
 
-  // Debug button - spawn king at random position near player
+  // Debug button - instantly enter boss room
   k.onButtonPress("debug", () => {
-    const player = tm.getObjectManager().getPlayer();
-    if (!player || isAnimating) return;
+    if (isAnimating) return;
 
-    const objectManager = tm.getObjectManager();
+    console.log("[Debug] Entering boss room instantly");
 
-    // Spawn king
-    const enemyType = "king";
+    // Call enterBossRoom to set the global state
+    enterBossRoom();
 
-    // Try to find an empty tile near the player
-    const playerPos = player.gridPosition;
-    const searchRadius = 3;
-    const potentialPositions: GridPosition[] = [];
-
-    for (let rowOffset = -searchRadius; rowOffset <= searchRadius; rowOffset++) {
-      for (let colOffset = -searchRadius; colOffset <= searchRadius; colOffset++) {
-        const row = playerPos.row + rowOffset;
-        const col = playerPos.col + colOffset;
-
-        // Check bounds
-        if (row >= 0 && row < GRID_ROWS && col >= 0 && col < GRID_COLS) {
-          // Check if position is empty (no objects)
-          const objectsAtPos = objectManager.getObjectsAtPosition(row, col);
-          if (objectsAtPos.length === 0) {
-            potentialPositions.push({ row, col });
-          }
-        }
-      }
-    }
-
-    if (potentialPositions.length > 0) {
-      // Pick random empty position
-      const spawnPos = potentialPositions[Math.floor(Math.random() * potentialPositions.length)];
-
-      // Spawn enemy
-      objectManager.createEnemy(spawnPos, enemyType);
-      console.log(`[Debug] Spawned ${enemyType} at (${spawnPos.row},${spawnPos.col})`);
-
-      render();
-    } else {
-      console.log("[Debug] No empty positions found near player");
-    }
+    // Reload the main scene to enter boss room
+    k.go("main");
   });
 
   // Set up input controller callbacks
