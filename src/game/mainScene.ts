@@ -197,66 +197,69 @@ export function createMainScene(): void {
     // Create game objects
     const objManager = turnManager.getObjectManager();
 
-    // Create exit
+    // Prepare exit tile position (used for exit and player spawn in normal levels)
     const immovableEdges = getImmovableEdgeTiles(GRID_ROWS, GRID_COLS);
     const exitTile = immovableEdges[Math.floor(Math.random() * immovableEdges.length)];
 
-    objManager.createExit(
-      { row: exitTile.row, col: exitTile.col },
-      "Exit Stairs",
-      (_mob, isPlayer) => {
-        if (isPlayer) {
-          // Save current inventory and equipment before transitioning
-          const currentState = turnManager.getState();
-          globalInventory = [...currentState.inventory];
-          globalEquipment = [...currentState.equipment];
-          console.log("[Game] Saved inventory and equipment state");
+    // Create exit (but not in boss room)
+    if (!globalIsBossRoom) {
+      objManager.createExit(
+        { row: exitTile.row, col: exitTile.col },
+        "Exit Stairs",
+        (_mob, isPlayer) => {
+          if (isPlayer) {
+            // Save current inventory and equipment before transitioning
+            const currentState = turnManager.getState();
+            globalInventory = [...currentState.inventory];
+            globalEquipment = [...currentState.equipment];
+            console.log("[Game] Saved inventory and equipment state");
 
-          // Decrement global level counter
-          globalCurrentLevel--;
-          globalIsAscending = true;  // Ascending toward surface
-          console.log(`[Game] Player reached the exit! Ascending to level: ${globalCurrentLevel}`);
+            // Decrement global level counter
+            globalCurrentLevel--;
+            globalIsAscending = true;  // Ascending toward surface
+            console.log(`[Game] Player reached the exit! Ascending to level: ${globalCurrentLevel}`);
 
-          if (globalCurrentLevel === 0 && !globalIsBossRoom) {
-            // Entering boss room!
-            console.log("[Game] Entering boss room!");
-            globalIsBossRoom = true;
-            k.go("main");
-          } else if (globalCurrentLevel < 0 || globalIsBossRoom) {
-            // Victory - escaped after defeating boss or went past level 0!
-            console.log("[Game] VICTORY! Player escaped the dungeon!");
-            k.add([
-              k.rect(640, 360),
-              k.pos(0, 0),
-              k.color(0, 0, 0),
-              k.opacity(0.8),
-              k.z(1000),
-              "victoryOverlay",
-            ]);
-            k.add([
-              k.text("VICTORY!", { size: 48 }),
-              k.pos(320, 150),
-              k.anchor("center"),
-              k.color(255, 215, 0),
-              k.z(1001),
-              "victoryText",
-            ]);
-            k.add([
-              k.text("You escaped the dungeon!", { size: 24 }),
-              k.pos(320, 220),
-              k.anchor("center"),
-              k.color(255, 255, 255),
-              k.z(1001),
-              "victoryText",
-            ]);
-          } else {
-            // Generate new level
-            console.log(`[Game] Generating level ${globalCurrentLevel}...`);
-            k.go("main");
+            if (globalCurrentLevel === 0 && !globalIsBossRoom) {
+              // Entering boss room!
+              console.log("[Game] Entering boss room!");
+              globalIsBossRoom = true;
+              k.go("main");
+            } else if (globalCurrentLevel < 0 || globalIsBossRoom) {
+              // Victory - escaped after defeating boss or went past level 0!
+              console.log("[Game] VICTORY! Player escaped the dungeon!");
+              k.add([
+                k.rect(640, 360),
+                k.pos(0, 0),
+                k.color(0, 0, 0),
+                k.opacity(0.8),
+                k.z(1000),
+                "victoryOverlay",
+              ]);
+              k.add([
+                k.text("VICTORY!", { size: 48 }),
+                k.pos(320, 150),
+                k.anchor("center"),
+                k.color(255, 215, 0),
+                k.z(1001),
+                "victoryText",
+              ]);
+              k.add([
+                k.text("You escaped the dungeon!", { size: 24 }),
+                k.pos(320, 220),
+                k.anchor("center"),
+                k.color(255, 255, 255),
+                k.z(1001),
+                "victoryText",
+              ]);
+            } else {
+              // Generate new level
+              console.log(`[Game] Generating level ${globalCurrentLevel}...`);
+              k.go("main");
+            }
           }
         }
-      }
-    );
+      );
+    }
 
     // Boss room setup or normal level setup
     if (globalIsBossRoom) {

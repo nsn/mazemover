@@ -29,7 +29,7 @@ import {
 } from "./render/UIRenderer";
 import { getInventoryItemAtPosition, getEquipmentItemAtPosition, getEquipmentSlotAtPosition, screenToGrid } from "./systems/PositionUtils";
 import { equipItemFromInventory, unequipItemToInventory, applyEquipmentBonuses, getOccupiedSlots, isSlotBlocked } from "./systems/EquipmentManager";
-import { TurnOwner, PlayerPhase, ObjectType, type PlotPosition, type GridPosition, type MapObject, type TileInstance } from "./types";
+import { TurnOwner, PlayerPhase, ObjectType, AIType, type PlotPosition, type GridPosition, type MapObject, type TileInstance } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION, getFallChance } from "./config";
@@ -576,6 +576,39 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
         objectManager.destroyObject(enemy);
         logger.debug("[Game] Enemy defeated - bouncing player back");
+
+        // Check if king was defeated in boss room - trigger victory
+        const state = turnManager.getState();
+        if (state.isBossRoom && enemy.aiType === AIType.King) {
+          console.log("[Game] King defeated! VICTORY!");
+          // Delay victory screen slightly to let animations finish
+          k.wait(0.5, () => {
+            k.add([
+              k.rect(640, 360),
+              k.pos(0, 0),
+              k.color(0, 0, 0),
+              k.opacity(0.8),
+              k.z(1000),
+              "victoryOverlay",
+            ]);
+            k.add([
+              k.text("VICTORY!", { size: 48 }),
+              k.pos(320, 150),
+              k.anchor("center"),
+              k.color(255, 215, 0),
+              k.z(1001),
+              "victoryText",
+            ]);
+            k.add([
+              k.text("You defeated the King!", { size: 24 }),
+              k.pos(320, 220),
+              k.anchor("center"),
+              k.color(255, 255, 255),
+              k.z(1001),
+              "victoryText",
+            ]);
+          });
+        }
       } else {
         logger.debug("[Game] Enemy survived - bouncing player back");
       }
