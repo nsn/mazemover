@@ -105,7 +105,7 @@ export async function loadAssets(): Promise<void> {
     sliceX: 7,
     sliceY: 4,
     anims: {
-      idle: {from : 8, to: 11, loop: true},
+      idle: {from : 7, to: 10, loop: true},
     }
   });
 

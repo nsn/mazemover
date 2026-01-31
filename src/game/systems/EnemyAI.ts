@@ -397,7 +397,7 @@ function calculateKingMove(
   playerPos: GridPosition,
   blockedPositions: GridPosition[]
 ): EnemyMove | null {
-  const SPAWN_THRESHOLD = 3;
+  const SPAWN_THRESHOLD = 5;
 
   // Initialize counter if not set
   if (enemy.kingSpawnCounter === undefined) {
