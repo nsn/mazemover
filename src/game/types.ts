@@ -85,6 +85,7 @@ export const ObjectType = {
   Enemy: "Enemy",
   Item: "Item",
   Exit: "Exit",
+  Bomb: "Bomb",
 } as const;
 
 export type ObjectType = (typeof ObjectType)[keyof typeof ObjectType];
@@ -182,4 +183,6 @@ export interface MapObject {
   teleportCounter?: number;  // Counter for teleporter enemies - teleports when reaching threshold
   summonCounter?: number;  // Counter for summoner enemies - summons skeleton when reaching threshold
   kingSpawnCounter?: number;  // Counter for king enemy - spawns random enemy when reaching threshold
+  bombTurnsRemaining?: number;  // Turns until bomb explodes (only for bombs): 5 = fuse_long, 3 = fuse_short, 1 = shake, 0 = explode
+  spawnedByKing?: boolean;  // True if this enemy was spawned by the king boss
 }

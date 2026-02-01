@@ -551,10 +551,8 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
           k.destroy(poofSprite);
         });
 
-        // Check for item drop
+        // Check for item/bomb drop
         const enemyPos = enemy.gridPosition;
-        const dropChance = enemy.dropChance ?? 0.1;
-        const enemyTier = enemy.tier ?? 1;
 
         // Check if tile is empty (no other MapObjects)
         const objectsAtPosition = objectManager.getAllObjects().filter(obj =>
@@ -563,14 +561,25 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
           obj.id !== enemy.id
         );
 
-        if (objectsAtPosition.length === 0 && Math.random() < dropChance) {
-          // Drop an item
-          const itemDatabase = objectManager.getItemDatabase();
-          const selectedItemId = selectItemByTier(enemyTier, itemDatabase);
+        if (objectsAtPosition.length === 0) {
+          // If enemy was spawned by king, drop bomb with 1/3 chance
+          if (enemy.spawnedByKing && Math.random() < 1/3) {
+            objectManager.createBomb(enemyPos);
+            console.log(`[Combat] King-spawned enemy dropped bomb at (${enemyPos.row},${enemyPos.col})`);
+          } else {
+            // Regular item drop logic
+            const dropChance = enemy.dropChance ?? 0.1;
+            const enemyTier = enemy.tier ?? 1;
 
-          if (selectedItemId) {
-            objectManager.createItem(enemyPos, selectedItemId);
-            console.log(`[Combat] Enemy dropped item: ${selectedItemId} (tier ${enemyTier})`);
+            if (Math.random() < dropChance) {
+              const itemDatabase = objectManager.getItemDatabase();
+              const selectedItemId = selectItemByTier(enemyTier, itemDatabase);
+
+              if (selectedItemId) {
+                objectManager.createItem(enemyPos, selectedItemId);
+                console.log(`[Combat] Enemy dropped item: ${selectedItemId} (tier ${enemyTier})`);
+              }
+            }
           }
         }
 
@@ -924,6 +933,156 @@ async function handleWallBump(player: MapObject, targetPos: GridPosition): Promi
   logger.debug("[handleWallBump] END");
 }
 
+/**
+ * Process all bombs on the field, decrementing their timers and handling explosions
+ */
+async function processBombs(): Promise<void> {
+  const objectManager = turnManager.getObjectManager();
+  const bombs = objectManager.getBombs();
+
+  if (bombs.length === 0) return;
+
+  console.log(`[Bombs] Processing ${bombs.length} bombs`);
+
+  for (const bomb of bombs) {
+    if (bomb.bombTurnsRemaining === undefined) continue;
+
+    // Decrement timer
+    bomb.bombTurnsRemaining--;
+    console.log(`[Bombs] Bomb ${bomb.id} at (${bomb.gridPosition.row},${bomb.gridPosition.col}): ${bomb.bombTurnsRemaining} turns remaining`);
+
+    // Check if bomb should explode
+    if (bomb.bombTurnsRemaining <= 0) {
+      await explodeBomb(bomb);
+    }
+  }
+
+  // Render to update bomb animations
+  render();
+}
+
+/**
+ * Handle bomb explosion: spawn explosions in cardinal directions, deal damage, increase decay
+ */
+async function explodeBomb(bomb: MapObject): Promise<void> {
+  isAnimating = true;
+  console.log(`[Bomb] Exploding bomb ${bomb.id} at (${bomb.gridPosition.row},${bomb.gridPosition.col})`);
+
+  const objectManager = turnManager.getObjectManager();
+  const state = turnManager.getState();
+  const centerPos = bomb.gridPosition;
+  const explosionPositions: GridPosition[] = [];
+
+  // Always explode in center
+  explosionPositions.push({ row: centerPos.row, col: centerPos.col });
+
+  // Check each cardinal direction
+  const directions = [
+    { row: -1, col: 0, name: "North" },  // North
+    { row: 1, col: 0, name: "South" },   // South
+    { row: 0, col: -1, name: "West" },   // West
+    { row: 0, col: 1, name: "East" }     // East
+  ];
+
+  for (const dir of directions) {
+    const adjRow = centerPos.row + dir.row;
+    const adjCol = centerPos.col + dir.col;
+
+    // Check bounds
+    if (adjRow < 0 || adjRow >= GRID_ROWS || adjCol < 0 || adjCol >= GRID_COLS) {
+      continue;
+    }
+
+    // Check if there's a wall blocking (CulDeSac tile facing this direction)
+    // For now, just add explosion - wall destruction can be refined later
+    explosionPositions.push({ row: adjRow, col: adjCol });
+  }
+
+  console.log(`[Bomb] Creating ${explosionPositions.length} explosions`);
+
+  // Spawn explosion sprites
+  const explosionSprites: any[] = [];
+  for (const pos of explosionPositions) {
+    const expX = GRID_OFFSET_X + pos.col * TILE_SIZE + TILE_SIZE / 2;
+    const expY = GRID_OFFSET_Y + pos.row * TILE_SIZE + TILE_SIZE / 2;
+
+    const expSprite = k.add([
+      k.sprite("explosion", { anim: "explode" }),
+      k.pos(expX, expY),
+      k.anchor("center"),
+      k.z(200),  // High z-index to be above everything
+      "explosion",
+    ]);
+
+    explosionSprites.push(expSprite);
+
+    // Deal damage to any mob on this tile
+    const mobsOnTile = objectManager.getAllObjects().filter(obj =>
+      obj.gridPosition.row === pos.row &&
+      obj.gridPosition.col === pos.col &&
+      (obj.type === ObjectType.Player || obj.type === ObjectType.Enemy)
+    );
+
+    for (const mob of mobsOnTile) {
+      if (mob.currentHP !== undefined) {
+        const hpBefore = mob.currentHP;
+        mob.currentHP = Math.max(0, mob.currentHP - 10);
+        console.log(`[Bomb] Explosion dealt 10 damage to ${mob.name} at (${pos.row},${pos.col}): ${hpBefore} -> ${mob.currentHP}`);
+
+        // Show damage text
+        spawnScrollingText({
+          text: "10",
+          x: expX,
+          y: expY,
+          color: { r: 255, g: 100, b: 0 },  // Orange for explosion damage
+          fontSize: 20,
+          behavior: "bounce",
+        });
+
+        // Check if mob died
+        if (mob.currentHP <= 0) {
+          if (mob.type === ObjectType.Player) {
+            console.log("[Bomb] Player died from explosion!");
+            // TODO: Handle player death
+          } else {
+            console.log(`[Bomb] Enemy ${mob.name} died from explosion`);
+            objectManager.destroyObject(mob);
+          }
+        }
+      }
+    }
+
+    // Increase tile decay by 1 (unless in boss room)
+    if (!state.isBossRoom && pos.row >= 0 && pos.row < state.grid.length &&
+        pos.col >= 0 && pos.col < state.grid[0].length) {
+      const tile = state.grid[pos.row][pos.col];
+      if (tile) {
+        const oldDecay = tile.decay;
+        tile.decay = Math.min(tile.decay + 1, 10);  // Max decay is 10
+        console.log(`[Bomb] Increased decay at (${pos.row},${pos.col}) from ${oldDecay} to ${tile.decay}`);
+      }
+    }
+  }
+
+  // Wait for explosion animation
+  const explosionDuration = 0.5;
+  await Promise.race([
+    k.wait(explosionDuration),
+    new Promise(resolve => setTimeout(resolve, 1000))
+  ]);
+
+  // Destroy explosion sprites
+  for (const sprite of explosionSprites) {
+    sprite.destroy();
+  }
+
+  // Destroy the bomb object
+  objectManager.destroyObject(bomb);
+
+  isAnimating = false;
+  render();
+}
+
 async function executeEnemyTurns(): Promise<void> {
   logger.debug("[executeEnemyTurns] START");
   const state = turnManager.getState();
@@ -936,6 +1095,9 @@ async function executeEnemyTurns(): Promise<void> {
   for (const move of enemyMoves) {
     await animateEnemyMove(move);
   }
+
+  // Process bombs after enemy turns
+  await processBombs();
 
   logger.debug("[executeEnemyTurns] Starting new player turn...");
   turnManager.startPlayerTurn();
@@ -1432,7 +1594,8 @@ async function animateBossSpawn(king: MapObject, enemyType: string, spawnPos: Gr
     // Create enemy at spawn position
     const objectManager = turnManager.getObjectManager();
     const spawnedEnemy = objectManager.createEnemy(spawnPos, enemyType);
-    console.log(`[BossSpawn] Created ${enemyType} ${spawnedEnemy.id} at (${spawnPos.row},${spawnPos.col})`);
+    spawnedEnemy.spawnedByKing = true;  // Mark enemy as spawned by king for bomb drops
+    console.log(`[BossSpawn] Created ${enemyType} ${spawnedEnemy.id} at (${spawnPos.row},${spawnPos.col}) (spawned by king)`);
 
     // Calculate spawn position
     const spawnX = GRID_OFFSET_X + spawnPos.col * TILE_SIZE + TILE_SIZE / 2 + spawnedEnemy.spriteOffset.x;

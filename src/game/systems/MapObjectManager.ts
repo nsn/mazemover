@@ -177,6 +177,26 @@ export class MapObjectManager {
     return this.getAllObjects().find(obj => obj.type === ObjectType.Exit);
   }
 
+  createBomb(gridPosition: GridPosition): MapObject {
+    const bomb = this.createObject(
+      ObjectType.Bomb,
+      gridPosition,
+      "Bomb",
+      "bomb",
+      55,  // Render order between items (50) and enemies (90)
+      0,   // Bombs don't move
+      undefined,
+      { x: 0, y: 0 }
+    );
+    bomb.bombTurnsRemaining = 5;  // 5 turns until explosion
+    console.log(`[MapObjectManager] Created bomb at (${gridPosition.row},${gridPosition.col})`);
+    return bomb;
+  }
+
+  getBombs(): MapObject[] {
+    return this.getAllObjects().filter(obj => obj.type === ObjectType.Bomb);
+  }
+
   checkInteractions(mob: MapObject, previousPosition: GridPosition, inventory?: (ItemInstance | null)[]): void {
     const isPlayer = mob.type === ObjectType.Player;
     const currentPos = mob.gridPosition;

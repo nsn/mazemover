@@ -89,6 +89,18 @@ export async function loadAssets(): Promise<void> {
     }
   });
 
+  await k.loadSpriteAtlas("/bomb.png", {
+    bomb: { x: 0, y: 0, width: 168, height: 24, sliceX: 7,
+      anims: {
+        icon: {frames: [0]},
+        fuse_long: {from: 1, to: 2, loop: true, speed: 10},
+        fuse_short: {from: 3, to: 4, loop: true, speed: 10},
+        shake: {from: 5, to: 6, loop: true, speed: 10},
+      }
+    },
+    explosion: { x: 0, y: 24, width: 120, height: 24, sliceX: 5, anims: {explode: {from: 0, to: 4, loop: false}} },
+  });
+
   await k.loadSprite("mason", "/mason.png", {
     sliceX: 11,
     sliceY: 118,

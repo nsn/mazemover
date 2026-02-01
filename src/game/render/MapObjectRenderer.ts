@@ -49,6 +49,16 @@ export function drawMapObjects(
       // Use entry animation if set, otherwise default to idle
       const anim = obj.entryAnimationName || "idle";
       spriteConfig = { anim, flipX: obj.flipX };
+    } else if (obj.type === ObjectType.Bomb) {
+      // Bomb animation based on turns remaining
+      let anim = "fuse_long";
+      const turnsRemaining = obj.bombTurnsRemaining ?? 5;
+      if (turnsRemaining <= 1) {
+        anim = "shake";
+      } else if (turnsRemaining <= 3) {
+        anim = "fuse_short";
+      }
+      spriteConfig = { anim, flipX: obj.flipX };
     } else if (obj.type === ObjectType.Item) {
       spriteConfig = { frame: obj.frame ?? 0, flipX: obj.flipX };
     } else {
