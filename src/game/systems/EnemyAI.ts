@@ -394,7 +394,7 @@ function calculateSummonerMove(
 
 /**
  * Calculates king enemy behavior (final boss)
- * Stays in place and spawns a random enemy every 3 turns
+ * Spawns enemies on turns 1, 2, 3, then once every 10 turns
  */
 function calculateKingMove(
   grid: TileInstance[][],
@@ -403,8 +403,6 @@ function calculateKingMove(
   blockedPositions: GridPosition[],
   objectManager: MapObjectManager
 ): EnemyMove | null {
-  const SPAWN_THRESHOLD = 5;
-
   // Initialize counter if not set
   if (enemy.kingSpawnCounter === undefined) {
     enemy.kingSpawnCounter = 0;
@@ -412,10 +410,17 @@ function calculateKingMove(
 
   // Increment counter
   enemy.kingSpawnCounter++;
-  console.log(`[KingAI] Enemy ${enemy.id} counter: ${enemy.kingSpawnCounter}/${SPAWN_THRESHOLD}`);
+
+  // Check if ready to spawn:
+  // - Spawn on turns 1, 2, 3 (first 3 turns)
+  // - Then spawn every 10 turns (turn 13, 23, 33, etc.)
+  const shouldSpawn = enemy.kingSpawnCounter <= 3 ||
+                      (enemy.kingSpawnCounter > 3 && (enemy.kingSpawnCounter - 3) % 10 === 0);
+
+  console.log(`[KingAI] Enemy ${enemy.id} counter: ${enemy.kingSpawnCounter}, shouldSpawn: ${shouldSpawn}`);
 
   // Check if ready to spawn
-  if (enemy.kingSpawnCounter >= SPAWN_THRESHOLD) {
+  if (shouldSpawn) {
     // Find all unoccupied tiles in the grid
     const unoccupiedPositions: GridPosition[] = [];
 
@@ -454,8 +459,7 @@ function calculateKingMove(
 
       console.log(`[KingAI] Enemy ${enemy.id} spawning ${randomEnemyType} at (${spawnPos.row},${spawnPos.col})`);
 
-      // Reset counter
-      enemy.kingSpawnCounter = 0;
+      // Counter keeps incrementing, no reset needed (handled by shouldSpawn logic)
 
       // Return boss spawn action (king stays in place)
       return {
