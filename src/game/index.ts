@@ -577,6 +577,8 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
         }
 
         if (objectsAtPosition.length === 0) {
+          const state = turnManager.getState();
+
           // If enemy was spawned by king, drop bomb with 1/3 chance
           if (enemy.spawnedByKing) {
             const bombRoll = Math.random();
@@ -588,29 +590,35 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
             } else {
               console.log(`[Combat] ✗ No bomb dropped (rolled too high)`);
             }
-          } else {
-            // Regular item drop logic
-            const dropChance = enemy.dropChance ?? 0.1;
-            const enemyTier = enemy.tier ?? 1;
-            const dropRoll = Math.random();
+          }
 
-            console.log(`[Combat] Regular drop - roll: ${dropRoll.toFixed(3)} vs dropChance: ${dropChance.toFixed(3)} (tier: ${enemyTier})`);
+          // Item drop logic (can drop in addition to bombs for king-spawned enemies)
+          let dropChance = enemy.dropChance ?? 0.1;
+          const enemyTier = enemy.tier ?? 1;
 
-            if (dropRoll < dropChance) {
-              const itemDatabase = objectManager.getItemDatabase();
-              const selectedItemId = selectItemByTier(enemyTier, itemDatabase);
+          // In boss room, triple the drop rate for king-spawned enemies
+          if (state.isBossRoom && enemy.spawnedByKing) {
+            dropChance = Math.min(dropChance * 3, 1.0);  // Cap at 100%
+            console.log(`[Combat] Boss room bonus - drop chance tripled: ${(dropChance / 3).toFixed(3)} -> ${dropChance.toFixed(3)}`);
+          }
 
-              console.log(`[Combat] Item drop success! Selected item: ${selectedItemId}`);
+          const dropRoll = Math.random();
+          console.log(`[Combat] Item drop roll: ${dropRoll.toFixed(3)} vs dropChance: ${dropChance.toFixed(3)} (tier: ${enemyTier})`);
 
-              if (selectedItemId) {
-                objectManager.createItem(enemyPos, selectedItemId);
-                console.log(`[Combat] ✓ Item dropped: ${selectedItemId} (tier ${enemyTier})`);
-              } else {
-                console.log(`[Combat] ✗ No item ID selected (selectItemByTier returned null)`);
-              }
+          if (dropRoll < dropChance) {
+            const itemDatabase = objectManager.getItemDatabase();
+            const selectedItemId = selectItemByTier(enemyTier, itemDatabase);
+
+            console.log(`[Combat] Item drop success! Selected item: ${selectedItemId}`);
+
+            if (selectedItemId) {
+              objectManager.createItem(enemyPos, selectedItemId);
+              console.log(`[Combat] ✓ Item dropped: ${selectedItemId} (tier ${enemyTier})`);
             } else {
-              console.log(`[Combat] ✗ No item dropped (rolled too high)`);
+              console.log(`[Combat] ✗ No item ID selected (selectItemByTier returned null)`);
             }
+          } else {
+            console.log(`[Combat] ✗ No item dropped (rolled too high)`);
           }
         }
 
