@@ -29,7 +29,7 @@ import {
 } from "./render/UIRenderer";
 import { getInventoryItemAtPosition, getEquipmentItemAtPosition, getEquipmentSlotAtPosition, screenToGrid } from "./systems/PositionUtils";
 import { equipItemFromInventory, unequipItemToInventory, applyEquipmentBonuses, getOccupiedSlots, isSlotBlocked } from "./systems/EquipmentManager";
-import { TurnOwner, PlayerPhase, ObjectType, AIType, type PlotPosition, type GridPosition, type MapObject, type TileInstance } from "./types";
+import { TurnOwner, PlayerPhase, ObjectType, AIType, TileType, type PlotPosition, type GridPosition, type MapObject, type TileInstance } from "./types";
 import { findReachableTiles, type ReachableTile } from "./systems/Pathfinding";
 import { spawnScrollingText } from "./systems/ScrollingCombatText";
 import { TILE_SIZE, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, PREVIEW_X, PREVIEW_Y, DECAY_PROGRESSION, getFallChance } from "./config";
@@ -1007,12 +1007,16 @@ async function explodeBomb(bomb: MapObject): Promise<void> {
   // Always explode in center
   explosionPositions.push({ row: centerPos.row, col: centerPos.col });
 
+  // Get the edges of the bomb's tile to check for walls
+  const bombTile = state.grid[centerPos.row][centerPos.col];
+  const bombTileEdges = getTileEdges(bombTile.type, bombTile.orientation);
+
   // Check each cardinal direction
   const directions = [
-    { row: -1, col: 0, name: "North" },  // North
-    { row: 1, col: 0, name: "South" },   // South
-    { row: 0, col: -1, name: "West" },   // West
-    { row: 0, col: 1, name: "East" }     // East
+    { row: -1, col: 0, name: "North", edge: "north" as const },
+    { row: 1, col: 0, name: "South", edge: "south" as const },
+    { row: 0, col: -1, name: "West", edge: "west" as const },
+    { row: 0, col: 1, name: "East", edge: "east" as const }
   ];
 
   for (const dir of directions) {
@@ -1021,12 +1025,24 @@ async function explodeBomb(bomb: MapObject): Promise<void> {
 
     // Check bounds
     if (adjRow < 0 || adjRow >= GRID_ROWS || adjCol < 0 || adjCol >= GRID_COLS) {
+      console.log(`[Bomb] ${dir.name} direction out of bounds`);
       continue;
     }
 
-    // Check if there's a wall blocking (CulDeSac tile facing this direction)
-    // For now, just add explosion - wall destruction can be refined later
-    explosionPositions.push({ row: adjRow, col: adjCol });
+    // Check if there's a wall blocking this direction
+    const isWallBlocking = !bombTileEdges[dir.edge];
+
+    if (isWallBlocking) {
+      // Wall blocks this direction - destroy the wall by opening all edges
+      console.log(`[Bomb] ${dir.name} wall blocking - converting tile to Cross (removing all walls)`);
+      bombTile.type = TileType.Cross;
+      bombTile.orientation = 0;
+      // Don't spawn explosion in this direction - the wall absorbed it
+    } else {
+      // No wall blocking - explosion spreads to adjacent tile
+      console.log(`[Bomb] ${dir.name} open - explosion spreads to (${adjRow},${adjCol})`);
+      explosionPositions.push({ row: adjRow, col: adjCol });
+    }
   }
 
   console.log(`[Bomb] Creating ${explosionPositions.length} explosions`);

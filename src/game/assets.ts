@@ -93,12 +93,12 @@ export async function loadAssets(): Promise<void> {
     bomb: { x: 0, y: 0, width: 168, height: 24, sliceX: 7,
       anims: {
         icon: {frames: [0]},
-        fuse_long: {from: 1, to: 2, loop: true, speed: 10},
-        fuse_short: {from: 3, to: 4, loop: true, speed: 10},
-        shake: {from: 5, to: 6, loop: true, speed: 10},
+        fuse_long: {from: 1, to: 2, loop: true, speed: 30},
+        fuse_short: {from: 3, to: 4, loop: true, speed: 30},
+        shake: {from: 5, to: 6, loop: true, speed: 30},
       }
     },
-    explosion: { x: 0, y: 24, width: 120, height: 24, sliceX: 5, anims: {explode: {from: 0, to: 4, loop: false}} },
+    explosion: { x: 0, y: 24, width: 168, height: 32, sliceX: 5, anims: {explode: {from: 0, to: 4, loop: false, speed: 30}} },
   });
 
   await k.loadSprite("mason", "/mason.png", {
