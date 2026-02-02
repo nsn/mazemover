@@ -563,14 +563,15 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
         console.log(`[Combat] Enemy defeated: ${enemy.name} (id: ${enemy.id}) at (${enemyPos.row},${enemyPos.col})`);
         console.log(`[Combat] Enemy spawnedByKing: ${enemy.spawnedByKing}, tier: ${enemy.tier}, dropChance: ${enemy.dropChance}`);
 
-        // Check if tile is empty (no other MapObjects)
+        // Check if tile is empty (no other MapObjects except player and the defeated enemy)
         const objectsAtPosition = objectManager.getAllObjects().filter(obj =>
           obj.gridPosition.row === enemyPos.row &&
           obj.gridPosition.col === enemyPos.col &&
-          obj.id !== enemy.id
+          obj.id !== enemy.id &&
+          obj.type !== ObjectType.Player  // Player can be on the tile (killed the enemy there)
         );
 
-        console.log(`[Combat] Objects at enemy position: ${objectsAtPosition.length}`);
+        console.log(`[Combat] Objects at enemy position (excluding player): ${objectsAtPosition.length}`);
         if (objectsAtPosition.length > 0) {
           console.log(`[Combat] Tile occupied, no drop. Objects:`, objectsAtPosition.map(o => `${o.name} (${o.type})`));
         }
