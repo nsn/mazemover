@@ -543,6 +543,12 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
         });
       }
 
+      // Check if king took damage (but didn't die) - teleport to random immovable tile
+      if (enemy.aiType === AIType.King && combatResult.attackerAttack.hit && !combatResult.attackerAttack.defenderDied) {
+        console.log(`[Combat] King took damage and survived`);
+        teleportKingToRandomImmovableTile(enemy, objectManager);
+      }
+
       // Remove dead enemy and bounce player back to previous position
       if (combatResult.attackerAttack.defenderDied) {
         // Play poof animation at enemy position
@@ -973,6 +979,82 @@ async function handleWallBump(player: MapObject, targetPos: GridPosition): Promi
 }
 
 /**
+ * Teleports the king to a random immovable tile (even row AND even col)
+ */
+function teleportKingToRandomImmovableTile(king: MapObject, objectManager: any): void {
+  console.log(`[King] Teleporting to random immovable tile`);
+
+  // Find all immovable tiles (even row AND even col)
+  const immovableTiles: GridPosition[] = [];
+  for (let row = 0; row < GRID_ROWS; row++) {
+    for (let col = 0; col < GRID_COLS; col++) {
+      // Immovable tiles have even row AND even col
+      if (row % 2 === 0 && col % 2 === 0) {
+        // Check if tile is empty (no other objects)
+        const objectsAtPosition = objectManager.getAllObjects().filter((obj: MapObject) =>
+          obj.gridPosition.row === row &&
+          obj.gridPosition.col === col &&
+          obj.id !== king.id
+        );
+
+        if (objectsAtPosition.length === 0) {
+          immovableTiles.push({ row, col });
+        }
+      }
+    }
+  }
+
+  if (immovableTiles.length > 0) {
+    // Pick random immovable tile
+    const targetTile = immovableTiles[Math.floor(Math.random() * immovableTiles.length)];
+    console.log(`[King] Teleporting from (${king.gridPosition.row},${king.gridPosition.col}) to (${targetTile.row},${targetTile.col})`);
+
+    // Create teleport visual effect at old position
+    const oldX = GRID_OFFSET_X + king.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
+    const oldY = GRID_OFFSET_Y + king.gridPosition.row * TILE_SIZE + TILE_SIZE / 2;
+
+    const teleportOut = k.add([
+      k.circle(16),
+      k.pos(oldX, oldY),
+      k.anchor("center"),
+      k.color(255, 215, 0),  // Gold
+      k.opacity(0.8),
+      k.z(150),
+      "kingTeleport",
+    ]);
+
+    k.tween(0.8, 0, 0.3, (val) => { teleportOut.opacity = val; }, k.easings.easeOutQuad);
+
+    // Update king position
+    king.gridPosition = { ...targetTile };
+
+    // Create teleport visual effect at new position
+    const newX = GRID_OFFSET_X + targetTile.col * TILE_SIZE + TILE_SIZE / 2;
+    const newY = GRID_OFFSET_Y + targetTile.row * TILE_SIZE + TILE_SIZE / 2;
+
+    const teleportIn = k.add([
+      k.circle(16),
+      k.pos(newX, newY),
+      k.anchor("center"),
+      k.color(255, 215, 0),  // Gold
+      k.opacity(0),
+      k.z(150),
+      "kingTeleport",
+    ]);
+
+    k.tween(0, 0.8, 0.3, (val) => { teleportIn.opacity = val; }, k.easings.easeInQuad);
+
+    // Clean up effects after animation
+    k.wait(0.3, () => {
+      teleportOut.destroy();
+      teleportIn.destroy();
+    });
+  } else {
+    console.log(`[King] No available immovable tiles for king to teleport to`);
+  }
+}
+
+/**
  * Process all bombs on the field, decrementing their timers and handling explosions
  */
 async function processBombs(): Promise<void> {
@@ -1093,6 +1175,12 @@ async function explodeBomb(bomb: MapObject): Promise<void> {
           fontSize: 20,
           behavior: "bounce",
         });
+
+        // Check if king took damage (but didn't die) - teleport to random immovable tile
+        if (mob.type === ObjectType.Enemy && mob.aiType === AIType.King && mob.currentHP > 0) {
+          console.log(`[Bomb] King took explosion damage and survived`);
+          teleportKingToRandomImmovableTile(mob, objectManager);
+        }
 
         // Check if mob died
         if (mob.currentHP <= 0) {
