@@ -131,9 +131,13 @@ function findConnectedTiles(
  */
 function selectItemByTier(maxTier: number, itemDatabase: any): string | null {
   const allItems = itemDatabase.getAllItems();
+  console.log(`[selectItemByTier] Total items in database: ${allItems.length}, maxTier: ${maxTier}`);
+
   const eligibleItems = allItems.filter((item: any) => item.tier <= maxTier);
+  console.log(`[selectItemByTier] Eligible items (tier <= ${maxTier}): ${eligibleItems.length}`);
 
   if (eligibleItems.length === 0) {
+    console.log(`[selectItemByTier] No eligible items found!`);
     return null;
   }
 
@@ -155,8 +159,11 @@ function selectItemByTier(maxTier: number, itemDatabase: any): string | null {
     }
   }
 
+  console.log(`[selectItemByTier] Weighted items pool size: ${weightedItems.length}`);
+
   // Select random item from weighted array
   const selectedId = weightedItems[Math.floor(Math.random() * weightedItems.length)];
+  console.log(`[selectItemByTier] Selected item: ${selectedId}`);
   return selectedId;
 }
 
@@ -553,6 +560,8 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
         // Check for item/bomb drop
         const enemyPos = enemy.gridPosition;
+        console.log(`[Combat] Enemy defeated: ${enemy.name} (id: ${enemy.id}) at (${enemyPos.row},${enemyPos.col})`);
+        console.log(`[Combat] Enemy spawnedByKing: ${enemy.spawnedByKing}, tier: ${enemy.tier}, dropChance: ${enemy.dropChance}`);
 
         // Check if tile is empty (no other MapObjects)
         const objectsAtPosition = objectManager.getAllObjects().filter(obj =>
@@ -561,24 +570,45 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
           obj.id !== enemy.id
         );
 
+        console.log(`[Combat] Objects at enemy position: ${objectsAtPosition.length}`);
+        if (objectsAtPosition.length > 0) {
+          console.log(`[Combat] Tile occupied, no drop. Objects:`, objectsAtPosition.map(o => `${o.name} (${o.type})`));
+        }
+
         if (objectsAtPosition.length === 0) {
           // If enemy was spawned by king, drop bomb with 1/3 chance
-          if (enemy.spawnedByKing && Math.random() < 1/3) {
-            objectManager.createBomb(enemyPos);
-            console.log(`[Combat] King-spawned enemy dropped bomb at (${enemyPos.row},${enemyPos.col})`);
+          if (enemy.spawnedByKing) {
+            const bombRoll = Math.random();
+            const bombChance = 1/3;
+            console.log(`[Combat] King-spawned enemy - bomb drop roll: ${bombRoll.toFixed(3)} vs ${bombChance.toFixed(3)}`);
+            if (bombRoll < bombChance) {
+              objectManager.createBomb(enemyPos);
+              console.log(`[Combat] ✓ Bomb dropped at (${enemyPos.row},${enemyPos.col})`);
+            } else {
+              console.log(`[Combat] ✗ No bomb dropped (rolled too high)`);
+            }
           } else {
             // Regular item drop logic
             const dropChance = enemy.dropChance ?? 0.1;
             const enemyTier = enemy.tier ?? 1;
+            const dropRoll = Math.random();
 
-            if (Math.random() < dropChance) {
+            console.log(`[Combat] Regular drop - roll: ${dropRoll.toFixed(3)} vs dropChance: ${dropChance.toFixed(3)} (tier: ${enemyTier})`);
+
+            if (dropRoll < dropChance) {
               const itemDatabase = objectManager.getItemDatabase();
               const selectedItemId = selectItemByTier(enemyTier, itemDatabase);
 
+              console.log(`[Combat] Item drop success! Selected item: ${selectedItemId}`);
+
               if (selectedItemId) {
                 objectManager.createItem(enemyPos, selectedItemId);
-                console.log(`[Combat] Enemy dropped item: ${selectedItemId} (tier ${enemyTier})`);
+                console.log(`[Combat] ✓ Item dropped: ${selectedItemId} (tier ${enemyTier})`);
+              } else {
+                console.log(`[Combat] ✗ No item ID selected (selectItemByTier returned null)`);
               }
+            } else {
+              console.log(`[Combat] ✗ No item dropped (rolled too high)`);
             }
           }
         }
