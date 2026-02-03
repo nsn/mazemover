@@ -42,7 +42,7 @@
       "aiType": "Ranged",
       "sprite": "archer",
       "flying": false,
-      "tier": 1,
+      "tier": 2,
       "dropChance": 0.15,
       "projectile": "arrow"
     },
@@ -73,7 +73,7 @@
       "aiType": "Healer",
       "sprite": "shaman",
       "flying": false,
-      "tier": 2,
+      "tier": 3,
       "dropChance": 0.2
     },
     "assassin": {
@@ -118,13 +118,13 @@
       "aiType": "Summoner",
       "sprite": "summoner",
       "flying": false,
-      "tier": 3,
+      "tier": 4,
       "dropChance": 0.3
     },
     "king": {
       "name": "King",
       "stats": {
-        "hp": 50,
+        "hp": 30,
         "atk": 5,
         "def": 5,
         "agi": 0

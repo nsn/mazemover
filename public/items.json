@@ -17,22 +17,22 @@
       "sprite": "items",
       "frame": 1,
       "tier": 2,
-      "charges": 9,
+      "charges": 12,
       "slot": "OffHand",
       "statBonuses": {
-        "atk": 2
+        "atk": 1
       },
       "description": "a widde bladed chisel"
     },
     "spatula": {
       "name": "Spatula",
       "sprite": "items",
-      "frame": 2,
+      "frame": 1,
       "tier": 1,
       "charges": -1,
       "slot": "MainHand",
       "statBonuses": {
-        "def": 1
+        "atk": 1
       },
       "description": "A sturdy spatula, doubles as a small blade"
     },
@@ -44,33 +44,19 @@
       "charges": -1,
       "slot": "MainHand",
       "statBonuses": {
-        "atk": 1,
-        "def": 1
+        "atk": 2
       },
       "description": "flat bladed tool for mason work"
     },
-    "level": {
-      "name": "Spirit Level",
-      "sprite": "items",
-      "frame": 4,
-      "tier": 3,
-      "charges": -1,
-      "slot": ["MainHand", "OffHand"],
-      "statBonuses": {
-        "agi": 2
-      },
-      "description": "A two-handed precision tool"
-    },
-    "mell": {
+   "mell": {
       "name": "Mell",
       "sprite": "items",
       "frame": 5,
-      "tier": 3,
+      "tier": 1,
       "charges": -1,
       "slot": "MainHand",
       "statBonuses": {
-        "atk": 2,
-        "agi": -1
+        "atk": 1
       },
       "description": "Heavy, short hammer, slow but powerful"
     },
@@ -78,11 +64,11 @@
       "name": "Mallet",
       "sprite": "items",
       "frame": 6,
-      "tier": 1,
+      "tier": 2,
       "charges": -1,
       "slot": "MainHand",
       "statBonuses": {
-        "atk": 1
+        "atk": 2
       },
       "description": "A simple wooden mallet"
     },
@@ -94,7 +80,8 @@
       "charges": -1,
       "slot": "MainHand",
       "statBonuses": {
-        "atk": 3
+        "atk": 1,
+        "agi": 1
       },
       "description": "A heavy hammer made of steel"
     },
@@ -102,12 +89,11 @@
       "name": "Mining Pick",
       "sprite": "items",
       "frame": 8,
-      "tier": 2,
+      "tier": 3,
       "charges": -1,
       "slot": "MainHand",
       "statBonuses": {
-        "atk": 2,
-        "def": 1
+        "atk": 3
       },
       "description": "Sharp pick for mining"
     },
@@ -115,112 +101,113 @@
       "name": "Heavy Pickaxe",
       "sprite": "items",
       "frame": 9,
-      "tier": 3,
-      "charges": 12,
+      "tier": 4,
+      "charges": 18,
       "slot": ["MainHand", "OffHand"],
       "statBonuses": {
-        "atk": 4,
+        "atk": 5,
         "agi": -1
       },
       "description": "A massive two-handed pickaxe"
     },
     "coif": {
-      "name": "Chain Coif",
+      "name": "Coif",
       "sprite": "items",
       "frame": 20,
       "tier": 2,
       "charges": -1,
       "slot": "Head",
       "statBonuses": {
-        "def": 2
+        "def": 1
       },
-      "description": "A protective chainmail hood"
+      "description": "A tight fitting linnen cap"
     },
     "cap": {
-      "name": "Leather Cap",
+      "name": "Velvet Cap",
       "sprite": "items",
       "frame": 21,
-      "tier": 1,
+      "tier": 2,
       "charges": -1,
       "slot": "Head",
       "statBonuses": {
-        "def": 1
+        "def": 2
       },
-      "description": "A simple leather cap"
+      "description": "A soft velvet cap"
     },
     "hat": {
       "name": "Felt Hat",
       "sprite": "items",
       "frame": 22,
-      "tier": 2,
+      "tier": 3,
       "charges": -1,
       "slot": "Head",
       "statBonuses": {
-        "agi": 1
+        "def": 3
       },
       "description": "A light felt hat"
     },
     "chausses": {
-      "name": "Chain Chausses",
+      "name": "Chausses",
       "sprite": "items",
       "frame": 40,
-      "tier": 3,
-      "charges": -1,
-      "slot": "Legs",
-      "statBonuses": {
-        "def": 2,
-        "agi": -1
-      },
-      "description": "Heavy chainmail leggings"
-    },
-    "trousers": {
-      "name": "Leather Trousers",
-      "sprite": "items",
-      "frame": 41,
       "tier": 2,
       "charges": -1,
       "slot": "Legs",
       "statBonuses": {
-        "def": 1
+        "def": 2
       },
-      "description": "Sturdy leather trousers"
+      "description": "Heavy chainmail leggings"
     },
-    "pants": {
-      "name": "Work Pants",
+    "trousers": {
+      "name": "Trousers",
       "sprite": "items",
-      "frame": 42,
-      "tier": 1,
+      "frame": 41,
+      "tier": 3,
       "charges": -1,
       "slot": "Legs",
       "statBonuses": {
-        "agi": 1
+        "def": 3
       },
-      "description": "Flexible work pants"
+      "description": "Padded trousers"
+    },
+    "pants": {
+      "name": "Pants",
+      "sprite": "items",
+      "frame": 42,
+      "tier": 4,
+      "charges": -1,
+      "slot": "Legs",
+      "statBonuses": {
+        "def": 5,
+        "agi": -1
+      },
+      "description": "Sturdy leather work pants"
     },
     "chemises": {
-      "name": "Chainmail Chemise",
+      "name": "Chemise",
       "sprite": "items",
       "frame": 60,
+      "tier": 1,
+      "charges": -1,
+      "slot": "Torso",
+      "statBonuses": {
+        "def": 2,
+        "hp": 1
+      },
+      "description": "A simple linnen shirt"
+    },
+    "shirt": {
+      "name": "Shirt",
+      "sprite": "items",
+      "frame": 61,
       "tier": 3,
       "charges": -1,
       "slot": "Torso",
       "statBonuses": {
         "def": 3,
-        "agi": -1
+        "hp": 3
       },
-      "description": "A heavy chainmail shirt"
-    },
-    "shirt": {
-      "name": "Leather Shirt",
-      "sprite": "items",
-      "frame": 61,
-      "tier": 2,
-      "charges": -1,
-      "slot": "Torso",
-      "statBonuses": {
-        "def": 2
-      },
-      "description": "A protective leather shirt"
+      "description": "A well made shirt"
     },
     "apron": {
       "name": "Mason's Apron",
@@ -230,8 +217,8 @@
       "charges": -1,
       "slot": "Torso",
       "statBonuses": {
-        "def": 1,
-        "hp": 2
+        "def": 4,
+        "hp": 4
       },
       "description": "A sturdy work apron"
     }
@@ -241,7 +228,7 @@
       "name": "Feather",
       "sprite": "items",
       "frame": 80,
-      "tier": 1,
+      "tier": 3,
       "charges": 1,
       "description": "Grants ability to fly over decayed tiles"
     },
@@ -271,9 +258,8 @@
       "tier": 2,
       "charges": 1,
       "statBonuses": {
-        "def": 2
       },
-      "description": "Hardening cement"
+      "description": "Fully repair adjacent tiles"
     },
     "bricks": {
       "name": "Bricks",
@@ -282,10 +268,8 @@
       "tier": 2,
       "charges": 1,
       "statBonuses": {
-        "def": 1,
-        "hp": 1
       },
-      "description": "Solid bricks"
+      "description": "Repair some damage througout the level"
     }
   }
 }
