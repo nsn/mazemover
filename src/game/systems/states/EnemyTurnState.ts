@@ -60,7 +60,6 @@ export class EnemyTurnState implements TurnState {
    * which detects the turnOwner change.
    */
   onEnter(context: StateContext): void {
-    console.log("[EnemyTurnState] Entering enemy turn");
     context.state.turnOwner = TurnOwner.Enemy;
     context.onStateChange();
   }
@@ -75,7 +74,6 @@ export class EnemyTurnState implements TurnState {
    * Does NOT call onStateChange (PlayerTurnState.onEnter will).
    */
   onExit(_context: StateContext): void {
-    console.log("[EnemyTurnState] Exiting enemy turn");
     // No cleanup needed
   }
 
@@ -117,7 +115,6 @@ export class EnemyTurnState implements TurnState {
    * - deck.draw() for new tile
    */
   startPlayerTurn(_context: StateContext): TurnState {
-    console.log("[EnemyTurnState] Transitioning to player turn");
     return new PlayerTurnState(new AwaitingActionState());
   }
 
@@ -132,7 +129,6 @@ export class EnemyTurnState implements TurnState {
    * This is a no-op that returns self.
    */
   startEnemyTurn(_context: StateContext): TurnState {
-    console.log("[EnemyTurnState] Already in enemy turn, ignoring startEnemyTurn");
     return this;
   }
 }

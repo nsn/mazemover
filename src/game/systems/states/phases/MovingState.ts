@@ -66,7 +66,6 @@ export class MovingState implements PlayerPhaseState {
    * Actual movement logic is triggered externally by detecting this phase.
    */
   onEnter(context: StateContext): void {
-    console.log("[MovingState] Entering Moving phase");
     context.state.playerPhase = PlayerPhase.Moving;
     context.onStateChange();
   }
@@ -81,7 +80,6 @@ export class MovingState implements PlayerPhaseState {
    * Does NOT call onStateChange (next phase will).
    */
   onExit(_context: StateContext): void {
-    console.log("[MovingState] Exiting Moving phase");
     // No cleanup needed
   }
 
@@ -161,7 +159,6 @@ export class MovingState implements PlayerPhaseState {
    * The enemy turn transition happens in TurnManager, not here.
    */
   completeMove(context: StateContext): PlayerPhaseState | null {
-    console.log("[MovingState] Completing move, returning to AwaitingAction");
     context.onStateChange();
 
     // Return to AwaitingAction
@@ -181,7 +178,6 @@ export class MovingState implements PlayerPhaseState {
    * - Calls `context.onStateChange()`
    */
   cancelMoving(context: StateContext): PlayerPhaseState | null {
-    console.log("[MovingState] Cancelling movement, returning to AwaitingAction");
     context.onStateChange();
 
     // Return to AwaitingAction

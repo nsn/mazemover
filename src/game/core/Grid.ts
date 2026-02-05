@@ -1,7 +1,6 @@
 import { Direction, TileType, ObjectType, type TileInstance, type PlotPosition, type Orientation } from "../types";
 import { GRID_COLS, GRID_ROWS, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, DECAY_WEIGHTS, DECAY_PROGRESSION } from "../config";
 import { TileDeck } from "./TileDeck";
-import { logger } from "../utils/logger";
 
 /**
  * Generates a random decay value based on configured weights.
@@ -58,17 +57,13 @@ export function increaseRandomDecay(grid: TileInstance[][], objectManager?: { ge
 
   // If there are no tiles that can decay further, return
   if (tiles.length === 0) {
-    logger.debug("[increaseRandomDecay] No tiles available to increase decay");
     return;
   }
 
   // Pick a random tile and increase its decay
   const randomIndex = Math.floor(Math.random() * tiles.length);
   const { row, col } = tiles[randomIndex];
-  const oldDecay = grid[row][col].decay;
   grid[row][col].decay = Math.min(grid[row][col].decay + 1, DECAY_PROGRESSION.MAX_DECAY);
-
-  logger.debug(`[increaseRandomDecay] Increased decay at (${row},${col}) from ${oldDecay} to ${grid[row][col].decay}`);
 }
 
 /**
@@ -89,8 +84,6 @@ export function increaseDecayInPushedLine(
 ): void {
   // North/South pushes affect a column, East/West pushes affect a row
   const isColumn = plot.direction === Direction.North || plot.direction === Direction.South;
-
-  logger.debug(`[increaseDecayInPushedLine] Applying decay to ${isColumn ? 'column' : 'row'} ${isColumn ? plot.col : plot.row}`);
 
   if (isColumn) {
     // Apply decay to all tiles in the column
@@ -132,7 +125,6 @@ export function applyRandomDecayToTile(
     const objectsAtPosition = objectManager.getObjectsAtPosition(row, col);
     const hasExit = objectsAtPosition.some(obj => obj.type === ObjectType.Exit);
     if (hasExit) {
-      logger.debug(`[applyRandomDecayToTile] Skipping (${row},${col}) - has exit`);
       return;
     }
   }
@@ -141,14 +133,10 @@ export function applyRandomDecayToTile(
   const decayIncrease = Math.floor(Math.random() * (maxIncrease + 1));
 
   if (decayIncrease === 0) {
-    logger.debug(`[applyRandomDecayToTile] No decay added to (${row},${col})`);
     return;
   }
 
-  const oldDecay = tile.decay;
   tile.decay = Math.min(tile.decay + decayIncrease, DECAY_PROGRESSION.MAX_DECAY);
-
-  logger.debug(`[applyRandomDecayToTile] Increased decay at (${row},${col}) from ${oldDecay} to ${tile.decay} (+${decayIncrease})`);
 }
 
 /**

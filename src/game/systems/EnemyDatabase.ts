@@ -38,7 +38,6 @@ export class EnemyDatabase {
         throw new Error(`Failed to load enemies.json: ${response.statusText}`);
       }
       this.data = await response.json();
-      console.log("[EnemyDatabase] Loaded enemy definitions:", Object.keys(this.data!.enemies));
     } catch (error) {
       console.error("[EnemyDatabase] Error loading enemies.json:", error);
       throw error;

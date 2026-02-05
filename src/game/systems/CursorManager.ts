@@ -66,7 +66,6 @@ export class CursorManager {
 
   initialize(): void {
     this.changeCursorType("default");
-    console.log("[CursorManager] Initialized with CSS cursors");
   }
 
   update(turnManager: TurnManager): void {
@@ -155,12 +154,17 @@ export class CursorManager {
         return this.getDirectionalMoveCursor(gridPos, player.gridPosition);
       }
 
-      // Check if wall blocking adjacent tile (demolish cursor)
+      // Check if wall blocking adjacent tile (demolish or cancel cursor)
       const dRow = Math.abs(gridPos.row - player.gridPosition.row);
       const dCol = Math.abs(gridPos.col - player.gridPosition.col);
       const isAdjacent = (dRow === 1 && dCol === 0) || (dRow === 0 && dCol === 1);
       if (isAdjacent && isWallBlocking(state.grid, player.gridPosition, gridPos)) {
-        return "demolish";
+        // Check if player can break walls (has required equipment with charges)
+        if (this.canBreakWalls(state, turnManager)) {
+          return "demolish";
+        } else {
+          return "cancel";
+        }
       }
 
       // Check if over plots
@@ -213,6 +217,47 @@ export class CursorManager {
       case Direction.West: return "push_left";
       default: return null;
     }
+  }
+
+  /**
+   * Check if the player can break walls (has required equipment with charges remaining)
+   */
+  private canBreakWalls(state: any, turnManager: TurnManager): boolean {
+    const mainHandItem = state.equipment[1]; // MainHand index
+    const offHandItem = state.equipment[2];  // OffHand index
+
+    // Check if player has required equipment
+    let hasRequiredEquipment = false;
+    let itemsToCheck: any[] = [];
+
+    if (mainHandItem !== null && offHandItem !== null) {
+      // Both hands have items
+      hasRequiredEquipment = true;
+      itemsToCheck = [mainHandItem, offHandItem];
+    } else if (mainHandItem !== null && offHandItem === null) {
+      // Check if MainHand item is a two-handed weapon
+      const itemDb = turnManager.getObjectManager().getItemDatabase();
+      const itemDef = itemDb.getItem(mainHandItem.definitionId);
+      if (itemDef && Array.isArray(itemDef.slot)) {
+        // Two-handed weapon (occupies multiple slots)
+        hasRequiredEquipment = true;
+        itemsToCheck = [mainHandItem];
+      }
+    }
+
+    if (!hasRequiredEquipment) {
+      return false;
+    }
+
+    // Check if all required items have charges remaining
+    // -1 means infinite charges, 0 or below means depleted
+    for (const item of itemsToCheck) {
+      if (item.remainingCharges !== undefined && item.remainingCharges !== -1 && item.remainingCharges <= 0) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   private getDirectionalMoveCursor(targetPos: any, playerPos: any): CursorType {

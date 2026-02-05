@@ -31,12 +31,10 @@ export class StartLevelSequence {
    */
   async start(): Promise<void> {
     if (this.isRunning) {
-      console.warn("[StartLevelSequence] Sequence already running");
       return;
     }
 
     this.isRunning = true;
-    console.log("[StartLevelSequence] Starting level sequence");
 
     try {
       // Step 1: Reveal grid
@@ -60,7 +58,6 @@ export class StartLevelSequence {
    * Reveals the grid tiles with a staggered animation
    */
   private async revealGrid(): Promise<void> {
-    console.log("[StartLevelSequence] Revealing grid");
 
     const totalTiles = GRID_ROWS * GRID_COLS;
     const delayPerTile = START_LEVEL.GRID_REVEAL_DURATION / totalTiles;
@@ -120,7 +117,6 @@ export class StartLevelSequence {
    * Spawns all map objects sequentially
    */
   private async spawnObjects(): Promise<void> {
-    console.log("[StartLevelSequence] Spawning objects");
 
     // Get all objects marked for start sequence (excluding player)
     const objects = this.objectManager.getAllObjects()
@@ -141,7 +137,6 @@ export class StartLevelSequence {
    * Spawns a single object with fade-in animation
    */
   private async spawnObject(obj: MapObject): Promise<void> {
-    console.log(`[StartLevelSequence] Spawning ${obj.name}`);
 
     const x = GRID_OFFSET_X + obj.gridPosition.col * TILE_SIZE + TILE_SIZE / 2 + obj.spriteOffset.x;
     const y = GRID_OFFSET_Y + obj.gridPosition.row * TILE_SIZE + TILE_SIZE / 2 + obj.spriteOffset.y;
@@ -195,13 +190,11 @@ export class StartLevelSequence {
   private async playPlayerDropAnimation(): Promise<void> {
     const player = this.objectManager.getPlayer();
     if (!player) {
-      console.warn("[StartLevelSequence] No player found");
       return;
     }
 
     // Choose animation based on whether player is ascending or descending
     const animationName = this.state.isAscending ? "rise" : "drop";
-    console.log(`[StartLevelSequence] Playing player ${animationName} animation`);
 
     // Wait before starting animation
     await this.wait(START_LEVEL.PLAYER_DROP_DELAY * 1000);
@@ -225,7 +218,6 @@ export class StartLevelSequence {
     // Wait for animation to complete
     return new Promise<void>((resolve) => {
       entrySprite.onAnimEnd(() => {
-        console.log(`[StartLevelSequence] ${animationName} animation completed`);
         player.isPlayingDropAnimation = false;
         this.onRender(); // Render to show idle animation
         resolve();
@@ -237,7 +229,6 @@ export class StartLevelSequence {
    * Completes the sequence and transitions to normal gameplay
    */
   private complete(): void {
-    console.log("[StartLevelSequence] Sequence complete");
     this.isRunning = false;
     this.state.isInStartLevelSequence = false;
 

@@ -46,7 +46,6 @@ export class ClickManager {
    */
   handleLeftClick(mousePos: { x: number; y: number }, turnManager: TurnManager, isAnimating: boolean): boolean {
     if (isAnimating) {
-      console.log("[ClickManager] Click ignored - animating");
       return false;
     }
 
@@ -54,7 +53,6 @@ export class ClickManager {
 
     // Block input during start level sequence
     if (state.isInStartLevelSequence) {
-      console.log("[ClickManager] Click ignored - start level sequence");
       return false;
     }
 
@@ -92,14 +90,12 @@ export class ClickManager {
 
     // Cancel rotation mode on right-click
     if (state.playerPhase === PlayerPhase.RotatingTile) {
-      console.log("[ClickManager] Right-click - canceling rotation");
       this.callbacks.onCancelRotation();
       return true;
     }
 
     // Check if right-clicking on preview/current tile for counter-clockwise rotation
     if (isMouseOverPreviewTile(mousePos.x, mousePos.y, PREVIEW_X, PREVIEW_Y)) {
-      console.log("[ClickManager] Preview tile right-click - rotating CCW");
       this.callbacks.onRotateTileCounterClockwise();
       return true;
     }
@@ -111,7 +107,6 @@ export class ClickManager {
     const skipButtons = k.get("skipButton");
     for (const button of skipButtons) {
       if ((button as any).hasPoint && (button as any).hasPoint(mousePos)) {
-        console.log("[ClickManager] Skip button clicked");
         return true;
       }
     }
@@ -128,7 +123,6 @@ export class ClickManager {
     const gridPos = screenToGrid(mousePos.x, mousePos.y);
     if (!gridPos) {
       // Click outside grid - cancel rotation
-      console.log("[ClickManager] Canceling rotation - click outside grid");
       this.callbacks.onCancelRotation();
       return true;
     }
@@ -136,7 +130,6 @@ export class ClickManager {
     // Check if clicked on the rotating tile
     if (gridPos.row === state.rotatingTilePosition.row &&
         gridPos.col === state.rotatingTilePosition.col) {
-      console.log("[ClickManager] Rotating player tile");
       this.callbacks.onRotatePlayerTile();
       return true;
     }
@@ -157,7 +150,6 @@ export class ClickManager {
         );
 
         if (target && target.path.length > 1) {
-          console.log("[ClickManager] Confirming rotation (no movement)");
           this.callbacks.onConfirmRotation();
           return true;
         }
@@ -165,7 +157,6 @@ export class ClickManager {
     }
 
     // Clicked outside reachable tiles - cancel rotation
-    console.log("[ClickManager] Canceling rotation - click outside reachable");
     this.callbacks.onCancelRotation();
     return true;
   }
@@ -175,7 +166,6 @@ export class ClickManager {
     const currentTiles = k.get("currentTile");
     for (const tile of currentTiles) {
       if ((tile as any).hasPoint && (tile as any).hasPoint(mousePos)) {
-        console.log("[ClickManager] Current tile hit - rotating");
         this.callbacks.onRotateTile();
         return true;
       }
@@ -183,7 +173,6 @@ export class ClickManager {
 
     // Check if clicking on preview tile (rotate)
     if (isMouseOverPreviewTile(mousePos.x, mousePos.y, PREVIEW_X, PREVIEW_Y)) {
-      console.log("[ClickManager] Preview tile hit - rotating");
       this.callbacks.onRotateTile();
       return true;
     }
@@ -192,7 +181,6 @@ export class ClickManager {
     const highlightAreas = k.get("highlightArea");
     for (const area of highlightAreas) {
       if ((area as any).hasPoint && (area as any).hasPoint(mousePos)) {
-        console.log("[ClickManager] Highlight area hit - pushing");
         this.callbacks.onExecutePush();
         return true;
       }
@@ -203,14 +191,12 @@ export class ClickManager {
     for (const plotObj of plotObjects) {
       if ((plotObj as any).hasPoint && (plotObj as any).hasPoint(mousePos)) {
         const plotData = (plotObj as any).plotData as PlotPosition;
-        console.log("[ClickManager] Plot hit:", plotData);
         this.callbacks.onSelectPlot(plotData);
         return true;
       }
     }
 
     // Background click - cancel placement
-    console.log("[ClickManager] Background hit - canceling placement");
     this.callbacks.onCancelPlacement();
     return true;
   }
@@ -222,7 +208,6 @@ export class ClickManager {
 
     // Check if clicking on player sprite (enter rotation mode)
     if (isMouseOverPlayer(mousePos.x, mousePos.y, turnManager) && player.movesRemaining > 0) {
-      console.log("[ClickManager] Player clicked - entering rotation mode");
       this.callbacks.onPlayerClicked();
       return true;
     }
@@ -230,7 +215,6 @@ export class ClickManager {
     // Check if clicking on preview tile (enter placement or rotate)
     if (isMouseOverPreviewTile(mousePos.x, mousePos.y, PREVIEW_X, PREVIEW_Y)) {
       if (turnManager.canPlaceTile()) {
-        console.log("[ClickManager] Preview tile hit - entering tile placement");
         this.callbacks.onEnterTilePlacement();
         return true;
       }
@@ -247,7 +231,6 @@ export class ClickManager {
         );
 
         if (target && target.path.length > 1) {
-          console.log("[ClickManager] Direct move to reachable tile:", target.position);
           this.callbacks.onMovePlayer(target.path);
           return true;
         }
@@ -258,7 +241,6 @@ export class ClickManager {
         const isAdjacent = (dRow === 1 && dCol === 0) || (dRow === 0 && dCol === 1);
 
         if (isAdjacent && isWallBlocking(state.grid, player.gridPosition, gridPos)) {
-          console.log("[ClickManager] Wall bump detected");
           this.callbacks.onWallBump(gridPos);
           return true;
         }
@@ -271,7 +253,6 @@ export class ClickManager {
       for (const plotObj of plotObjects) {
         if ((plotObj as any).hasPoint && (plotObj as any).hasPoint(mousePos)) {
           const plotData = (plotObj as any).plotData as PlotPosition;
-          console.log("[ClickManager] Plot hit - entering placement:", plotData);
           this.callbacks.onEnterTilePlacement();
           this.callbacks.onSelectPlot(plotData);
           return true;

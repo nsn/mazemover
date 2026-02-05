@@ -102,13 +102,8 @@ function executeAttack(attacker: MapObject, defender: MapObject): AttackResult {
  * @returns Combat result with attack outcome
  */
 export function executeCombat(attacker: MapObject, defender: MapObject): CombatResult {
-  console.log(`[Combat] ${attacker.name} attacks ${defender.name}`);
-
   // Attacker's attack
   const attackerAttack = executeAttack(attacker, defender);
-
-  console.log(`[Combat] ${attacker.name} ${attackerAttack.hit ? 'hits' : 'misses'} ${defender.name}${attackerAttack.critical ? ' (CRITICAL)' : ''} for ${attackerAttack.damage} damage`);
-  console.log(`[Combat] ${defender.name} HP: ${defender.currentHP}/${defender.stats?.hp}`);
 
   return {
     attackerAttack,

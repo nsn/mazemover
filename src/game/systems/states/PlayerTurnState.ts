@@ -99,7 +99,6 @@ export class PlayerTurnState implements TurnState {
    * - Calls `context.onStateChange()` to trigger render
    */
   onEnter(context: StateContext): void {
-    console.log(`[PlayerTurnState] Entering player turn with phase: ${this._currentPhase.phaseName}`);
     context.state.turnOwner = TurnOwner.Player;
     this._currentPhase.onEnter(context);
     context.onStateChange();
@@ -118,7 +117,6 @@ export class PlayerTurnState implements TurnState {
    * - Does NOT call onStateChange (EnemyTurnState.onEnter will)
    */
   onExit(context: StateContext): void {
-    console.log(`[PlayerTurnState] Exiting player turn from phase: ${this._currentPhase.phaseName}`);
     this._currentPhase.onExit(context);
   }
 
@@ -155,7 +153,6 @@ export class PlayerTurnState implements TurnState {
    * ensure onExit/onEnter are called and state is reset properly.
    */
   startPlayerTurn(_context: StateContext): TurnState {
-    console.log("[PlayerTurnState] Starting new player turn");
     return new PlayerTurnState(new AwaitingActionState());
   }
 
@@ -170,7 +167,6 @@ export class PlayerTurnState implements TurnState {
    * This is typically triggered by TurnManager after completeMove() returns to AwaitingAction.
    */
   startEnemyTurn(_context: StateContext): TurnState {
-    console.log("[PlayerTurnState] Transitioning to enemy turn");
     return new EnemyTurnState();
   }
 
@@ -200,8 +196,6 @@ export class PlayerTurnState implements TurnState {
    * ```
    */
   transitionToPhase(context: StateContext, newPhase: PlayerPhaseState): void {
-    console.log(`[PlayerTurnState] Transitioning from ${this._currentPhase.phaseName} to ${newPhase.phaseName}`);
-
     // Exit current phase
     this._currentPhase.onExit(context);
 

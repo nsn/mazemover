@@ -47,12 +47,10 @@ export function enterBossRoom(): void {
 function generateEnemiesForLevel(level: number, enemyDb: EnemyDatabase): { enemyId: string, position: GridPosition }[] {
   // Calculate enemy budget
   const budget = Math.max(STARTING_LEVEL - level + ENEMY_BUDGET_MODIFIER, ENEMY_BUDGET_MODIFIER);
-  console.log(`[GenerateEnemies] Level ${level}, Budget: ${budget}`);
 
   // Get all available enemy types
   const allEnemyIds = enemyDb.getAllEnemyIds();
   if (allEnemyIds.length === 0) {
-    console.warn("[GenerateEnemies] No enemies in database");
     return [];
   }
 
@@ -89,8 +87,6 @@ function generateEnemiesForLevel(level: number, enemyDb: EnemyDatabase): { enemy
     remainingBudget -= tier;
   }
 
-  console.log(`[GenerateEnemies] Selected ${selectedEnemies.length} enemies:`, selectedEnemies);
-
   // Generate non-edge tile positions
   const nonEdgePositions: GridPosition[] = [];
   for (let row = 1; row < GRID_ROWS - 1; row++) {
@@ -121,12 +117,10 @@ export function fallThroughFloor(currentState: import("./types").GameState): voi
   // Save current inventory and equipment before falling
   globalInventory = [...currentState.inventory];
   globalEquipment = [...currentState.equipment];
-  console.log("[Game] Player fell through the floor! Saved inventory and equipment state");
 
   // Increment global level counter (going deeper into dungeon)
   globalCurrentLevel++;
   globalIsAscending = false;  // Falling deeper (descending)
-  console.log(`[Game] Falling to level: ${globalCurrentLevel}`);
 
   // Generate new level
   k.go("main");
@@ -134,12 +128,9 @@ export function fallThroughFloor(currentState: import("./types").GameState): voi
 
 export function createMainScene(): void {
   k.scene("main", async () => {
-    console.log("[MainScene] Loading assets...");
     await loadAssets();
     await loadEnemyDatabase();
     await loadItemDatabase();
-
-    console.log("[MainScene] Initializing game systems...");
 
     // Initialize managers
     const cursorManager = new CursorManager();
@@ -154,11 +145,9 @@ export function createMainScene(): void {
     state.currentLevel = globalCurrentLevel;
     state.isAscending = globalIsAscending;
     state.isBossRoom = globalIsBossRoom;
-    console.log(`[MainScene] Starting at level ${globalCurrentLevel}, ascending: ${globalIsAscending}, bossRoom: ${globalIsBossRoom}`);
 
     // If in boss room, set all tile decay to 0
     if (globalIsBossRoom) {
-      console.log("[MainScene] Boss room - setting all tile decay to 0");
       for (let row = 0; row < state.grid.length; row++) {
         for (let col = 0; col < state.grid[row].length; col++) {
           state.grid[row][col].decay = 0;
@@ -170,7 +159,6 @@ export function createMainScene(): void {
     let restoredEquipment = false;
     if (globalInventory === null || globalEquipment === null) {
       // First time starting the game - initialize with starting items
-      console.log("[MainScene] First game start - initializing inventory with starting items");
       STARTING_ITEMS.forEach((itemId, index) => {
         const itemDef = itemDatabase.getItem(itemId);
         const charges = itemDef ? itemDef.charges : -1;
@@ -182,7 +170,6 @@ export function createMainScene(): void {
       globalEquipment = [...state.equipment];
     } else {
       // Continuing from previous level - restore saved inventory and equipment
-      console.log("[MainScene] Continuing game - restoring inventory and equipment from previous level");
       state.inventory = [...globalInventory];
       state.equipment = [...globalEquipment];
       restoredEquipment = true;
@@ -212,21 +199,17 @@ export function createMainScene(): void {
             const currentState = turnManager.getState();
             globalInventory = [...currentState.inventory];
             globalEquipment = [...currentState.equipment];
-            console.log("[Game] Saved inventory and equipment state");
 
             // Decrement global level counter
             globalCurrentLevel--;
             globalIsAscending = true;  // Ascending toward surface
-            console.log(`[Game] Player reached the exit! Ascending to level: ${globalCurrentLevel}`);
 
             if (globalCurrentLevel === 0 && !globalIsBossRoom) {
               // Entering boss room!
-              console.log("[Game] Entering boss room!");
               globalIsBossRoom = true;
               k.go("main");
             } else if (globalCurrentLevel < 0 || globalIsBossRoom) {
               // Victory - escaped after defeating boss or went past level 0!
-              console.log("[Game] VICTORY! Player escaped the dungeon!");
               k.add([
                 k.rect(640, 360),
                 k.pos(0, 0),
@@ -253,7 +236,6 @@ export function createMainScene(): void {
               ]);
             } else {
               // Generate new level
-              console.log(`[Game] Generating level ${globalCurrentLevel}...`);
               k.go("main");
             }
           }
@@ -263,7 +245,6 @@ export function createMainScene(): void {
 
     // Boss room setup or normal level setup
     if (globalIsBossRoom) {
-      console.log("[MainScene] Setting up BOSS ROOM");
       // Boss room: spawn player at 2/6, king at 2/2
       objManager.createPlayer({ row: 2, col: 6 }, "Player1");
 
@@ -272,19 +253,16 @@ export function createMainScene(): void {
         try {
           const player = objManager.getPlayer();
           if (player) {
-            console.log("[MainScene] Applying equipment bonuses...");
             applyEquipmentBonuses(player, state.equipment, itemDatabase);
-            console.log("[MainScene] Applied equipment bonuses from restored equipment");
           }
         } catch (error) {
-          console.error("[MainScene] Error applying equipment bonuses:", error);
+          // Error applying equipment bonuses
         }
       }
 
       // Spawn king at position 2/2
       const king = objManager.createEnemy({ row: 2, col: 2 }, "king");
       king.isInStartLevelSequence = true;
-      console.log("[MainScene] Spawned king at (2,2)");
     } else {
       // Normal level setup
       // Create player on opposite side from exit
@@ -297,18 +275,10 @@ export function createMainScene(): void {
         try {
           const player = objManager.getPlayer();
           if (player) {
-            console.log("[MainScene] Applying equipment bonuses...");
-            console.log("[MainScene] Player stats before:", player.stats);
-            console.log("[MainScene] Player baseStats:", player.baseStats);
-            console.log("[MainScene] Equipment:", state.equipment);
             applyEquipmentBonuses(player, state.equipment, itemDatabase);
-            console.log("[MainScene] Applied equipment bonuses from restored equipment");
-            console.log("[MainScene] Player stats after:", player.stats);
-          } else {
-            console.error("[MainScene] Could not find player to apply equipment bonuses");
           }
         } catch (error) {
-          console.error("[MainScene] Error applying equipment bonuses:", error);
+          // Error applying equipment bonuses
         }
       }
 
@@ -324,30 +294,19 @@ export function createMainScene(): void {
     }
 
     // Create and start the level sequence
-    console.log("[MainScene] Starting level sequence...");
-    console.log("[MainScene] Game state:", {
-      isInStartLevelSequence: state.isInStartLevelSequence,
-      revealedTilesCount: state.revealedTiles.size,
-      hasCurrentTile: state.currentTile !== null
-    });
-
     const startSequence = new StartLevelSequence(
       turnManager.getState(),
       objManager,
       () => {
-        console.log("[MainScene] Render called from StartLevelSequence");
         render();
       },
       () => {
-        console.log("[MainScene] Level sequence complete, starting player turn");
         turnManager.startPlayerTurn();
       }
     );
 
     // Start the sequence (async, but we don't await)
-    console.log("[MainScene] Calling startSequence.start()...");
     startSequence.start();
-    console.log("[MainScene] startSequence.start() called (async)");
   });
 }
 

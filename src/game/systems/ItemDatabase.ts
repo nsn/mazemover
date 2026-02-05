@@ -1,11 +1,9 @@
 import type { ItemDefinition } from "../types";
-import { logger } from "../utils/logger";
 
 export class ItemDatabase {
   private items: Map<string, ItemDefinition> = new Map();
 
   async load(path: string): Promise<void> {
-    logger.debug(`[ItemDatabase] Loading items from ${path}...`);
     try {
       const response = await fetch(path);
       if (!response.ok) {
@@ -51,7 +49,6 @@ export class ItemDatabase {
         }
       }
 
-      console.log(`[ItemDatabase] Loaded ${this.items.size} items`);
     } catch (error) {
       console.error("[ItemDatabase] Error loading items:", error);
       throw error;

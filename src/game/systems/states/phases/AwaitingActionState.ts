@@ -70,7 +70,6 @@ export class AwaitingActionState implements PlayerPhaseState {
    * - Calls `context.onStateChange()` to trigger render
    */
   onEnter(context: StateContext): void {
-    console.log("[AwaitingActionState] Entering AwaitingAction phase");
     context.state.playerPhase = PlayerPhase.AwaitingAction;
     context.resetAnimation();
     context.onStateChange();
@@ -86,7 +85,6 @@ export class AwaitingActionState implements PlayerPhaseState {
    * Does NOT call onStateChange (next phase will).
    */
   onExit(_context: StateContext): void {
-    console.log("[AwaitingActionState] Exiting AwaitingAction phase");
     // No cleanup needed
   }
 
@@ -107,11 +105,9 @@ export class AwaitingActionState implements PlayerPhaseState {
    */
   enterTilePlacement(context: StateContext): PlayerPhaseState | null {
     if (!context.state.currentTile) {
-      console.log("[AwaitingActionState] Cannot enter tile placement - no tile available");
       return null;
     }
 
-    console.log("[AwaitingActionState] Entering tile placement mode");
     return new TilePlacementState();
   }
 
@@ -148,7 +144,6 @@ export class AwaitingActionState implements PlayerPhaseState {
       return;
     }
 
-    console.log("[AwaitingActionState] Rotating tile in hand");
     context.state.currentTile = {
       ...context.state.currentTile,
       orientation: rotateTile(context.state.currentTile.orientation),
@@ -235,11 +230,9 @@ export class AwaitingActionState implements PlayerPhaseState {
   enterRotationMode(context: StateContext): PlayerPhaseState | null {
     const player = context.objectManager.getPlayer();
     if (!player) {
-      console.log("[AwaitingActionState] Cannot enter rotation mode - no player");
       return null;
     }
 
-    console.log("[AwaitingActionState] Entering rotation mode at player position");
     return new RotatingTileState(player.gridPosition);
   }
 

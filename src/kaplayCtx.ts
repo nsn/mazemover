@@ -42,6 +42,9 @@ export const k = kaplay({
     down: {
       keyboard: ["down", "s", "j"],
     },
+    abort: {
+      keyboard: ["escape"],
+    },
     debug: {
       keyboard: ["p"],
     }

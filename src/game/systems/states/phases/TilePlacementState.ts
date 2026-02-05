@@ -78,7 +78,6 @@ export class TilePlacementState implements PlayerPhaseState {
    * - Calls `context.onStateChange()` to trigger render
    */
   onEnter(context: StateContext): void {
-    console.log("[TilePlacementState] Entering TilePlacement phase");
     context.state.playerPhase = PlayerPhase.TilePlacement;
     context.onStateChange();
   }
@@ -96,7 +95,6 @@ export class TilePlacementState implements PlayerPhaseState {
    * - Clears `context.state.selectedPlot = null`
    */
   onExit(context: StateContext): void {
-    console.log("[TilePlacementState] Exiting TilePlacement phase");
     context.state.selectedPlot = null;
   }
 
@@ -135,12 +133,10 @@ export class TilePlacementState implements PlayerPhaseState {
       context.state.selectedPlot.col === plot.col &&
       context.state.selectedPlot.direction === plot.direction
     ) {
-      console.log("[TilePlacementState] Same plot clicked, executing push");
       return this.executePush(context);
     }
 
     // Otherwise, select this plot
-    console.log("[TilePlacementState] Plot selected:", plot);
     context.state.selectedPlot = plot;
     context.onStateChange();
     return null;
@@ -167,7 +163,6 @@ export class TilePlacementState implements PlayerPhaseState {
       return;
     }
 
-    console.log("[TilePlacementState] Rotating tile in hand");
     context.state.currentTile = {
       ...context.state.currentTile,
       orientation: rotateTile(context.state.currentTile.orientation),
@@ -199,11 +194,8 @@ export class TilePlacementState implements PlayerPhaseState {
    */
   executePush(context: StateContext): PlayerPhaseState | null {
     if (!context.state.currentTile || !context.state.selectedPlot) {
-      console.log("[TilePlacementState] Cannot execute push - missing tile or plot");
       return null;
     }
-
-    console.log("[TilePlacementState] Executing push with tile:", context.state.currentTile.type);
 
     // Move objects affected by the push
     context.objectManager.handlePush(context.state.selectedPlot);
@@ -234,7 +226,6 @@ export class TilePlacementState implements PlayerPhaseState {
 
     // Auto-draw new tile for continuous placement
     context.state.currentTile = context.deck.draw();
-    console.log("[TilePlacementState] Push complete, auto-drew new tile:", context.state.currentTile?.type);
 
     // Trigger render
     context.onStateChange();
@@ -257,7 +248,6 @@ export class TilePlacementState implements PlayerPhaseState {
    * - Calls `context.onStateChange()`
    */
   cancelPlacement(context: StateContext): PlayerPhaseState | null {
-    console.log("[TilePlacementState] Cancelling tile placement");
     context.state.selectedPlot = null;
     context.onStateChange();
 

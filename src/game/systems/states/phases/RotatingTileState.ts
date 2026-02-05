@@ -99,8 +99,6 @@ export class RotatingTileState implements PlayerPhaseState {
    * - Calls `context.onStateChange()` to trigger render with darkened overlay
    */
   onEnter(context: StateContext): void {
-    console.log("[RotatingTileState] Entering RotatingTile phase at position:", this.position);
-
     const { row, col } = this.position;
     const tile = context.state.grid[row][col];
 
@@ -125,7 +123,6 @@ export class RotatingTileState implements PlayerPhaseState {
    * - Clears `context.state.originalTileOrientation = null`
    */
   onExit(context: StateContext): void {
-    console.log("[RotatingTileState] Exiting RotatingTile phase");
     context.state.rotatingTilePosition = null;
     context.state.originalTileOrientation = null;
   }
@@ -240,14 +237,11 @@ export class RotatingTileState implements PlayerPhaseState {
    */
   rotatePlayerTile(context: StateContext): void {
     if (!context.state.rotatingTilePosition) {
-      console.warn("[RotatingTileState] Cannot rotate - no rotatingTilePosition");
       return;
     }
 
     const { row, col } = context.state.rotatingTilePosition;
     const tile = context.state.grid[row][col];
-
-    console.log("[RotatingTileState] Rotating grid tile at", { row, col }, "from", tile.orientation);
 
     context.state.grid[row][col] = {
       ...tile,
@@ -273,8 +267,6 @@ export class RotatingTileState implements PlayerPhaseState {
    * onExit() clears rotatingTilePosition and originalTileOrientation.
    */
   confirmRotation(context: StateContext): PlayerPhaseState | null {
-    console.log("[RotatingTileState] Confirming rotation");
-
     if (!context.state.rotatingTilePosition) {
       return new AwaitingActionState();
     }
@@ -328,13 +320,11 @@ export class RotatingTileState implements PlayerPhaseState {
    */
   cancelRotation(context: StateContext): PlayerPhaseState | null {
     if (!context.state.rotatingTilePosition || context.state.originalTileOrientation === null) {
-      console.warn("[RotatingTileState] Cannot cancel - missing rotation state");
       // Return to AwaitingAction anyway to recover
       return new AwaitingActionState();
     }
 
     const { row, col } = context.state.rotatingTilePosition;
-    console.log("[RotatingTileState] Cancelling rotation, restoring original orientation:", context.state.originalTileOrientation);
 
     // Restore original orientation
     context.state.grid[row][col] = {

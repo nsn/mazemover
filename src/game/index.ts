@@ -3,7 +3,6 @@ import { TurnManager } from "./systems/TurnManager";
 import { InputController } from "./systems/InputController";
 import { CursorManager } from "./systems/CursorManager";
 import { ClickManager, type ClickCallbacks } from "./systems/ClickManager";
-import { logger } from "./utils/logger";
 import {
   drawPlots,
   drawCurrentTile,
@@ -47,6 +46,53 @@ let lastHoveredItemId: string | null = null;
 let lastHighlightedSlots: number[] = [];
 let hoveredTilePosition: GridPosition | null = null;
 let connectedTiles: GridPosition[] = [];
+
+/**
+ * Plays a gray magic effect on the specified tiles (for repair items like cement and bricks)
+ * Creates expanding/fading gray circles on each affected tile
+ */
+function playRepairEffect(tiles: GridPosition[]): void {
+  const EFFECT_DURATION = 0.4;
+
+  for (const pos of tiles) {
+    const x = GRID_OFFSET_X + pos.col * TILE_SIZE + TILE_SIZE / 2;
+    const y = GRID_OFFSET_Y + pos.row * TILE_SIZE + TILE_SIZE / 2;
+
+    // Create gray magic effect circle
+    const effect = k.add([
+      k.circle(TILE_SIZE / 2),
+      k.pos(x, y),
+      k.anchor("center"),
+      k.color(128, 128, 128), // Gray color
+      k.opacity(0.6),
+      k.scale(0.3),
+      k.z(150),
+      "repairEffect",
+    ]);
+
+    // Scale up animation
+    k.tween(
+      0.3,
+      1.2,
+      EFFECT_DURATION,
+      (val) => {
+        effect.scale = k.vec2(val, val);
+      },
+      k.easings.easeOutQuad
+    );
+
+    // Fade out animation
+    k.tween(
+      0.6,
+      0,
+      EFFECT_DURATION,
+      (val) => { effect.opacity = val; },
+      k.easings.easeOutQuad
+    ).onEnd(() => {
+      k.destroy(effect);
+    });
+  }
+}
 
 /**
  * Finds all tiles connected to a given position without breaking walls
@@ -131,13 +177,10 @@ function findConnectedTiles(
  */
 function selectItemByTier(maxTier: number, itemDatabase: any): string | null {
   const allItems = itemDatabase.getAllItems();
-  console.log(`[selectItemByTier] Total items in database: ${allItems.length}, maxTier: ${maxTier}`);
 
   const eligibleItems = allItems.filter((item: any) => item.tier <= maxTier);
-  console.log(`[selectItemByTier] Eligible items (tier <= ${maxTier}): ${eligibleItems.length}`);
 
   if (eligibleItems.length === 0) {
-    console.log(`[selectItemByTier] No eligible items found!`);
     return null;
   }
 
@@ -159,11 +202,8 @@ function selectItemByTier(maxTier: number, itemDatabase: any): string | null {
     }
   }
 
-  console.log(`[selectItemByTier] Weighted items pool size: ${weightedItems.length}`);
-
   // Select random item from weighted array
   const selectedId = weightedItems[Math.floor(Math.random() * weightedItems.length)];
-  console.log(`[selectItemByTier] Selected item: ${selectedId}`);
   return selectedId;
 }
 
@@ -190,33 +230,23 @@ async function handleClick(): Promise<void> {
 
     // Check if item is a consumable
     if (itemDef.type === "Consumable") {
-      console.log(`[Consumable] Using ${itemDef.name}`);
 
       // Consume the item based on its type
       if (itemDef.id === "apple") {
         if (player && player.currentHP !== undefined && player.stats) {
           const maxHP = player.stats.hp;
           const healAmount = 5;
-          const hpBefore = player.currentHP;
           player.currentHP = Math.min(player.currentHP + healAmount, maxHP);
-          const actualHeal = player.currentHP - hpBefore;
-
-          console.log(`[Apple] Healed ${actualHeal} HP (${hpBefore} -> ${player.currentHP}/${maxHP})`);
         }
       } else if (itemDef.id === "ham") {
         if (player && player.currentHP !== undefined && player.stats) {
           const maxHP = player.stats.hp;
-          const hpBefore = player.currentHP;
           player.currentHP = maxHP;
-          const actualHeal = player.currentHP - hpBefore;
-
-          console.log(`[Ham] Restored to full health: ${actualHeal} HP healed (${hpBefore} -> ${player.currentHP}/${maxHP})`);
         }
       } else if (itemDef.id === "feather") {
         if (player) {
           // Grant flying ability
           player.flying = true;
-          console.log(`[Feather] Player can now fly over decayed tiles`);
 
           // Add flying buff to state
           state.buffs.push({
@@ -239,48 +269,45 @@ async function handleClick(): Promise<void> {
             { row: playerPos.row, col: playerPos.col + 1 }, // East
           ];
 
-          // Remove decay from each tile
-          let restoredCount = 0;
+          // Collect valid tiles and remove decay from each
+          const affectedTiles: GridPosition[] = [];
           tilesToRestore.forEach(pos => {
             if (pos.row >= 0 && pos.row < GRID_ROWS &&
                 pos.col >= 0 && pos.col < GRID_COLS) {
+              affectedTiles.push(pos);
               const tile = state.grid[pos.row][pos.col];
               if (tile && tile.decay > 0) {
                 tile.decay = 0;
-                restoredCount++;
-                console.log(`[Cement] Removed decay from tile (${pos.row},${pos.col})`);
               }
             }
           });
 
-          console.log(`[Cement] Restored ${restoredCount} tiles (current + adjacent)`);
+          // Play repair effect on affected tiles
+          playRepairEffect(affectedTiles);
         }
       } else if (itemDef.id === "bricks") {
-        // Decrease all tiles' decay by a random value between 1 and 3
-        let restoredCount = 0;
+        // Collect all tiles with decay and decrease their decay by a random value between 1 and 3
+        const affectedTiles: GridPosition[] = [];
         for (let row = 0; row < GRID_ROWS; row++) {
           for (let col = 0; col < GRID_COLS; col++) {
             const tile = state.grid[row][col];
             if (tile && tile.decay > 0) {
+              affectedTiles.push({ row, col });
               const decayReduction = Math.floor(Math.random() * 3) + 1; // Random 1-3
-              const oldDecay = tile.decay;
               tile.decay = Math.max(0, tile.decay - decayReduction);
-              restoredCount++;
-              console.log(`[Bricks] Reduced decay at (${row},${col}) by ${decayReduction}: ${oldDecay} -> ${tile.decay}`);
             }
           }
         }
 
-        console.log(`[Bricks] Reduced decay on ${restoredCount} tiles`);
+        // Play repair effect on all affected tiles
+        playRepairEffect(affectedTiles);
       }
 
       // Decrease charges
       item.remainingCharges--;
-      console.log(`[Consumable] Charges remaining: ${item.remainingCharges}`);
 
       // Remove item if charges depleted
       if (item.remainingCharges <= 0) {
-        console.log(`[Consumable] ${itemDef.name} depleted and removed from inventory`);
         state.inventory[inventoryItem.index] = null;
       }
 
@@ -300,18 +327,6 @@ async function handleClick(): Promise<void> {
       // Apply stat bonuses after equipping
       applyEquipmentBonuses(player, state.equipment, itemDatabase);
 
-      // Debug log equipment slots
-      console.log("[Equipment] After equipping:");
-      state.equipment.forEach((item, index) => {
-        const slotName = ["Head", "MainHand", "OffHand", "Legs", "Torso"][index];
-        if (item) {
-          const itemDef = itemDatabase.getItem(item.definitionId);
-          console.log(`  [${index}] ${slotName}: ${itemDef?.name || item.definitionId}`);
-        } else {
-          console.log(`  [${index}] ${slotName}: empty`);
-        }
-      });
-
       render();
     }
     return; // Don't process other clicks if we clicked an inventory item
@@ -330,18 +345,6 @@ async function handleClick(): Promise<void> {
     if (success && player) {
       // Apply stat bonuses after unequipping (removes bonuses)
       applyEquipmentBonuses(player, state.equipment, itemDatabase);
-
-      // Debug log equipment slots
-      console.log("[Equipment] After unequipping:");
-      state.equipment.forEach((item, index) => {
-        const slotName = ["Head", "MainHand", "OffHand", "Legs", "Torso"][index];
-        if (item) {
-          const itemDef = itemDatabase.getItem(item.definitionId);
-          console.log(`  [${index}] ${slotName}: ${itemDef?.name || item.definitionId}`);
-        } else {
-          console.log(`  [${index}] ${slotName}: empty`);
-        }
-      });
 
       render();
     }
@@ -363,7 +366,6 @@ async function handleClick(): Promise<void> {
         const occupiedSlots = getOccupiedSlots(itemDef);
         if (occupiedSlots.includes(clickedSlotIndex)) {
           // This item is blocking the clicked slot - unequip it
-          console.log(`[Equipment] Clicked blocked slot ${clickedSlotIndex}, unequipping blocking item from slot ${i}`);
           const success = unequipItemToInventory(
             state.inventory,
             state.equipment,
@@ -373,18 +375,6 @@ async function handleClick(): Promise<void> {
 
           if (success && player) {
             applyEquipmentBonuses(player, state.equipment, itemDatabase);
-
-            // Debug log equipment slots
-            console.log("[Equipment] After unequipping (clicked blocked slot):");
-            state.equipment.forEach((item, index) => {
-              const slotName = ["Head", "MainHand", "OffHand", "Legs", "Torso"][index];
-              if (item) {
-                const itemDef = itemDatabase.getItem(item.definitionId);
-                console.log(`  [${index}] ${slotName}: ${itemDef?.name || item.definitionId}`);
-              } else {
-                console.log(`  [${index}] ${slotName}: empty`);
-              }
-            });
 
             render();
           }
@@ -399,8 +389,6 @@ async function handleClick(): Promise<void> {
 }
 
 async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Promise<void> {
-  logger.debug("[movePlayerAlongPath] START - path length:", path.length, "isAnimating before:", isAnimating);
-
   if (path.length <= 1) {
     render();
     return;
@@ -410,7 +398,6 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
   turnManager.resetWallBumpCounter();
 
   isAnimating = true;
-  logger.debug("[movePlayerAlongPath] isAnimating set to true");
 
   try {
   const stepDuration = 0.15;
@@ -451,13 +438,10 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
     k.z(2), // Above decay overlay and tiles
     "movingPlayer",
   ]);
-  logger.debug("[movePlayerAlongPath] Moving sprite created");
 
   const objectManager = turnManager.getObjectManager();
 
-  logger.debug("[movePlayerAlongPath] Starting path loop, path.length:", path.length);
   for (let i = 1; i < path.length; i++) {
-    logger.debug(`[movePlayerAlongPath] Step ${i}/${path.length - 1} - moving to:`, path[i]);
     const previousPosition = { ...player.gridPosition };
     const to = path[i];
 
@@ -486,7 +470,6 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
     }
 
     const currentPos = movingSprite.pos.clone();
-    logger.debug(`[movePlayerAlongPath] Starting tween to (${endX}, ${endY})`);
 
     k.tween(
       currentPos,
@@ -498,16 +481,13 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
       k.easings.easeOutQuad
     );
 
-    logger.debug(`[movePlayerAlongPath] Waiting ${stepDuration}s for tween...`);
     await Promise.race([
       k.wait(stepDuration),
       new Promise(resolve => setTimeout(resolve, 1000)) // 1s timeout
     ]);
-    logger.debug(`[movePlayerAlongPath] Tween complete`);
 
     player.gridPosition.row = to.row;
     player.gridPosition.col = to.col;
-    logger.debug(`[movePlayerAlongPath] Updated player position to (${to.row}, ${to.col})`);
 
     if (enemy) {
       const combatResult = executeCombat(player, enemy);
@@ -545,7 +525,6 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
       // Check if king took damage (but didn't die) - teleport to random immovable tile
       if (enemy.aiType === AIType.King && combatResult.attackerAttack.hit && !combatResult.attackerAttack.defenderDied) {
-        console.log(`[Combat] King took damage and survived`);
         teleportKingToRandomImmovableTile(enemy, objectManager);
       }
 
@@ -629,12 +608,10 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
         }
 
         objectManager.destroyObject(enemy);
-        logger.debug("[Game] Enemy defeated - bouncing player back");
 
         // Check if king was defeated in boss room - trigger victory
         const state = turnManager.getState();
         if (state.isBossRoom && enemy.aiType === AIType.King) {
-          console.log("[Game] King defeated! VICTORY!");
           // Delay victory screen slightly to let animations finish
           k.wait(0.5, () => {
             k.add([
@@ -663,8 +640,6 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
             ]);
           });
         }
-      } else {
-        logger.debug("[Game] Enemy survived - bouncing player back");
       }
 
       // Always bounce player back to previous position after combat
@@ -695,17 +670,12 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
     }
 
     objectManager.checkInteractions(player, previousPosition, turnManager.getState().inventory);
-    logger.debug(`[movePlayerAlongPath] Step ${i} complete`);
   }
 
-  logger.debug("[movePlayerAlongPath] Path loop complete");
   k.destroyAll("movingPlayer");
-  logger.debug("[movePlayerAlongPath] Movement sprite destroyed");
   turnManager.getObjectManager().spendMovement(player, path.length - 1);
-  logger.debug("[movePlayerAlongPath] Movement spent");
 
   isAnimating = false;
-  logger.debug("[movePlayerAlongPath] isAnimating set to false");
 
   // Check if player falls through the floor (if not flying)
   if (!player.flying) {
@@ -714,14 +684,10 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
 
     if (fallChance > 0) {
       const roll = Math.random();
-      logger.debug(`[movePlayerAlongPath] Fall check: decay=${currentTile.decay}, chance=${fallChance}, roll=${roll}`);
 
       if (roll < fallChance) {
-        console.log(`[Game] Player fell through the floor! (decay=${currentTile.decay}, chance=${fallChance}, roll=${roll})`);
-
         // Set animating to prevent other actions during fall
         isAnimating = true;
-        console.log("[Fall] isAnimating set to true - fall animation starting");
 
         try {
           // Play fall animation
@@ -749,37 +715,29 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
         } finally {
           // Reset animating flag before scene transition
           isAnimating = false;
-          console.log("[Fall] isAnimating set to false - fall animation complete");
         }
 
         // Transition to next level (going deeper)
         fallThroughFloor(turnManager.getState());
 
         // Don't continue with normal turn flow
-        logger.debug("[movePlayerAlongPath] END (player fell)");
         return;
       }
     }
   }
 
   turnManager.completeMove();
-  logger.debug("[movePlayerAlongPath] Move completed, executing enemy turns");
   await executeEnemyTurns();
-  logger.debug("[movePlayerAlongPath] Enemy turns complete");
   // startPlayerTurn() is now called inside executeEnemyTurns()
-  logger.debug("[movePlayerAlongPath] END");
   } catch (error) {
     console.error("[movePlayerAlongPath] Error during player movement:", error);
     k.destroyAll("movingPlayer");
     isAnimating = false;
-    console.log("[movePlayerAlongPath] isAnimating set to false - error recovery");
     render();
   }
 }
 
 async function skipPlayerTurn(_player: MapObject): Promise<void> {
-  logger.debug("Skipping player turn - passing to enemies");
-
   isAnimating = true;
   isAnimating = false;
 
@@ -789,10 +747,7 @@ async function skipPlayerTurn(_player: MapObject): Promise<void> {
 }
 
 async function animateWallBump(player: MapObject, targetPos: GridPosition): Promise<void> {
-  logger.debug(`[WallBump] Animating bump from ${player.gridPosition.row},${player.gridPosition.col} toward ${targetPos.row},${targetPos.col}`);
-
   isAnimating = true;
-  console.log("[WallBump] isAnimating set to true - wall bump animation starting");
 
   try {
     // Remove player from map objects (will be rendered as moving sprite)
@@ -872,13 +827,11 @@ async function animateWallBump(player: MapObject, targetPos: GridPosition): Prom
     // Guaranteed cleanup
     k.destroyAll("movingPlayer");
     isAnimating = false;
-    console.log("[WallBump] isAnimating set to false - wall bump animation complete");
     render();
   }
 }
 
 async function handleWallBump(player: MapObject, targetPos: GridPosition): Promise<void> {
-  logger.debug("[handleWallBump] START - player moves:", player.movesRemaining);
   const state = turnManager.getState();
 
   // Check if player has required equipment to break walls
@@ -902,8 +855,6 @@ async function handleWallBump(player: MapObject, targetPos: GridPosition): Promi
   }
 
   if (!hasRequiredEquipment) {
-    logger.debug("[handleWallBump] No required equipment - wall bump has no effect");
-    console.log("[WallBump] Cannot break walls without a two-handed weapon or both MainHand and OffHand equipped");
     return;
   }
 
@@ -919,23 +870,17 @@ async function handleWallBump(player: MapObject, targetPos: GridPosition): Promi
     state.wallBumpTarget = { ...targetPos };
   }
 
-  logger.debug(`[WallBump] Count: ${state.wallBumpCount}/3`);
-
   // Animate the bump
-  logger.debug("[handleWallBump] Starting animation...");
   await animateWallBump(player, targetPos);
-  logger.debug("[handleWallBump] Animation complete");
 
   // Decrease charges for equipped items
   for (let i = 0; i < state.equipment.length; i++) {
     const item = state.equipment[i];
     if (item && item.remainingCharges > -1) {
       item.remainingCharges--;
-      console.log(`[WallBump] Decreased charges for ${item.definitionId}: ${item.remainingCharges + 1} -> ${item.remainingCharges}`);
 
       // Remove item if charges depleted
       if (item.remainingCharges <= 0) {
-        console.log(`[WallBump] Item ${item.definitionId} depleted and removed from equipment`);
         state.equipment[i] = null;
 
         // Reapply equipment bonuses to update player stats
@@ -956,7 +901,6 @@ async function handleWallBump(player: MapObject, targetPos: GridPosition): Promi
 
   // Check if we've reached 3 bumps
   if (state.wallBumpCount >= 3) {
-    logger.debug("[WallBump] Breaking wall!");
     openWall(state.grid, player.gridPosition, targetPos);
     state.wallBumpCount = 0;
     state.wallBumpTarget = null;
@@ -964,26 +908,19 @@ async function handleWallBump(player: MapObject, targetPos: GridPosition): Promi
   }
 
   // Spend movement point
-  logger.debug("[handleWallBump] Spending movement - before:", player.movesRemaining);
   turnManager.getObjectManager().spendMovement(player, 1);
-  logger.debug("[handleWallBump] Spending movement - after:", player.movesRemaining);
   render();  // Update UI to show remaining moves
 
   // Check if player has moves remaining, otherwise trigger enemy turn
   if (player.movesRemaining <= 0) {
-    logger.debug("[handleWallBump] No moves remaining, executing enemy turns...");
     await executeEnemyTurns();
-    logger.debug("[handleWallBump] Enemy turns complete");
   }
-  logger.debug("[handleWallBump] END");
 }
 
 /**
  * Teleports the king to a random immovable tile (even row AND even col)
  */
 function teleportKingToRandomImmovableTile(king: MapObject, objectManager: any): void {
-  console.log(`[King] Teleporting to random immovable tile`);
-
   // Find all immovable tiles (even row AND even col)
   const immovableTiles: GridPosition[] = [];
   for (let row = 0; row < GRID_ROWS; row++) {
@@ -1007,7 +944,6 @@ function teleportKingToRandomImmovableTile(king: MapObject, objectManager: any):
   if (immovableTiles.length > 0) {
     // Pick random immovable tile
     const targetTile = immovableTiles[Math.floor(Math.random() * immovableTiles.length)];
-    console.log(`[King] Teleporting from (${king.gridPosition.row},${king.gridPosition.col}) to (${targetTile.row},${targetTile.col})`);
 
     // Create teleport visual effect at old position
     const oldX = GRID_OFFSET_X + king.gridPosition.col * TILE_SIZE + TILE_SIZE / 2;
@@ -1049,8 +985,6 @@ function teleportKingToRandomImmovableTile(king: MapObject, objectManager: any):
       teleportOut.destroy();
       teleportIn.destroy();
     });
-  } else {
-    console.log(`[King] No available immovable tiles for king to teleport to`);
   }
 }
 
@@ -1063,14 +997,11 @@ async function processBombs(): Promise<void> {
 
   if (bombs.length === 0) return;
 
-  console.log(`[Bombs] Processing ${bombs.length} bombs`);
-
   for (const bomb of bombs) {
     if (bomb.bombTurnsRemaining === undefined) continue;
 
     // Decrement timer
     bomb.bombTurnsRemaining--;
-    console.log(`[Bombs] Bomb ${bomb.id} at (${bomb.gridPosition.row},${bomb.gridPosition.col}): ${bomb.bombTurnsRemaining} turns remaining`);
 
     // Check if bomb should explode
     if (bomb.bombTurnsRemaining <= 0) {
@@ -1087,7 +1018,6 @@ async function processBombs(): Promise<void> {
  */
 async function explodeBomb(bomb: MapObject): Promise<void> {
   isAnimating = true;
-  console.log(`[Bomb] Exploding bomb ${bomb.id} at (${bomb.gridPosition.row},${bomb.gridPosition.col})`);
 
   const objectManager = turnManager.getObjectManager();
   const state = turnManager.getState();
@@ -1115,7 +1045,6 @@ async function explodeBomb(bomb: MapObject): Promise<void> {
 
     // Check bounds
     if (adjRow < 0 || adjRow >= GRID_ROWS || adjCol < 0 || adjCol >= GRID_COLS) {
-      console.log(`[Bomb] ${dir.name} direction out of bounds`);
       continue;
     }
 
@@ -1124,18 +1053,14 @@ async function explodeBomb(bomb: MapObject): Promise<void> {
 
     if (isWallBlocking) {
       // Wall blocks this direction - destroy the wall by opening all edges
-      console.log(`[Bomb] ${dir.name} wall blocking - converting tile to Cross (removing all walls)`);
       bombTile.type = TileType.Cross;
       bombTile.orientation = 0;
       // Don't spawn explosion in this direction - the wall absorbed it
     } else {
       // No wall blocking - explosion spreads to adjacent tile
-      console.log(`[Bomb] ${dir.name} open - explosion spreads to (${adjRow},${adjCol})`);
       explosionPositions.push({ row: adjRow, col: adjCol });
     }
   }
-
-  console.log(`[Bomb] Creating ${explosionPositions.length} explosions`);
 
   // Spawn explosion sprites
   const explosionSprites: any[] = [];
@@ -1162,9 +1087,7 @@ async function explodeBomb(bomb: MapObject): Promise<void> {
 
     for (const mob of mobsOnTile) {
       if (mob.currentHP !== undefined) {
-        const hpBefore = mob.currentHP;
         mob.currentHP = Math.max(0, mob.currentHP - 10);
-        console.log(`[Bomb] Explosion dealt 10 damage to ${mob.name} at (${pos.row},${pos.col}): ${hpBefore} -> ${mob.currentHP}`);
 
         // Show damage text
         spawnScrollingText({
@@ -1178,17 +1101,14 @@ async function explodeBomb(bomb: MapObject): Promise<void> {
 
         // Check if king took damage (but didn't die) - teleport to random immovable tile
         if (mob.type === ObjectType.Enemy && mob.aiType === AIType.King && mob.currentHP > 0) {
-          console.log(`[Bomb] King took explosion damage and survived`);
           teleportKingToRandomImmovableTile(mob, objectManager);
         }
 
         // Check if mob died
         if (mob.currentHP <= 0) {
           if (mob.type === ObjectType.Player) {
-            console.log("[Bomb] Player died from explosion!");
             // TODO: Handle player death
           } else {
-            console.log(`[Bomb] Enemy ${mob.name} died from explosion`);
             objectManager.destroyObject(mob);
           }
         }
@@ -1200,9 +1120,7 @@ async function explodeBomb(bomb: MapObject): Promise<void> {
         pos.col >= 0 && pos.col < state.grid[0].length) {
       const tile = state.grid[pos.row][pos.col];
       if (tile) {
-        const oldDecay = tile.decay;
         tile.decay = Math.min(tile.decay + 1, 10);  // Max decay is 10
-        console.log(`[Bomb] Increased decay at (${pos.row},${pos.col}) from ${oldDecay} to ${tile.decay}`);
       }
     }
   }
@@ -1227,7 +1145,6 @@ async function explodeBomb(bomb: MapObject): Promise<void> {
 }
 
 async function executeEnemyTurns(): Promise<void> {
-  logger.debug("[executeEnemyTurns] START");
   const state = turnManager.getState();
   const objectManager = turnManager.getObjectManager();
   const player = objectManager.getPlayer();
@@ -1242,11 +1159,8 @@ async function executeEnemyTurns(): Promise<void> {
   // Process bombs after enemy turns
   await processBombs();
 
-  logger.debug("[executeEnemyTurns] Starting new player turn...");
   turnManager.startPlayerTurn();
   render();
-  logger.debug("[executeEnemyTurns] END");
-  logger.debug("################ TURN COMPLETE ################");
 }
 
 /**
@@ -1254,7 +1168,6 @@ async function executeEnemyTurns(): Promise<void> {
  */
 async function animateHealing(healer: MapObject, target: MapObject): Promise<void> {
   isAnimating = true;
-  console.log(`[Healing] isAnimating set to true - enemy ${healer.id} healing ${target.id}`);
 
   try {
     const healDuration = 0.5;
@@ -1320,8 +1233,6 @@ async function animateHealing(healer: MapObject, target: MapObject): Promise<voi
       target.currentHP = Math.min(target.currentHP + healAmount, target.stats.hp);
       const actualHeal = target.currentHP - hpBefore;
 
-      console.log(`[Healing] Healed ${target.name} for ${actualHeal} HP (${hpBefore} -> ${target.currentHP}/${target.stats.hp})`);
-
       // Show heal text
       spawnScrollingText({
         text: `+${actualHeal}`,
@@ -1341,7 +1252,6 @@ async function animateHealing(healer: MapObject, target: MapObject): Promise<voi
     console.error("[Healing] Error during healing:", error);
   } finally {
     isAnimating = false;
-    console.log("[Healing] isAnimating set to false - healing complete");
   }
 }
 
@@ -1350,7 +1260,6 @@ async function animateHealing(healer: MapObject, target: MapObject): Promise<voi
  */
 async function animateRangedAttack(enemy: MapObject): Promise<void> {
   isAnimating = true;
-  console.log(`[RangedAttack] isAnimating set to true - enemy ${enemy.id} attacking`);
 
   try {
     const player = turnManager.getObjectManager().getPlayer();
@@ -1439,14 +1348,12 @@ async function animateRangedAttack(enemy: MapObject): Promise<void> {
     if (combatResult.attackerAttack.defenderDied) {
       const objectManager = turnManager.getObjectManager();
       objectManager.destroyObject(player);
-      logger.debug("[Game] Player was killed by ranged attack!");
     }
 
   } catch (error) {
     console.error("[RangedAttack] Error during ranged attack:", error);
   } finally {
     isAnimating = false;
-    console.log("[RangedAttack] isAnimating set to false - ranged attack complete");
   }
 }
 
@@ -1455,7 +1362,6 @@ async function animateRangedAttack(enemy: MapObject): Promise<void> {
  */
 async function animateTeleport(enemy: MapObject, targetPos: GridPosition): Promise<void> {
   isAnimating = true;
-  console.log(`[Teleport] isAnimating set to true - enemy ${enemy.id} teleporting from (${enemy.gridPosition.row},${enemy.gridPosition.col}) to (${targetPos.row},${targetPos.col})`);
 
   try {
     const teleportDuration = 0.4;
@@ -1550,7 +1456,6 @@ async function animateTeleport(enemy: MapObject, targetPos: GridPosition): Promi
     if (player) {
       const distance = manhattanDistance(enemy.gridPosition, player.gridPosition);
       if (distance === 1) {
-        console.log(`[Teleport] Enemy ${enemy.id} adjacent to player, executing combat`);
         const combatResult = executeCombat(enemy, player);
 
         // Show damage text
@@ -1585,7 +1490,6 @@ async function animateTeleport(enemy: MapObject, targetPos: GridPosition): Promi
         if (combatResult.attackerAttack.defenderDied) {
           const objectManager = turnManager.getObjectManager();
           objectManager.destroyObject(player);
-          logger.debug("[Teleport] Player was killed by assassin!");
         }
       }
     }
@@ -1594,7 +1498,6 @@ async function animateTeleport(enemy: MapObject, targetPos: GridPosition): Promi
     console.error("[Teleport] Error during teleport:", error);
   } finally {
     isAnimating = false;
-    console.log("[Teleport] isAnimating set to false - teleport complete");
     render();
   }
 }
@@ -1608,7 +1511,6 @@ function manhattanDistance(a: GridPosition, b: GridPosition): number {
  */
 async function animateSummon(summoner: MapObject, summonPos: GridPosition): Promise<void> {
   isAnimating = true;
-  console.log(`[Summon] isAnimating set to true - summoner ${summoner.id} summoning skeleton at (${summonPos.row},${summonPos.col})`);
 
   try {
     const summonDuration = 0.5;
@@ -1650,7 +1552,6 @@ async function animateSummon(summoner: MapObject, summonPos: GridPosition): Prom
     // Create skeleton at summon position
     const objectManager = turnManager.getObjectManager();
     const skeleton = objectManager.createEnemy(summonPos, "skeleton");
-    console.log(`[Summon] Created skeleton ${skeleton.id} at (${summonPos.row},${summonPos.col})`);
 
     // Calculate skeleton sprite position
     const skeletonX = GRID_OFFSET_X + summonPos.col * TILE_SIZE + TILE_SIZE / 2 + skeleton.spriteOffset.x;
@@ -1665,8 +1566,6 @@ async function animateSummon(summoner: MapObject, summonPos: GridPosition): Prom
       "summonedSkeleton",
     ]);
 
-    console.log(`[Summon] Created skeleton sprite playing rise animation`);
-
     // Wait for rise animation to complete
     // Rise animation is frames 4-7 (4 frames), assuming default animation speed
     const riseAnimDuration = 0.6;
@@ -1676,7 +1575,6 @@ async function animateSummon(summoner: MapObject, summonPos: GridPosition): Prom
     ]);
 
     // Destroy the temporary sprite
-    console.log(`[Summon] Destroying temporary skeleton sprite`);
     skeletonSprite.destroy();
 
     // The skeleton object exists in objectManager, it will be rendered normally on next render()
@@ -1685,7 +1583,6 @@ async function animateSummon(summoner: MapObject, summonPos: GridPosition): Prom
     console.error("[Summon] Error during summon:", error);
   } finally {
     isAnimating = false;
-    console.log("[Summon] isAnimating set to false - summon complete");
     render();
   }
 }
@@ -1695,7 +1592,6 @@ async function animateSummon(summoner: MapObject, summonPos: GridPosition): Prom
  */
 async function animateBossSpawn(king: MapObject, enemyType: string, spawnPos: GridPosition): Promise<void> {
   isAnimating = true;
-  console.log(`[BossSpawn] isAnimating set to true - king ${king.id} spawning ${enemyType} at (${spawnPos.row},${spawnPos.col})`);
 
   try {
     const spawnDuration = 0.5;
@@ -1738,7 +1634,6 @@ async function animateBossSpawn(king: MapObject, enemyType: string, spawnPos: Gr
     const objectManager = turnManager.getObjectManager();
     const spawnedEnemy = objectManager.createEnemy(spawnPos, enemyType);
     spawnedEnemy.spawnedByKing = true;  // Mark enemy as spawned by king for bomb drops
-    console.log(`[BossSpawn] Created ${enemyType} ${spawnedEnemy.id} at (${spawnPos.row},${spawnPos.col}) (spawned by king)`);
 
     // Calculate spawn position
     const spawnX = GRID_OFFSET_X + spawnPos.col * TILE_SIZE + TILE_SIZE / 2 + spawnedEnemy.spriteOffset.x;
@@ -1756,8 +1651,6 @@ async function animateBossSpawn(king: MapObject, enemyType: string, spawnPos: Gr
       "bossSpawnedEnemy",
     ]);
 
-    console.log(`[BossSpawn] Created ${enemyType} sprite${hasRiseAnim ? ' with rise animation' : ''}`);
-
     // If it has a rise animation, wait for it
     if (hasRiseAnim) {
       const riseAnimDuration = 0.6;
@@ -1774,7 +1667,6 @@ async function animateBossSpawn(king: MapObject, enemyType: string, spawnPos: Gr
     }
 
     // Destroy the temporary sprite
-    console.log(`[BossSpawn] Destroying temporary ${enemyType} sprite`);
     spawnedSprite.destroy();
 
     // The enemy object exists in objectManager, it will be rendered normally on next render()
@@ -1783,7 +1675,6 @@ async function animateBossSpawn(king: MapObject, enemyType: string, spawnPos: Gr
     console.error("[BossSpawn] Error during boss spawn:", error);
   } finally {
     isAnimating = false;
-    console.log("[BossSpawn] isAnimating set to false - boss spawn complete");
     render();
   }
 }
@@ -1791,39 +1682,32 @@ async function animateBossSpawn(king: MapObject, enemyType: string, spawnPos: Gr
 async function animateEnemyMove(move: EnemyMove): Promise<void> {
   const { enemy, path, isRangedAttack, isHealingAction, healTarget, isTeleportAction, isSummonAction, summonPosition, isBossSpawnAction, bossSpawnEnemyType, bossSpawnPosition } = move;
 
-  console.log(`[animateEnemyMove] Enemy ${enemy.id}: isRangedAttack=${isRangedAttack}, isHealingAction=${isHealingAction}, isTeleportAction=${isTeleportAction}, isSummonAction=${isSummonAction}, isBossSpawnAction=${isBossSpawnAction}, path.length=${path.length}`);
-
   // Check if this is a healing action
   if (isHealingAction && healTarget) {
-    console.log(`[animateEnemyMove] Calling animateHealing for enemy ${enemy.id} targeting ${healTarget.id}`);
     await animateHealing(enemy, healTarget);
     return;
   }
 
   // Check if this is a ranged attack
   if (isRangedAttack) {
-    console.log(`[animateEnemyMove] Calling animateRangedAttack for enemy ${enemy.id}`);
     await animateRangedAttack(enemy);
     return;
   }
 
   // Check if this is a teleport action
   if (isTeleportAction) {
-    console.log(`[animateEnemyMove] Calling animateTeleport for enemy ${enemy.id}`);
     await animateTeleport(enemy, path[path.length - 1]);
     return;
   }
 
   // Check if this is a summon action
   if (isSummonAction && summonPosition) {
-    console.log(`[animateEnemyMove] Calling animateSummon for enemy ${enemy.id}`);
     await animateSummon(enemy, summonPosition);
     return;
   }
 
   // Check if this is a boss spawn action
   if (isBossSpawnAction && bossSpawnEnemyType && bossSpawnPosition) {
-    console.log(`[animateEnemyMove] Calling animateBossSpawn for enemy ${enemy.id}`);
     await animateBossSpawn(enemy, bossSpawnEnemyType, bossSpawnPosition);
     return;
   }
@@ -1831,7 +1715,6 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
   if (path.length <= 1) return;
 
   isAnimating = true;
-  console.log(`[EnemyMove] isAnimating set to true - enemy ${enemy.id} moving`);
 
   try {
     const stepDuration = 0.12;
@@ -1894,7 +1777,6 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
 
     // If blocked by another enemy, stop movement here
     if (blockingEnemy) {
-      logger.debug(`[animateEnemyMove] Enemy ${enemy.id} blocked by enemy ${blockingEnemy.id} at (${to.row},${to.col})`);
       break;
     }
 
@@ -1975,7 +1857,6 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
       // Remove dead target (player) and complete movement to tile center
       if (combatResult.attackerAttack.defenderDied) {
         objectManager.destroyObject(target);
-        logger.debug("[Game] Player was killed by enemy!");
 
         // Complete movement to tile center (was stopped 16 pixels before)
         const finalPos = movingSprite.pos.clone();
@@ -1995,7 +1876,6 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
         ]);
       } else {
         // Defender survived - bounce enemy back to previous position
-        logger.debug("[Game] Defender survived - bouncing enemy back");
         const bounceX = GRID_OFFSET_X + previousPos.col * TILE_SIZE + TILE_SIZE / 2;
         const bounceY = GRID_OFFSET_Y + previousPos.row * TILE_SIZE + TILE_SIZE / 2;
 
@@ -2030,7 +1910,6 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
     turnManager.getObjectManager().spendMovement(enemy, path.length - 1);
 
     isAnimating = false;
-    console.log("[animateEnemyMove] isAnimating set to false - enemy animation complete");
     render();
   }
 }
@@ -2137,7 +2016,6 @@ async function tryMovePlayerInDirection(rowDelta: number, colDelta: number): Pro
 
   // Check if target is within grid bounds
   if (targetRow < 0 || targetRow >= GRID_ROWS || targetCol < 0 || targetCol >= GRID_COLS) {
-    logger.debug("Target out of bounds");
     return;
   }
 
@@ -2151,7 +2029,6 @@ async function tryMovePlayerInDirection(rowDelta: number, colDelta: number): Pro
   );
 
   if (target && target.path.length > 1) {
-    logger.debug(`Keyboard move to (${targetRow}, ${targetCol})`);
     movePlayerAlongPath(player, target.path);
   } else {
     // Check if this is a wall bump (adjacent tile blocked by wall)
@@ -2160,10 +2037,7 @@ async function tryMovePlayerInDirection(rowDelta: number, colDelta: number): Pro
     const isAdjacent = (dRow === 1 && dCol === 0) || (dRow === 0 && dCol === 1);
 
     if (isAdjacent && isWallBlocking(state.grid, player.gridPosition, targetPos)) {
-      logger.debug("Keyboard wall bump detected");
       await handleWallBump(player, targetPos);
-    } else {
-      logger.debug("Target tile not reachable");
     }
   }
 }
@@ -2200,7 +2074,6 @@ export function setCursorManager(_cm: CursorManager): void {
 
 export function resetAnimationFlag(): void {
   isAnimating = false;
-  console.log("[Game] Animation flag forcefully reset");
 }
 
 // Initialize all game event handlers
@@ -2230,7 +2103,6 @@ export function initializeGameHandlers(
       tm.confirmRotation();
       render();
       // Rotating a tile ends the player's turn - execute enemy turns
-      console.log("[Rotation] Tile rotated, executing enemy turns");
       await executeEnemyTurns();
     },
     onCancelRotation: () => {
@@ -2288,13 +2160,22 @@ export function initializeGameHandlers(
   k.onButtonPress("debug", () => {
     if (isAnimating) return;
 
-    console.log("[Debug] Entering boss room instantly");
-
     // Call enterBossRoom to set the global state
     enterBossRoom();
 
     // Reload the main scene to enter boss room
     k.go("main");
+  });
+
+  // Abort button - exit tile placement or rotation mode
+  k.onButtonPress("abort", () => {
+    if (isAnimating) return;
+
+    if (tm.isTilePlacement()) {
+      tm.cancelPlacement();
+    } else if (tm.isRotatingTile()) {
+      tm.cancelRotation();
+    }
   });
 
   // Set up input controller callbacks
@@ -2398,7 +2279,6 @@ async function executePushWithAnimation(): Promise<void> {
   if (!state.currentTile || !state.selectedPlot) return;
 
   isAnimating = true;
-  console.log("[Push] isAnimating set to true - tile push animation starting");
   clearAll();
 
   const mapObjects = turnManager.getMapObjects();
@@ -2423,12 +2303,10 @@ async function executePushWithAnimation(): Promise<void> {
     );
 
     // Pushing a tile ends the player's turn - execute enemy turns
-    console.log("[Push] Tile pushed, executing enemy turns");
     await executeEnemyTurns();
   } catch (error) {
     console.error("[executePushWithAnimation] Error during push animation:", error);
     isAnimating = false;
-    console.log("[executePushWithAnimation] isAnimating set to false - error recovery");
     turnManager.executePush();
     render();
   }
@@ -2497,17 +2375,9 @@ function drawConnectedTilesHighlight(
   }
 }
 
-let renderCallCount = 0;
-
 export function render(): void {
   if (isAnimating) {
     return;
-  }
-
-  renderCallCount++;
-  if (renderCallCount % 100 === 1) {
-    // Log every 100th render to avoid console spam
-    console.log("[Render] Render call #" + renderCallCount + ", isInStartLevelSequence:", turnManager?.getState()?.isInStartLevelSequence);
   }
 
   clearAll();

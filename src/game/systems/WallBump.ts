@@ -78,8 +78,6 @@ function findBestTileUpgrade(
   requiredDirection: Direction
 ): { type: TileType; orientation: Orientation; preservedCount: number } | null {
   const currentEdges = getTileEdges(currentTile.type, currentTile.orientation);
-  console.log(`[findBestTileUpgrade] Current: ${currentTile.type} orient ${currentTile.orientation}, edges:`, currentEdges);
-  console.log(`[findBestTileUpgrade] Need opening in direction: ${requiredDirection}`);
 
   // Try all tile types in order of preference (fewest openings first to minimize changes)
   const tileTypes: TileType[] = [TileType.L, TileType.Straight, TileType.T, TileType.Cross];
@@ -119,10 +117,6 @@ function findBestTileUpgrade(
     }
   }
 
-  if (bestOption) {
-    console.log(`[findBestTileUpgrade] Best: ${bestOption.type} orient ${bestOption.orientation}, preserves ${bestOption.preservedCount} openings`);
-  }
-
   return bestOption;
 }
 
@@ -135,34 +129,24 @@ export function openWall(
   from: GridPosition,
   to: GridPosition
 ): boolean {
-  console.log(`[openWall] START - from: ${from.row},${from.col} to: ${to.row},${to.col}`);
-
   const wallDir = getWallDirection(from, to);
-  console.log(`[openWall] Wall direction:`, wallDir);
   if (wallDir === null) return false;
 
   const fromTile = grid[from.row][from.col];
   const toTile = grid[to.row][to.col];
-  console.log(`[openWall] From tile:`, fromTile?.type, fromTile?.orientation);
-  console.log(`[openWall] To tile:`, toTile?.type, toTile?.orientation);
 
   if (!fromTile || !toTile) return false;
 
   // Calculate opposite direction for the "to" tile
   const oppositeDir = ((wallDir + 2) % 4) as Direction;
-  console.log(`[openWall] Opposite direction:`, oppositeDir);
 
   // Find best tile upgrades for both tiles
   const fromUpgrade = findBestTileUpgrade(fromTile, wallDir);
   const toUpgrade = findBestTileUpgrade(toTile, oppositeDir);
 
   if (!fromUpgrade || !toUpgrade) {
-    console.warn("[WallBump] Cannot create opening - impossible tile configuration");
     return false;
   }
-
-  console.log(`[openWall] From tile: ${fromTile.type} → ${fromUpgrade.type}, orientation ${fromUpgrade.orientation}`);
-  console.log(`[openWall] To tile: ${toTile.type} → ${toUpgrade.type}, orientation ${toUpgrade.orientation}`);
 
   // Update grid with new tile types and orientations, preserving decay
   grid[from.row][from.col] = {
@@ -176,6 +160,5 @@ export function openWall(
     decay: toTile.decay,
   };
 
-  console.log(`[WallBump] Opened wall from ${from.row},${from.col} to ${to.row},${to.col}`);
   return true;
 }

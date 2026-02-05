@@ -124,7 +124,6 @@ export function unequipItemToInventory(
     equipment[slotIndex] = null;
   }
 
-  console.log(`[EquipmentManager] Unequipped ${itemDef.name} from slots ${slotsToFree.join(", ")}`);
   return true;
 }
 
@@ -219,7 +218,6 @@ export function equipItemFromInventory(
   const firstSlot = Math.min(...slotsToOccupy);
   equipment[firstSlot] = itemToEquip;
 
-  console.log(`[EquipmentManager] Equipped ${itemDef.name} to slot ${firstSlot} (blocks slots ${slotsToOccupy.join(", ")})`);
   return true;
 }
 
@@ -303,5 +301,4 @@ export function applyEquipmentBonuses(
     player.currentHP = player.stats.hp;
   }
 
-  console.log(`[EquipmentManager] Applied bonuses: HP+${bonuses.hp}, ATK+${bonuses.atk}, DEF+${bonuses.def}, AGI+${bonuses.agi}`);
 }

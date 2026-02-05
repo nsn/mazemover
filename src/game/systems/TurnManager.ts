@@ -8,7 +8,6 @@ import type { EnemyDatabase } from "./EnemyDatabase";
 import type { ItemDatabase } from "./ItemDatabase";
 import type { TurnState, StateContext } from "./states/interfaces";
 import { PlayerTurnState, AwaitingActionState } from "./states";
-import { logger } from "../utils/logger";
 
 export type TurnManagerCallback = () => void;
 
@@ -152,18 +151,15 @@ export class TurnManager {
    */
   startPlayerTurn(): void {
     if (this.useStatePattern) {
-      console.log("[TurnManager] startPlayerTurn (state pattern)");
       this.objectManager.resetAllTurnMovement();
 
       // Only draw a new tile if we don't have one
       // (First turn or after tile was somehow consumed without replacement)
       if (!this.state.currentTile) {
         this.state.currentTile = this.deck.draw();
-        console.log("[TurnManager] Drew initial tile:", this.state.currentTile?.type);
       }
 
       this.state.selectedPlot = null;
-      console.log("[TurnManager] Player turn started - tile:", this.state.currentTile?.type);
 
       // Transition to player turn state
       const oldState = this.currentTurnState;
@@ -174,7 +170,6 @@ export class TurnManager {
       }
     } else {
       // Legacy implementation
-      console.log("[TurnManager] startPlayerTurn (legacy)");
       this.objectManager.resetAllTurnMovement();
 
       // Only draw a new tile if we don't have one
@@ -185,7 +180,6 @@ export class TurnManager {
       this.state.selectedPlot = null;
       this.state.turnOwner = TurnOwner.Player;
       this.state.playerPhase = PlayerPhase.AwaitingAction;
-      console.log("[TurnManager] Player turn started - tile:", this.state.currentTile?.type);
       this.onStateChange();
     }
   }
@@ -202,7 +196,6 @@ export class TurnManager {
    */
   startEnemyTurn(): void {
     if (this.useStatePattern) {
-      console.log("[TurnManager] startEnemyTurn (state pattern)");
       const oldState = this.currentTurnState;
       this.currentTurnState = oldState.startEnemyTurn(this.stateContext);
       if (oldState !== this.currentTurnState) {
@@ -211,7 +204,6 @@ export class TurnManager {
       }
     } else {
       // Legacy implementation
-      console.log("[TurnManager] startEnemyTurn (legacy)");
       this.state.turnOwner = TurnOwner.Enemy;
       this.onStateChange();
     }
@@ -257,13 +249,11 @@ export class TurnManager {
 
   enterTilePlacement(): void {
     if (this.useStatePattern) {
-      console.log("[TurnManager] enterTilePlacement (state pattern) - canPlace:", this.canPlaceTile());
       if (this.currentTurnState instanceof PlayerTurnState) {
         this.currentTurnState.enterTilePlacement(this.stateContext);
       }
     } else {
       // Legacy implementation
-      console.log("[TurnManager] enterTilePlacement (legacy) - canPlace:", this.canPlaceTile());
       if (this.canPlaceTile()) {
         this.state.playerPhase = PlayerPhase.TilePlacement;
         this.onStateChange();
@@ -273,13 +263,11 @@ export class TurnManager {
 
   selectPlot(plot: PlotPosition): void {
     if (this.useStatePattern) {
-      console.log("[TurnManager] selectPlot (state pattern):", plot, "phase:", this.state.playerPhase);
       if (this.currentTurnState instanceof PlayerTurnState) {
         this.currentTurnState.selectPlot(this.stateContext, plot);
       }
     } else {
       // Legacy implementation
-      console.log("[TurnManager] selectPlot (legacy):", plot, "phase:", this.state.playerPhase);
       if (this.isTilePlacement()) {
         if (this.state.selectedPlot && this.isSelectedPlot(plot)) {
           this.executePush();
@@ -324,13 +312,11 @@ export class TurnManager {
   executePush(): void {
     this.resetWallBumpCounter();
     if (this.useStatePattern) {
-      console.log("[TurnManager] executePush (state pattern) - tile:", this.state.currentTile?.type, "plot:", this.state.selectedPlot);
       if (this.currentTurnState instanceof PlayerTurnState) {
         this.currentTurnState.executePush(this.stateContext);
       }
     } else {
       // Legacy implementation
-      console.log("[TurnManager] executePush (legacy) - tile:", this.state.currentTile?.type, "plot:", this.state.selectedPlot);
       if (!this.state.currentTile || !this.state.selectedPlot) return;
 
       this.objectManager.handlePush(this.state.selectedPlot);
@@ -348,7 +334,6 @@ export class TurnManager {
 
       // Auto-draw new tile for continuous placement
       this.state.currentTile = this.deck.draw();
-      console.log("[TurnManager] Push complete - auto-drew new tile:", this.state.currentTile?.type);
       this.onStateChange();
     }
   }
@@ -371,13 +356,11 @@ export class TurnManager {
 
   cancelPlacement(): void {
     if (this.useStatePattern) {
-      console.log("[TurnManager] cancelPlacement (state pattern) - phase:", this.state.playerPhase);
       if (this.currentTurnState instanceof PlayerTurnState) {
         this.currentTurnState.cancelPlacement(this.stateContext);
       }
     } else {
       // Legacy implementation
-      console.log("[TurnManager] cancelPlacement (legacy) - phase:", this.state.playerPhase);
       if (this.isTilePlacement()) {
         this.state.selectedPlot = null;
         this.state.playerPhase = PlayerPhase.AwaitingAction;
@@ -391,13 +374,11 @@ export class TurnManager {
   startMoving(): void {
     if (this.useStatePattern) {
       if (this.canMove() && this.currentTurnState instanceof PlayerTurnState) {
-        console.log("[TurnManager] startMoving (state pattern)");
         this.currentTurnState.startMoving(this.stateContext);
       }
     } else {
       // Legacy implementation
       if (this.canMove()) {
-        console.log("[TurnManager] startMoving (legacy)");
         this.state.playerPhase = PlayerPhase.Moving;
         this.onStateChange();
       }
@@ -406,7 +387,6 @@ export class TurnManager {
 
   completeMove(): void {
     if (this.useStatePattern) {
-      console.log("[TurnManager] completeMove (state pattern) - yielding to enemies");
       if (this.currentTurnState instanceof PlayerTurnState) {
         this.currentTurnState.completeMove(this.stateContext);
       }
@@ -414,7 +394,6 @@ export class TurnManager {
       this.startEnemyTurn();
     } else {
       // Legacy implementation
-      console.log("[TurnManager] completeMove (legacy) - yielding to enemies");
       this.state.playerPhase = PlayerPhase.AwaitingAction;
       this.startEnemyTurn();
     }
@@ -423,13 +402,11 @@ export class TurnManager {
   cancelMoving(): void {
     if (this.useStatePattern) {
       if (this.isMoving() && this.currentTurnState instanceof PlayerTurnState) {
-        console.log("[TurnManager] cancelMoving (state pattern)");
         this.currentTurnState.cancelMoving(this.stateContext);
       }
     } else {
       // Legacy implementation
       if (this.isMoving()) {
-        console.log("[TurnManager] cancelMoving (legacy)");
         this.state.playerPhase = PlayerPhase.AwaitingAction;
         this.onStateChange();
       }
@@ -450,7 +427,6 @@ export class TurnManager {
       const player = this.objectManager.getPlayer();
       if (!player) return;
 
-      console.log("[TurnManager] enterRotationMode (state pattern) at position:", player.gridPosition);
       this.currentTurnState.enterRotationMode(this.stateContext);
     } else {
       // Legacy implementation
@@ -461,8 +437,6 @@ export class TurnManager {
 
       const { row, col } = player.gridPosition;
       const tile = this.state.grid[row][col];
-
-      console.log("[TurnManager] enterRotationMode (legacy) at position:", { row, col });
 
       this.state.rotatingTilePosition = { row, col };
       this.state.originalTileOrientation = tile.orientation;
@@ -483,8 +457,6 @@ export class TurnManager {
       const { row, col } = this.state.rotatingTilePosition;
       const tile = this.state.grid[row][col];
 
-      console.log("[TurnManager] rotatePlayerTile (legacy) - current orientation:", tile.orientation);
-
       this.state.grid[row][col] = {
         ...tile,
         orientation: rotateTile(tile.orientation),
@@ -496,14 +468,11 @@ export class TurnManager {
   confirmRotation(): void {
     if (this.useStatePattern) {
       if (this.currentTurnState instanceof PlayerTurnState) {
-        console.log("[TurnManager] confirmRotation (state pattern)");
         this.currentTurnState.confirmRotation(this.stateContext);
       }
     } else {
       // Legacy implementation
       if (!this.isRotatingTile()) return;
-
-      console.log("[TurnManager] confirmRotation (legacy) - rotation confirmed");
 
       this.state.rotatingTilePosition = null;
       this.state.originalTileOrientation = null;
@@ -515,7 +484,6 @@ export class TurnManager {
   cancelRotation(): void {
     if (this.useStatePattern) {
       if (this.currentTurnState instanceof PlayerTurnState) {
-        console.log("[TurnManager] cancelRotation (state pattern)");
         this.currentTurnState.cancelRotation(this.stateContext);
       }
     } else {
@@ -523,8 +491,6 @@ export class TurnManager {
       if (!this.isRotatingTile() || !this.state.rotatingTilePosition || this.state.originalTileOrientation === null) return;
 
       const { row, col } = this.state.rotatingTilePosition;
-
-      console.log("[TurnManager] cancelRotation (legacy) - restoring original orientation:", this.state.originalTileOrientation);
 
       // Restore original orientation
       this.state.grid[row][col] = {
@@ -544,9 +510,6 @@ export class TurnManager {
    * Should be called when player performs any action other than wall bumping
    */
   resetWallBumpCounter(): void {
-    if (this.state.wallBumpCount > 0) {
-      logger.debug(`[TurnManager] Resetting wall bump counter from ${this.state.wallBumpCount} to 0`);
-    }
     this.state.wallBumpCount = 0;
     this.state.wallBumpTarget = null;
   }

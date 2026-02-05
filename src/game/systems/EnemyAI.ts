@@ -26,10 +26,7 @@ function hasLineOfSight(
   const isSameRow = from.row === to.row;
   const isSameCol = from.col === to.col;
 
-  console.log(`[LOS] Checking from (${from.row},${from.col}) to (${to.row},${to.col}): sameRow=${isSameRow}, sameCol=${isSameCol}`);
-
   if (!isSameRow && !isSameCol) {
-    console.log(`[LOS] Not in straight line - no LOS`);
     return false; // Not a straight line
   }
 
@@ -61,13 +58,11 @@ function hasLineOfSight(
       if (direction > 0) {
         // Moving east
         if (!currentEdges.east || !nextEdges.west) {
-          console.log(`[LOS] Wall blocking at (${currentPos.row},${currentPos.col}) -> (${nextPos.row},${nextPos.col}) moving east`);
           return false; // Wall blocking
         }
       } else {
         // Moving west
         if (!currentEdges.west || !nextEdges.east) {
-          console.log(`[LOS] Wall blocking at (${currentPos.row},${currentPos.col}) -> (${nextPos.row},${nextPos.col}) moving west`);
           return false; // Wall blocking
         }
       }
@@ -99,20 +94,17 @@ function hasLineOfSight(
       if (direction > 0) {
         // Moving south
         if (!currentEdges.south || !nextEdges.north) {
-          console.log(`[LOS] Wall blocking at (${currentPos.row},${currentPos.col}) -> (${nextPos.row},${nextPos.col}) moving south`);
           return false; // Wall blocking
         }
       } else {
         // Moving north
         if (!currentEdges.north || !nextEdges.south) {
-          console.log(`[LOS] Wall blocking at (${currentPos.row},${currentPos.col}) -> (${nextPos.row},${nextPos.col}) moving north`);
           return false; // Wall blocking
         }
       }
     }
   }
 
-  console.log(`[LOS] Clear line of sight!`);
   return true; // Clear line of sight
 }
 
@@ -175,11 +167,9 @@ function calculateRangedMove(
 ): EnemyMove | null {
   // Check if we have line of sight to player
   const hasLOS = hasLineOfSight(grid, enemy.gridPosition, playerPos);
-  console.log(`[RangedAI] Enemy ${enemy.id} at (${enemy.gridPosition.row},${enemy.gridPosition.col}) checking LOS to player at (${playerPos.row},${playerPos.col}): ${hasLOS}`);
 
   if (hasLOS) {
     // Perform ranged attack - no movement, just mark as ranged attack
-    console.log(`[RangedAI] Enemy ${enemy.id} has line of sight - performing ranged attack`);
     return {
       enemy,
       path: [enemy.gridPosition], // Stay in place
@@ -188,7 +178,6 @@ function calculateRangedMove(
   }
 
   // No line of sight, behave like Hunter (move toward player)
-  console.log(`[RangedAI] Enemy ${enemy.id} no line of sight - moving toward player`);
   return calculateHunterMove(grid, enemy, playerPos, blockedPositions);
 }
 
@@ -213,16 +202,12 @@ function calculateHealerMove(
     ally.currentHP > 0  // Not dead
   );
 
-  console.log(`[HealerAI] Enemy ${enemy.id} found ${woundedAllies.length} wounded allies`);
-
   // Check each wounded ally for line of sight
   for (const ally of woundedAllies) {
     const hasLOS = hasLineOfSight(grid, enemy.gridPosition, ally.gridPosition);
-    console.log(`[HealerAI] Enemy ${enemy.id} checking LOS to wounded ally ${ally.id} at (${ally.gridPosition.row},${ally.gridPosition.col}): ${hasLOS}`);
 
     if (hasLOS) {
       // Heal this ally
-      console.log(`[HealerAI] Enemy ${enemy.id} has line of sight to wounded ally - performing heal`);
       return {
         enemy,
         path: [enemy.gridPosition], // Stay in place
@@ -233,12 +218,7 @@ function calculateHealerMove(
   }
 
   // No wounded allies with LOS, behave like Hunter (move toward player and attack normally)
-  console.log(`[HealerAI] Enemy ${enemy.id} no wounded allies with LOS - moving toward player to attack`);
-  const hunterMove = calculateHunterMove(grid, enemy, playerPos, blockedPositions);
-  if (hunterMove) {
-    console.log(`[HealerAI] Enemy ${enemy.id} will move ${hunterMove.path.length - 1} tiles toward player`);
-  }
-  return hunterMove;
+  return calculateHunterMove(grid, enemy, playerPos, blockedPositions);
 }
 
 /**
@@ -261,7 +241,6 @@ function calculateTeleporterMove(
 
   // Increment counter
   enemy.teleportCounter++;
-  console.log(`[TeleporterAI] Enemy ${enemy.id} counter: ${enemy.teleportCounter}/${TELEPORT_THRESHOLD}`);
 
   // Check if ready to teleport
   if (enemy.teleportCounter >= TELEPORT_THRESHOLD) {
@@ -291,7 +270,6 @@ function calculateTeleporterMove(
     if (validPositions.length > 0) {
       // Pick random adjacent position
       const targetPos = validPositions[Math.floor(Math.random() * validPositions.length)];
-      console.log(`[TeleporterAI] Enemy ${enemy.id} teleporting to (${targetPos.row},${targetPos.col})`);
 
       // Reset counter
       enemy.teleportCounter = 0;
@@ -302,14 +280,11 @@ function calculateTeleporterMove(
         path: [enemy.gridPosition, targetPos],
         isTeleportAction: true,
       };
-    } else {
-      console.log(`[TeleporterAI] Enemy ${enemy.id} has no valid teleport positions`);
-      // No valid positions, don't reset counter - will try again next turn
     }
+    // No valid positions, don't reset counter - will try again next turn
   }
 
   // Not ready to teleport or no valid positions, behave like Hunter
-  console.log(`[TeleporterAI] Enemy ${enemy.id} moving normally toward player`);
   return calculateHunterMove(grid, enemy, playerPos, blockedPositions);
 }
 
@@ -334,7 +309,6 @@ function calculateSummonerMove(
 
   // Increment counter
   enemy.summonCounter++;
-  console.log(`[SummonerAI] Enemy ${enemy.id} counter: ${enemy.summonCounter}/${SUMMON_THRESHOLD}`);
 
   // Check if ready to summon
   if (enemy.summonCounter >= SUMMON_THRESHOLD) {
@@ -369,7 +343,6 @@ function calculateSummonerMove(
     if (unoccupiedPositions.length > 0) {
       // Pick random unoccupied position
       const summonPos = unoccupiedPositions[Math.floor(Math.random() * unoccupiedPositions.length)];
-      console.log(`[SummonerAI] Enemy ${enemy.id} summoning skeleton at (${summonPos.row},${summonPos.col})`);
 
       // Reset counter
       enemy.summonCounter = 0;
@@ -381,14 +354,11 @@ function calculateSummonerMove(
         isSummonAction: true,
         summonPosition: summonPos,
       };
-    } else {
-      console.log(`[SummonerAI] Enemy ${enemy.id} has no valid summon positions - skipping summon`);
-      // No valid positions, don't reset counter - will try again next turn
     }
+    // No valid positions, don't reset counter - will try again next turn
   }
 
   // Not ready to summon or no valid positions, behave like Hunter
-  console.log(`[SummonerAI] Enemy ${enemy.id} moving normally toward player`);
   return calculateHunterMove(grid, enemy, playerPos, blockedPositions);
 }
 
@@ -416,8 +386,6 @@ function calculateKingMove(
   // - Then spawn every 10 turns (turn 13, 23, 33, etc.)
   const shouldSpawn = enemy.kingSpawnCounter <= 3 ||
                       (enemy.kingSpawnCounter > 3 && (enemy.kingSpawnCounter - 3) % 10 === 0);
-
-  console.log(`[KingAI] Enemy ${enemy.id} counter: ${enemy.kingSpawnCounter}, shouldSpawn: ${shouldSpawn}`);
 
   // Check if ready to spawn
   if (shouldSpawn) {
@@ -457,8 +425,6 @@ function calculateKingMove(
       const enemyTypes = ["goblin", "bat", "archer", "brute", "shaman", "assassin", "skeleton", "summoner"];
       const randomEnemyType = enemyTypes[Math.floor(Math.random() * enemyTypes.length)];
 
-      console.log(`[KingAI] Enemy ${enemy.id} spawning ${randomEnemyType} at (${spawnPos.row},${spawnPos.col})`);
-
       // Counter keeps incrementing, no reset needed (handled by shouldSpawn logic)
 
       // Return boss spawn action (king stays in place)
@@ -469,14 +435,11 @@ function calculateKingMove(
         bossSpawnEnemyType: randomEnemyType,
         bossSpawnPosition: spawnPos,
       };
-    } else {
-      console.log(`[KingAI] Enemy ${enemy.id} has no valid spawn positions - skipping spawn`);
-      // No valid positions, don't reset counter - will try again next turn
     }
+    // No valid positions, don't reset counter - will try again next turn
   }
 
   // King doesn't move - stay in place
-  console.log(`[KingAI] Enemy ${enemy.id} standing still`);
   return null;
 }
 
@@ -488,7 +451,6 @@ export function calculateEnemyMove(
   allEnemies: MapObject[] = [],
   objectManager?: MapObjectManager
 ): EnemyMove | null {
-  console.log(`[calculateEnemyMove] Enemy ${enemy.id} (${enemy.name}): aiType=${enemy.aiType}, movesRemaining=${enemy.movesRemaining}`);
 
   // Check AI type and dispatch to appropriate function
   if (enemy.aiType === AIType.Ranged) {
@@ -542,10 +504,8 @@ export function calculateAllEnemyMoves(
 
     const move = calculateEnemyMove(grid, enemy, playerPos, otherEnemyPositions, enemies, objectManager);
     if (move) {
-      console.log(`[calculateAllEnemyMoves] Enemy ${enemy.id}: isRangedAttack=${move.isRangedAttack}, isHealingAction=${move.isHealingAction}, isTeleportAction=${move.isTeleportAction}, isSummonAction=${move.isSummonAction}, isBossSpawnAction=${move.isBossSpawnAction}, path.length=${move.path.length}`);
       // Include ranged attacks, healing actions, teleport actions, summon actions, boss spawn actions, and movement
       if (move.isRangedAttack || move.isHealingAction || move.isTeleportAction || move.isSummonAction || move.isBossSpawnAction || move.path.length > 1) {
-        console.log(`[calculateAllEnemyMoves] Adding move for enemy ${enemy.id}`);
         moves.push(move);
         // Update this enemy's position in the map (only if actually moving or teleporting)
         if (!move.isRangedAttack && !move.isHealingAction && !move.isSummonAction && !move.isBossSpawnAction) {

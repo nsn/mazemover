@@ -78,7 +78,6 @@ export class MapObjectManager {
       playerDef.flying || false  // flying
     );
     player.isInStartLevelSequence = true;  // Will be managed by StartLevelSequence
-    console.log(`[MapObjectManager] Created player with stats:`, player.stats);
     return player;
   }
 
@@ -130,7 +129,6 @@ export class MapObjectManager {
     // Initialize movement so enemy can act immediately
     this.resetTurnMovement(enemy);
 
-    console.log(`[MapObjectManager] Created ${enemyDef.name} with stats:`, enemy.stats, `movesRemaining: ${enemy.movesRemaining}`);
     return enemy;
   }
 
@@ -165,7 +163,6 @@ export class MapObjectManager {
     // Store the item definition ID on the object for later reference
     (item as any).itemId = itemId;
 
-    console.log(`[MapObjectManager] Created item ${itemDef.name} (${itemId})`);
     return item;
   }
 
@@ -189,7 +186,6 @@ export class MapObjectManager {
       { x: 0, y: 0 }
     );
     bomb.bombTurnsRemaining = 5;  // 5 turns until explosion
-    console.log(`[MapObjectManager] Created bomb at (${gridPosition.row},${gridPosition.col})`);
     return bomb;
   }
 
@@ -235,7 +231,6 @@ export class MapObjectManager {
     const emptySlotIndex = inventory.findIndex(slot => slot === null);
 
     if (emptySlotIndex === -1) {
-      console.log("[MapObjectManager] Inventory is full, cannot pick up item:", item.name);
       return false;
     }
 
@@ -259,7 +254,6 @@ export class MapObjectManager {
     };
 
     inventory[emptySlotIndex] = itemInstance;
-    console.log(`[MapObjectManager] Picked up ${item.name} and placed in slot ${emptySlotIndex}`);
 
     // Remove item from map
     this.destroyObject(item);
@@ -286,7 +280,6 @@ export class MapObjectManager {
   }
 
   destroyObject(obj: MapObject): void {
-    console.log(`[MapObject] Destroyed: ${obj.name} (${obj.type}) at row=${obj.gridPosition.row}, col=${obj.gridPosition.col}`);
     this.objects.delete(obj.id);
   }
 
@@ -429,7 +422,5 @@ export class MapObjectManager {
         }
       }
     }
-
-    console.log(`[MapObjectManager] Spawned ${itemsSpawned} items on the map`);
   }
 }
