@@ -132,6 +132,7 @@ export interface ItemDefinition {
   sprite: string;  // Sprite atlas name (e.g., "items")
   frame: number;   // Frame index within the sprite atlas
   tier: number;  // Item tier, typically 1-3
+  weight: number;  // Spawn weight for random item selection (higher = more likely)
   charges: number;  // Negative = infinite, default -1 for equipment, 1 for consumables
   statBonuses?: Partial<Stats>;  // Stat bonuses for equipment
   slot?: EquipmentSlot | EquipmentSlot[];  // Single slot or array for two-handed weapons

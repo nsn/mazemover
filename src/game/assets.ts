@@ -4,6 +4,8 @@ import { ItemDatabase } from "./systems/ItemDatabase";
 import { UI } from "./config";
 
 export async function loadAssets(): Promise<void> {
+  await k.loadSprite("title", "/title.png");
+
   await k.loadSprite("tiles", "/tiles.png", {
     sliceX: 6,
     sliceY: 4,
@@ -41,6 +43,15 @@ export async function loadAssets(): Promise<void> {
         right: UI.PATCH_SIZE,
         top: UI.PATCH_SIZE,
         bottom: UI.PATCH_SIZE,
+    },
+  });
+
+  await k.loadSprite("bubble", "/bubble.png", {
+    slice9: {
+        left: 8,
+        right: 8,
+        top: 8,
+        bottom: 8,
     },
   });
 

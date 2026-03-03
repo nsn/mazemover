@@ -17,7 +17,6 @@ import {
 } from "./render/MapObjectRenderer";
 import {
   drawPreviewTile,
-  drawSkipButton,
   drawDebugInfo,
   drawLevelInfo,
   drawStateMachineInfo,
@@ -36,7 +35,7 @@ import { calculateAllEnemyMoves, type EnemyMove } from "./systems/EnemyAI";
 import { executeCombat, checkForCombat } from "./systems/Combat";
 import { isWallBlocking, openWall } from "./systems/WallBump";
 import { applyRandomDecayToTile } from "./core/Grid";
-import { fallThroughFloor, enterBossRoom } from "./mainScene";
+import { fallThroughFloor, enterBossRoom, showGameOver, resetGlobalLevel } from "./mainScene";
 import { getTileEdges } from "./core/Tile";
 
 let turnManager: TurnManager;
@@ -46,6 +45,22 @@ let lastHoveredItemId: string | null = null;
 let lastHighlightedSlots: number[] = [];
 let hoveredTilePosition: GridPosition | null = null;
 let connectedTiles: GridPosition[] = [];
+
+// Context menu state
+interface ContextMenuState {
+  visible: boolean;
+  x: number;
+  y: number;
+  inventoryIndex: number;
+  options: { label: string; action: string }[];
+}
+let contextMenu: ContextMenuState = {
+  visible: false,
+  x: 0,
+  y: 0,
+  inventoryIndex: -1,
+  options: [],
+};
 
 /**
  * Plays a gray magic effect on the specified tiles (for repair items like cement and bricks)
@@ -92,6 +107,238 @@ function playRepairEffect(tiles: GridPosition[]): void {
       k.destroy(effect);
     });
   }
+}
+
+/**
+ * Shows the context menu for an inventory item
+ */
+function showContextMenu(x: number, y: number, inventoryIndex: number): void {
+  const state = turnManager.getState();
+  const item = state.inventory[inventoryIndex];
+  if (!item) return;
+
+  const itemDatabase = turnManager.getObjectManager().getItemDatabase();
+  const itemDef = itemDatabase.getItem(item.definitionId);
+  if (!itemDef) return;
+
+  // Build menu options based on item type
+  const options: { label: string; action: string }[] = [];
+
+  if (itemDef.type === "Consumable") {
+    options.push({ label: "Use", action: "use" });
+  } else if (itemDef.type === "Equipment" && itemDef.slot) {
+    options.push({ label: "Equip", action: "equip" });
+  }
+
+  options.push({ label: "Drop", action: "drop" });
+
+  contextMenu = {
+    visible: true,
+    x,
+    y,
+    inventoryIndex,
+    options,
+  };
+
+  render();
+}
+
+/**
+ * Hides the context menu
+ */
+function hideContextMenu(): void {
+  if (contextMenu.visible) {
+    contextMenu.visible = false;
+    render();
+  }
+}
+
+/**
+ * Draws the context menu using the bubble slice9 sprite
+ */
+function drawContextMenu(): void {
+  if (!contextMenu.visible) return;
+
+  const menuWidth = 50;
+  const optionHeight = 16;
+  const padding = 6;
+  const menuHeight = contextMenu.options.length * optionHeight + padding * 2;
+  const mousePos = k.mousePos();
+
+  // Draw background bubble
+  k.add([
+    k.sprite("bubble", { width: menuWidth, height: menuHeight }),
+    k.pos(contextMenu.x, contextMenu.y),
+    k.z(200),
+    k.area(),
+    "contextMenu",
+  ]);
+
+  // Draw menu options
+  contextMenu.options.forEach((option, index) => {
+    const optionX = contextMenu.x + padding;
+    const optionY = contextMenu.y + padding + index * optionHeight;
+    const optionWidth = menuWidth - padding * 2;
+
+    // Check if mouse is hovering over this option
+    const isHovered = mousePos.x >= optionX && mousePos.x <= optionX + optionWidth &&
+                      mousePos.y >= optionY && mousePos.y <= optionY + optionHeight;
+
+    // Option background (for click detection)
+    k.add([
+      k.rect(optionWidth, optionHeight),
+      k.pos(optionX, optionY),
+      k.color(0, 0, 0),
+      k.opacity(0),
+      k.area(),
+      k.z(201),
+      "contextMenuOption",
+      { optionIndex: index, action: option.action },
+    ]);
+
+    // Option text - white when hovered, dark brown otherwise
+    const textColor = isHovered ? { r: 255, g: 255, b: 255 } : { r: 72, g: 59, b: 58 };
+    k.add([
+      k.text(option.label, { font: "saga", size: 12 }),
+      k.pos(optionX + 2, optionY + 2),
+      k.color(textColor.r, textColor.g, textColor.b),
+      k.z(202),
+      "contextMenu",
+    ]);
+  });
+}
+
+/**
+ * Handles context menu option selection
+ */
+function handleContextMenuAction(action: string): void {
+  const state = turnManager.getState();
+  const item = state.inventory[contextMenu.inventoryIndex];
+
+  if (!item) {
+    hideContextMenu();
+    return;
+  }
+
+  const itemDatabase = turnManager.getObjectManager().getItemDatabase();
+  const itemDef = itemDatabase.getItem(item.definitionId);
+  const player = turnManager.getObjectManager().getPlayer();
+
+  if (action === "drop") {
+    // Remove item from inventory (destroy it)
+    state.inventory[contextMenu.inventoryIndex] = null;
+    hideContextMenu();
+    return;
+  }
+
+  if (action === "use" && itemDef?.type === "Consumable") {
+    // Use the consumable (same logic as left-click)
+    useConsumableItem(contextMenu.inventoryIndex, item, itemDef, player ?? null, state);
+    hideContextMenu();
+    return;
+  }
+
+  if (action === "equip" && itemDef?.type === "Equipment" && itemDef.slot) {
+    // Equip the item
+    const success = equipItemFromInventory(
+      state.inventory,
+      state.equipment,
+      contextMenu.inventoryIndex,
+      itemDatabase
+    );
+
+    if (success && player) {
+      applyEquipmentBonuses(player, state.equipment, itemDatabase);
+    }
+    hideContextMenu();
+    return;
+  }
+
+  hideContextMenu();
+}
+
+/**
+ * Uses a consumable item (extracted for reuse)
+ */
+function useConsumableItem(
+  inventoryIndex: number,
+  item: { definitionId: string; remainingCharges: number },
+  itemDef: { id: string; type: string; sprite: string; frame: number },
+  player: MapObject | null,
+  state: { inventory: any[]; grid: any[][]; buffs: any[] }
+): void {
+  // Consume the item based on its type
+  if (itemDef.id === "apple") {
+    if (player && player.currentHP !== undefined && player.stats) {
+      const maxHP = player.stats.hp;
+      const healAmount = 5;
+      player.currentHP = Math.min(player.currentHP + healAmount, maxHP);
+    }
+  } else if (itemDef.id === "ham") {
+    if (player && player.currentHP !== undefined && player.stats) {
+      const maxHP = player.stats.hp;
+      player.currentHP = maxHP;
+    }
+  } else if (itemDef.id === "feather") {
+    if (player) {
+      player.flying = true;
+      state.buffs.push({
+        id: "flying",
+        name: "Flying",
+        iconSprite: itemDef.sprite,
+        iconFrame: itemDef.frame,
+      });
+    }
+  } else if (itemDef.id === "cement") {
+    if (player) {
+      const playerPos = player.gridPosition;
+      const tilesToRestore = [
+        { row: playerPos.row, col: playerPos.col },
+        { row: playerPos.row - 1, col: playerPos.col },
+        { row: playerPos.row + 1, col: playerPos.col },
+        { row: playerPos.row, col: playerPos.col - 1 },
+        { row: playerPos.row, col: playerPos.col + 1 },
+      ];
+
+      const affectedTiles: GridPosition[] = [];
+      tilesToRestore.forEach(pos => {
+        if (pos.row >= 0 && pos.row < GRID_ROWS &&
+            pos.col >= 0 && pos.col < GRID_COLS) {
+          affectedTiles.push(pos);
+          const tile = state.grid[pos.row][pos.col];
+          if (tile && tile.decay > 0) {
+            tile.decay = 0;
+          }
+        }
+      });
+
+      playRepairEffect(affectedTiles);
+    }
+  } else if (itemDef.id === "bricks") {
+    const affectedTiles: GridPosition[] = [];
+    for (let row = 0; row < GRID_ROWS; row++) {
+      for (let col = 0; col < GRID_COLS; col++) {
+        const tile = state.grid[row][col];
+        if (tile && tile.decay > 0) {
+          affectedTiles.push({ row, col });
+          const decayReduction = Math.floor(Math.random() * 3) + 1;
+          tile.decay = Math.max(0, tile.decay - decayReduction);
+        }
+      }
+    }
+
+    playRepairEffect(affectedTiles);
+  }
+
+  // Decrease charges
+  item.remainingCharges--;
+
+  // Remove item if charges depleted
+  if (item.remainingCharges <= 0) {
+    state.inventory[inventoryIndex] = null;
+  }
+
+  render();
 }
 
 /**
@@ -214,6 +461,21 @@ async function handleClick(): Promise<void> {
   }
 
   const pos = k.mousePos();
+
+  // Check for context menu option clicks first
+  if (contextMenu.visible) {
+    const menuOptions = k.get("contextMenuOption");
+    for (const option of menuOptions) {
+      if ((option as any).hasPoint && (option as any).hasPoint(pos)) {
+        const action = (option as any).action;
+        handleContextMenuAction(action);
+        return;
+      }
+    }
+    // Click outside context menu - close it
+    hideContextMenu();
+    return;
+  }
 
   const state = turnManager.getState();
   const itemDatabase = turnManager.getObjectManager().getItemDatabase();
@@ -567,7 +829,7 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
           // If enemy was spawned by king, drop bomb with 1/3 chance
           if (enemy.spawnedByKing) {
             const bombRoll = Math.random();
-            const bombChance = 1/3;
+            const bombChance = 0.5;
             console.log(`[Combat] King-spawned enemy - bomb drop roll: ${bombRoll.toFixed(3)} vs ${bombChance.toFixed(3)}`);
             if (bombRoll < bombChance) {
               objectManager.createBomb(enemyPos);
@@ -624,7 +886,7 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
             ]);
             k.add([
               k.text("VICTORY!", { size: 48 }),
-              k.pos(320, 150),
+              k.pos(320, 130),
               k.anchor("center"),
               k.color(255, 215, 0),
               k.z(1001),
@@ -632,12 +894,34 @@ async function movePlayerAlongPath(player: MapObject, path: GridPosition[]): Pro
             ]);
             k.add([
               k.text("You defeated the King!", { size: 24 }),
-              k.pos(320, 220),
+              k.pos(320, 190),
               k.anchor("center"),
               k.color(255, 255, 255),
               k.z(1001),
               "victoryText",
             ]);
+            k.add([
+              k.text("The dungeon is saved!", { size: 20 }),
+              k.pos(320, 230),
+              k.anchor("center"),
+              k.color(200, 200, 200),
+              k.z(1001),
+              "victoryText",
+            ]);
+            k.add([
+              k.text("Click to return to title", { size: 16 }),
+              k.pos(320, 290),
+              k.anchor("center"),
+              k.color(150, 150, 150),
+              k.z(1001),
+              "victoryText",
+            ]);
+
+            // Click to return to title
+            k.onMousePress("left", () => {
+              resetGlobalLevel();
+              k.go("title");
+            });
           });
         }
       }
@@ -1107,7 +1391,9 @@ async function explodeBomb(bomb: MapObject): Promise<void> {
         // Check if mob died
         if (mob.currentHP <= 0) {
           if (mob.type === ObjectType.Player) {
-            // TODO: Handle player death
+            // Player died from explosion
+            showGameOver();
+            return;
           } else {
             objectManager.destroyObject(mob);
           }
@@ -1346,8 +1632,8 @@ async function animateRangedAttack(enemy: MapObject): Promise<void> {
 
     // Check if player died
     if (combatResult.attackerAttack.defenderDied) {
-      const objectManager = turnManager.getObjectManager();
-      objectManager.destroyObject(player);
+      showGameOver();
+      return;
     }
 
   } catch (error) {
@@ -1488,8 +1774,8 @@ async function animateTeleport(enemy: MapObject, targetPos: GridPosition): Promi
 
         // Check if player died
         if (combatResult.attackerAttack.defenderDied) {
-          const objectManager = turnManager.getObjectManager();
-          objectManager.destroyObject(player);
+          showGameOver();
+          return;
         }
       }
     }
@@ -1854,26 +2140,12 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
         });
       }
 
-      // Remove dead target (player) and complete movement to tile center
+      // Check if target (player) died
       if (combatResult.attackerAttack.defenderDied) {
-        objectManager.destroyObject(target);
-
-        // Complete movement to tile center (was stopped 16 pixels before)
-        const finalPos = movingSprite.pos.clone();
-        k.tween(
-          finalPos,
-          k.vec2(tileCenterX, tileCenterY),
-          stepDuration * 0.3,
-          (val) => {
-            movingSprite.pos = val;
-          },
-          k.easings.easeOutQuad
-        );
-
-        await Promise.race([
-          k.wait(stepDuration * 0.3),
-          new Promise(resolve => setTimeout(resolve, 1000)) // 1s timeout
-        ]);
+        // Clean up moving sprite before showing game over
+        movingSprite.destroy();
+        showGameOver();
+        return;
       } else {
         // Defender survived - bounce enemy back to previous position
         const bounceX = GRID_OFFSET_X + previousPos.col * TILE_SIZE + TILE_SIZE / 2;
@@ -1915,13 +2187,36 @@ async function animateEnemyMove(move: EnemyMove): Promise<void> {
 }
 
 function handleRightClick(): void {
+  if (isAnimating) return;
+
   const pos = k.mousePos();
+
+  // Close context menu if visible and right-click outside
+  if (contextMenu.visible) {
+    hideContextMenu();
+    return;
+  }
+
+  // Check for right-click on inventory item
+  const inventoryItem = getInventoryItemAtPosition(pos.x, pos.y, turnManager);
+  if (inventoryItem) {
+    showContextMenu(pos.x, pos.y, inventoryItem.index);
+    return;
+  }
+
+  // Pass to click manager for other right-click actions
   clickManager.handleRightClick(pos, turnManager, isAnimating);
 }
 
 function handleMouseMove(): void {
   // Don't process during animations
   if (isAnimating) {
+    return;
+  }
+
+  // Re-render when context menu is visible to update hover highlighting
+  if (contextMenu.visible) {
+    render();
     return;
   }
 
@@ -2167,9 +2462,15 @@ export function initializeGameHandlers(
     k.go("main");
   });
 
-  // Abort button - exit tile placement or rotation mode
+  // Abort button - exit tile placement, rotation mode, or context menu
   k.onButtonPress("abort", () => {
     if (isAnimating) return;
+
+    // Close context menu first if visible
+    if (contextMenu.visible) {
+      hideContextMenu();
+      return;
+    }
 
     if (tm.isTilePlacement()) {
       tm.cancelPlacement();
@@ -2270,6 +2571,8 @@ function clearAll(): void {
   clearUI();
   k.destroyAll("rotationOverlay");
   k.destroyAll("connectedTilesHighlight");
+  k.destroyAll("contextMenu");
+  k.destroyAll("contextMenuOption");
   lastHoveredItemId = null; // Reset hover state so description updates after render
   lastHighlightedSlots = []; // Reset equipment slot highlights
 }
@@ -2386,10 +2689,6 @@ export function render(): void {
   const mapObjects = turnManager.getMapObjects();
   const player = turnManager.getObjectManager().getPlayer();
 
-  // Calculate UI positions
-  const skipButtonX = GRID_OFFSET_X + GRID_COLS * TILE_SIZE + TILE_SIZE * 3;
-  const skipButtonY = 360 / 2 + 80;
-
   // Get item database for UI rendering
   const itemDatabase = turnManager.getObjectManager().getItemDatabase();
 
@@ -2400,13 +2699,13 @@ export function render(): void {
   drawLevelInfo(state.currentLevel);
 
   // Draw saga font sample text
-  k.add([
-    k.text("The quick brown Fox jumps over the lazy Dog.", { font: "saga", size: 16 }),
-    k.pos(GRID_OFFSET_X, 10),
-    k.color(255, 255, 255),
-    k.z(100),
-    "sagaText",
-  ]);
+  // k.add([
+  //   k.text("The quick brown Fox jumps over the lazy Dog.", { font: "saga", size: 16 }),
+  //   k.pos(GRID_OFFSET_X, 10),
+  //   k.color(255, 255, 255),
+  //   k.z(100),
+  //   "sagaText",
+  // ]);
 
   if (state.turnOwner === TurnOwner.Player) {
     if (state.playerPhase === PlayerPhase.RotatingTile) {
@@ -2425,7 +2724,6 @@ export function render(): void {
       if (state.currentTile) {
         drawPreviewTile(state.currentTile, PREVIEW_X, PREVIEW_Y);
       }
-      drawSkipButton(skipButtonX, skipButtonY);
     } else if (state.playerPhase === PlayerPhase.TilePlacement && state.currentTile) {
       drawGridWithOverlay(state.grid, state.selectedPlot, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360, state.isInStartLevelSequence, state.revealedTiles);
       drawDecayOverlay(state.grid, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
@@ -2438,7 +2736,6 @@ export function render(): void {
       } else {
         drawPreviewTile(state.currentTile, PREVIEW_X, PREVIEW_Y);
       }
-      drawSkipButton(skipButtonX, skipButtonY);
     } else {
       drawGridWithOverlay(state.grid, null, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE, 640, 360, state.isInStartLevelSequence, state.revealedTiles);
       drawDecayOverlay(state.grid, GRID_OFFSET_X, GRID_OFFSET_Y, TILE_SIZE, state.isInStartLevelSequence, state.revealedTiles);
@@ -2454,7 +2751,6 @@ export function render(): void {
         const plots = turnManager.getPlots();
         drawPlots(plots, null, state.playerPhase, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE);
       }
-      drawSkipButton(skipButtonX, skipButtonY);
     }
   } else {
     // Enemy turn - still show plots and tile preview
@@ -2470,6 +2766,9 @@ export function render(): void {
       drawPlots(plots, null, state.playerPhase, GRID_OFFSET_X, GRID_OFFSET_Y, GRID_ROWS, GRID_COLS, TILE_SIZE);
     }
   }
+
+  // Draw context menu if visible
+  drawContextMenu();
 
   // Draw debug info
   drawDebugInfo();

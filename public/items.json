@@ -5,6 +5,7 @@
       "sprite": "items",
       "frame": 0,
       "tier": 1,
+      "weight": 1,
       "charges": 6,
       "slot": "OffHand",
       "statBonuses": {
@@ -17,6 +18,7 @@
       "sprite": "items",
       "frame": 1,
       "tier": 2,
+      "weight": 1,
       "charges": 12,
       "slot": "OffHand",
       "statBonuses": {
@@ -27,12 +29,14 @@
     "spatula": {
       "name": "Spatula",
       "sprite": "items",
-      "frame": 1,
+      "frame": 2,
       "tier": 1,
+      "weight": 1,
       "charges": -1,
       "slot": "MainHand",
       "statBonuses": {
-        "atk": 1
+        "atk": 1,
+        "agi": 2
       },
       "description": "A sturdy spatula, doubles as a small blade"
     },
@@ -41,18 +45,21 @@
       "sprite": "items",
       "frame": 3,
       "tier": 2,
+      "weight": 1,
       "charges": -1,
       "slot": "MainHand",
       "statBonuses": {
-        "atk": 2
+        "atk": 2,
+        "agi": 2
       },
       "description": "flat bladed tool for mason work"
     },
-   "mell": {
+    "mell": {
       "name": "Mell",
       "sprite": "items",
       "frame": 5,
       "tier": 1,
+      "weight": 1,
       "charges": -1,
       "slot": "MainHand",
       "statBonuses": {
@@ -65,6 +72,7 @@
       "sprite": "items",
       "frame": 6,
       "tier": 2,
+      "weight": 1,
       "charges": -1,
       "slot": "MainHand",
       "statBonuses": {
@@ -77,6 +85,7 @@
       "sprite": "items",
       "frame": 7,
       "tier": 2,
+      "weight": 1,
       "charges": -1,
       "slot": "MainHand",
       "statBonuses": {
@@ -90,6 +99,7 @@
       "sprite": "items",
       "frame": 8,
       "tier": 3,
+      "weight": 1,
       "charges": -1,
       "slot": "MainHand",
       "statBonuses": {
@@ -101,12 +111,13 @@
       "name": "Heavy Pickaxe",
       "sprite": "items",
       "frame": 9,
-      "tier": 4,
+      "tier": 3,
+      "weight": 1,
       "charges": 18,
       "slot": ["MainHand", "OffHand"],
       "statBonuses": {
         "atk": 5,
-        "agi": -1
+        "def": -2
       },
       "description": "A massive two-handed pickaxe"
     },
@@ -115,10 +126,12 @@
       "sprite": "items",
       "frame": 20,
       "tier": 2,
+      "weight": 1,
       "charges": -1,
       "slot": "Head",
       "statBonuses": {
-        "def": 1
+        "def": 1,
+        "agi": 2
       },
       "description": "A tight fitting linnen cap"
     },
@@ -127,10 +140,12 @@
       "sprite": "items",
       "frame": 21,
       "tier": 2,
+      "weight": 1,
       "charges": -1,
       "slot": "Head",
       "statBonuses": {
-        "def": 2
+        "def": 2,
+        "agi": 1
       },
       "description": "A soft velvet cap"
     },
@@ -139,10 +154,12 @@
       "sprite": "items",
       "frame": 22,
       "tier": 3,
+      "weight": 1,
       "charges": -1,
       "slot": "Head",
       "statBonuses": {
-        "def": 3
+        "def": 3,
+        "hp": 2
       },
       "description": "A light felt hat"
     },
@@ -151,6 +168,7 @@
       "sprite": "items",
       "frame": 40,
       "tier": 2,
+      "weight": 1,
       "charges": -1,
       "slot": "Legs",
       "statBonuses": {
@@ -163,10 +181,12 @@
       "sprite": "items",
       "frame": 41,
       "tier": 3,
+      "weight": 1,
       "charges": -1,
       "slot": "Legs",
       "statBonuses": {
-        "def": 3
+        "def": 3,
+        "hp": 1
       },
       "description": "Padded trousers"
     },
@@ -175,6 +195,7 @@
       "sprite": "items",
       "frame": 42,
       "tier": 4,
+      "weight": 1,
       "charges": -1,
       "slot": "Legs",
       "statBonuses": {
@@ -188,11 +209,12 @@
       "sprite": "items",
       "frame": 60,
       "tier": 1,
+      "weight": 1,
       "charges": -1,
       "slot": "Torso",
       "statBonuses": {
         "def": 2,
-        "hp": 1
+        "hp": 2
       },
       "description": "A simple linnen shirt"
     },
@@ -201,11 +223,12 @@
       "sprite": "items",
       "frame": 61,
       "tier": 3,
+      "weight": 1,
       "charges": -1,
       "slot": "Torso",
       "statBonuses": {
         "def": 3,
-        "hp": 3
+        "agi": 2
       },
       "description": "A well made shirt"
     },
@@ -214,6 +237,7 @@
       "sprite": "items",
       "frame": 62,
       "tier": 1,
+      "weight": 1,
       "charges": -1,
       "slot": "Torso",
       "statBonuses": {
@@ -229,6 +253,7 @@
       "sprite": "items",
       "frame": 80,
       "tier": 3,
+      "weight": 1,
       "charges": 1,
       "description": "Grants ability to fly over decayed tiles"
     },
@@ -237,6 +262,7 @@
       "sprite": "items",
       "frame": 81,
       "tier": 2,
+      "weight": 1.25,
       "charges": 1,
       "description": "Restores to full health"
     },
@@ -245,6 +271,7 @@
       "sprite": "items",
       "frame": 82,
       "tier": 1,
+      "weight": 1.75,
       "charges": 1,
       "statBonuses": {
         "hp": 5
@@ -256,6 +283,7 @@
       "sprite": "items",
       "frame": 83,
       "tier": 2,
+      "weight": 1,
       "charges": 1,
       "statBonuses": {
       },
@@ -266,6 +294,7 @@
       "sprite": "items",
       "frame": 84,
       "tier": 2,
+      "weight": 1,
       "charges": 1,
       "statBonuses": {
       },

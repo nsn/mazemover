@@ -394,13 +394,27 @@ export class MapObjectManager {
   /**
    * Randomly spawns items on empty tiles
    * @param spawnChance Probability (0-1) that each empty tile will have an item
+   * @param level Current dungeon level (used to determine max item tier)
    */
-  spawnRandomItems(spawnChance: number = 0.1): void {
+  spawnRandomItems(spawnChance: number = 0.1, level: number = 10): void {
     const allItems = this.itemDatabase.getAllItems();
     if (allItems.length === 0) {
       console.warn("[MapObjectManager] No items in database, skipping item spawn");
       return;
     }
+
+    // Calculate max tier based on level: deeper levels allow higher tier items
+    const maxTier = Math.max(Math.floor((10 - level) / 2), 1);
+
+    // Filter items to only those with tier <= maxTier
+    const eligibleItems = allItems.filter(item => (item.tier ?? 1) <= maxTier);
+    if (eligibleItems.length === 0) {
+      console.warn("[MapObjectManager] No eligible items for tier", maxTier);
+      return;
+    }
+
+    // Calculate total weight for weighted random selection
+    const totalWeight = eligibleItems.reduce((sum, item) => sum + (item.weight ?? 1), 0);
 
     let itemsSpawned = 0;
 
@@ -415,9 +429,17 @@ export class MapObjectManager {
 
         // Random chance to spawn item
         if (Math.random() < spawnChance) {
-          // Select random item from database
-          const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
-          this.createItem({ row, col }, randomItem.id);
+          // Weighted random selection
+          let roll = Math.random() * totalWeight;
+          let selectedItem = eligibleItems[0];
+          for (const item of eligibleItems) {
+            roll -= (item.weight ?? 1);
+            if (roll <= 0) {
+              selectedItem = item;
+              break;
+            }
+          }
+          this.createItem({ row, col }, selectedItem.id);
           itemsSpawned++;
         }
       }

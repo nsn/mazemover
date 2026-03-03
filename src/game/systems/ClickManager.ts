@@ -56,12 +56,6 @@ export class ClickManager {
       return false;
     }
 
-    // Check for skip button click
-    if (this.checkSkipButton(mousePos)) {
-      this.callbacks.onSkipTurn();
-      return true;
-    }
-
     // Handle rotation mode clicks
     if (state.playerPhase === PlayerPhase.RotatingTile) {
       return this.handleRotationModeClick(mousePos, turnManager);
@@ -100,16 +94,6 @@ export class ClickManager {
       return true;
     }
 
-    return false;
-  }
-
-  private checkSkipButton(mousePos: { x: number; y: number }): boolean {
-    const skipButtons = k.get("skipButton");
-    for (const button of skipButtons) {
-      if ((button as any).hasPoint && (button as any).hasPoint(mousePos)) {
-        return true;
-      }
-    }
     return false;
   }
 

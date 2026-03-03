@@ -1,0 +1,36 @@
+{
+  "phases": [
+    {
+      "phase": 1,
+      "instruction": "Click on highlighted tiles to move.\nTiles must have matching openings to connect.\nTry to reach the stairs to the next level."
+    },
+    {
+      "phase": 2,
+      "instruction": "Click your character to rotate the tile beneath you.\nRotating will also damage the surrounding tiles.\nRotate to open a path forward."
+    },
+    {
+      "phase": 3,
+      "instruction": "Click the arrow to push a tile into the maze.\nThis shifts the entire row or column."
+    },
+    {
+      "phase": 4,
+      "instruction": "Move onto enemies to attack them.\nYour ATK vs their DEF determines damage."
+    },
+    {
+      "phase": 5,
+      "instruction": "Right-click items for options.\nEquip the spatula to boost ATK, then defeat the enemy."
+    },
+    {
+      "phase": 6,
+      "instruction": "Badly damaged tiles are dangerous - you may fall through!\nUse CEMENT to repair adjacent tiles, then cross safely."
+    },
+    {
+      "phase": 7,
+      "instruction": "Equip the pickaxe first!\nThen bump into walls 3 times to break through.\nClick the blocked tile repeatedly."
+    },
+    {
+      "phase": 8,
+      "instruction": "You're ready!\n\nNavigate through 10 dungeon levels.\nReach the exit stairs to ascend.\nDefeat the King in the final room.\nEscape to victory!\n\nReach the exit to start the game!"
+    }
+  ]
+}

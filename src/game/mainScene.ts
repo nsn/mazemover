@@ -24,6 +24,7 @@ let globalIsAscending = false;  // True if ascending toward surface, false if de
 let globalInventory: (import("./types").ItemInstance | null)[] | null = null;
 let globalEquipment: (import("./types").ItemInstance | null)[] | null = null;
 let globalIsBossRoom = false;  // True if in boss room
+let globalPlayerHP: number | null = null;  // Player's current HP that persists between levels
 
 export function resetGlobalLevel(): void {
   globalCurrentLevel = STARTING_LEVEL;
@@ -31,6 +32,7 @@ export function resetGlobalLevel(): void {
   globalInventory = null;
   globalEquipment = null;
   globalIsBossRoom = false;
+  globalPlayerHP = null;
 }
 
 export function enterBossRoom(): void {
@@ -126,6 +128,48 @@ export function fallThroughFloor(currentState: import("./types").GameState): voi
   k.go("main");
 }
 
+export function showGameOver(): void {
+  // Show game over overlay
+  k.add([
+    k.rect(640, 360),
+    k.pos(0, 0),
+    k.color(0, 0, 0),
+    k.opacity(0.8),
+    k.z(1000),
+    "gameOverOverlay",
+  ]);
+  k.add([
+    k.text("GAME OVER", { size: 48 }),
+    k.pos(320, 150),
+    k.anchor("center"),
+    k.color(255, 80, 80),
+    k.z(1001),
+    "gameOverText",
+  ]);
+  k.add([
+    k.text("You have been defeated!", { size: 24 }),
+    k.pos(320, 220),
+    k.anchor("center"),
+    k.color(255, 255, 255),
+    k.z(1001),
+    "gameOverText",
+  ]);
+  k.add([
+    k.text("Click to return to title", { size: 16 }),
+    k.pos(320, 280),
+    k.anchor("center"),
+    k.color(150, 150, 150),
+    k.z(1001),
+    "gameOverText",
+  ]);
+
+  // Click to return to title
+  k.onMousePress("left", () => {
+    resetGlobalLevel();
+    k.go("title");
+  });
+}
+
 export function createMainScene(): void {
   k.scene("main", async () => {
     await loadAssets();
@@ -195,10 +239,14 @@ export function createMainScene(): void {
         "Exit Stairs",
         (_mob, isPlayer) => {
           if (isPlayer) {
-            // Save current inventory and equipment before transitioning
+            // Save current inventory, equipment, and HP before transitioning
             const currentState = turnManager.getState();
             globalInventory = [...currentState.inventory];
             globalEquipment = [...currentState.equipment];
+            const playerObj = turnManager.getObjectManager().getPlayer();
+            if (playerObj?.currentHP !== undefined) {
+              globalPlayerHP = playerObj.currentHP;
+            }
 
             // Decrement global level counter
             globalCurrentLevel--;
@@ -248,15 +296,18 @@ export function createMainScene(): void {
       // Boss room: spawn player at 2/6, king at 2/2
       objManager.createPlayer({ row: 2, col: 6 }, "Player1");
 
-      // Apply equipment bonuses if we restored equipment from previous level
-      if (restoredEquipment) {
-        try {
-          const player = objManager.getPlayer();
-          if (player) {
+      // Restore player HP and apply equipment bonuses
+      const player = objManager.getPlayer();
+      if (player) {
+        if (globalPlayerHP !== null && player.currentHP !== undefined) {
+          player.currentHP = globalPlayerHP;
+        }
+        if (restoredEquipment) {
+          try {
             applyEquipmentBonuses(player, state.equipment, itemDatabase);
+          } catch (error) {
+            // Error applying equipment bonuses
           }
-        } catch (error) {
-          // Error applying equipment bonuses
         }
       }
 
@@ -270,15 +321,18 @@ export function createMainScene(): void {
       const playerTile = getRandomTileOnSide(oppositeSide, GRID_ROWS, GRID_COLS);
       objManager.createPlayer({ row: playerTile.row, col: playerTile.col }, "Player1");
 
-      // Apply equipment bonuses if we restored equipment from previous level
-      if (restoredEquipment) {
-        try {
-          const player = objManager.getPlayer();
-          if (player) {
+      // Restore player HP and apply equipment bonuses
+      const player = objManager.getPlayer();
+      if (player) {
+        if (globalPlayerHP !== null && player.currentHP !== undefined) {
+          player.currentHP = globalPlayerHP;
+        }
+        if (restoredEquipment) {
+          try {
             applyEquipmentBonuses(player, state.equipment, itemDatabase);
+          } catch (error) {
+            // Error applying equipment bonuses
           }
-        } catch (error) {
-          // Error applying equipment bonuses
         }
       }
 
@@ -289,8 +343,8 @@ export function createMainScene(): void {
         enemy.isInStartLevelSequence = true;
       });
 
-      // Spawn random items on empty tiles
-      objManager.spawnRandomItems(ITEM_DROP_PROBABILITY);
+      // Spawn random items on empty tiles (tier based on level)
+      objManager.spawnRandomItems(ITEM_DROP_PROBABILITY, globalCurrentLevel);
     }
 
     // Create and start the level sequence
@@ -310,7 +364,3 @@ export function createMainScene(): void {
   });
 }
 
-export async function startGame(): Promise<void> {
-  createMainScene();
-  k.go("main");
-}

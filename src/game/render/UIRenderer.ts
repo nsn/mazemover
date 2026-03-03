@@ -69,22 +69,6 @@ export function drawPlayerStats(player: MapObject, x: number, y: number): void {
 }
 
 /**
- * Draws the skip turn button
- * @param x X coordinate for button center
- * @param y Y coordinate for button center
- */
-export function drawSkipButton(x: number, y: number): void {
-  k.add([
-    k.sprite("skip_button"),
-    k.pos(x, y),
-    k.anchor("center"),
-    k.area(),
-    k.z(100),
-    "skipButton",
-  ]);
-}
-
-/**
  * Draws the preview tile with label
  * @param tile The tile to preview
  * @param x X coordinate for tile center
@@ -406,7 +390,6 @@ export function drawEquipmentItems(
  */
 export function clearUI(): void {
   k.destroyAll("playerStats");
-  k.destroyAll("skipButton");
   k.destroyAll("previewTile");
   k.destroyAll("previewLabel");
   k.destroyAll("debugInfo");
