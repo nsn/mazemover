@@ -26,8 +26,13 @@ import { spawnScrollingText } from "./systems/ScrollingCombatText";
 import { equipItemFromInventory, applyEquipmentBonuses } from "./systems/EquipmentManager";
 import { resetGlobalLevel } from "./mainScene";
 
-// Tutorial phase definitions
 const TOTAL_PHASES = 8;
+
+const BUTTON_WIDTH = 50;
+const BUTTON_HEIGHT = 24;
+const BUTTON_Y = 330;
+const SKIP_BUTTON_X = 520;
+const RESET_BUTTON_X = 580;
 
 interface TutorialPhase {
   instruction: string;
@@ -601,6 +606,43 @@ export function createTutorialScene(): void {
         }
       }
 
+      // isHovered = false
+      // const btnTextColor = isHovered ? { r: 255, g: 255, b: 255 } : { r: 72, g: 59, b: 58 };
+      const btnTextColor = { r: 72, g: 59, b: 58 };
+      // Draw skip button
+      k.add([
+        k.sprite("bubble", { width: BUTTON_WIDTH, height: BUTTON_HEIGHT }),
+        k.pos(SKIP_BUTTON_X, BUTTON_Y),
+        k.z(100),
+        k.area(),
+        "skipTutorialBtn",
+      ]);
+      k.add([
+        k.text("Skip", { font: "saga", size: 16 }),
+        k.pos(SKIP_BUTTON_X + BUTTON_WIDTH / 2, BUTTON_Y + BUTTON_HEIGHT / 2),
+        k.anchor("center"),
+        k.color(btnTextColor.r, btnTextColor.g, btnTextColor.b),
+        k.z(101),
+        "skipTutorialBtn",
+      ]);
+
+      // Draw reset button
+      k.add([
+        k.sprite("bubble", { width: BUTTON_WIDTH, height: BUTTON_HEIGHT }),
+        k.pos(RESET_BUTTON_X, BUTTON_Y),
+        k.z(100),
+        k.area(),
+        "resetTutorialBtn",
+      ]);
+      k.add([
+        k.text("Reset", { font: "saga", size: 16 }),
+        k.pos(RESET_BUTTON_X + BUTTON_WIDTH / 2, BUTTON_Y + BUTTON_HEIGHT / 2),
+        k.anchor("center"),
+        k.color(btnTextColor.r, btnTextColor.g, btnTextColor.b),
+        k.z(101),
+        "resetTutorialBtn",
+      ]);
+
       // Draw context menu if visible
       drawContextMenu();
     }
@@ -610,6 +652,27 @@ export function createTutorialScene(): void {
       if (isAnimating) return;
 
       const pos = k.mousePos();
+
+      // Check for skip button click
+      const skipBtns = k.get("skipTutorialBtn");
+      for (const btn of skipBtns) {
+        if ((btn as any).hasPoint && (btn as any).hasPoint(pos)) {
+          resetGlobalLevel();
+          k.go("main");
+          return;
+        }
+      }
+
+      // Check for reset button click
+      const resetBtns = k.get("resetTutorialBtn");
+      for (const btn of resetBtns) {
+        if ((btn as any).hasPoint && (btn as any).hasPoint(pos)) {
+          setupPhase(tutorialState.currentPhase);
+          render();
+          return;
+        }
+      }
+
       const state = turnManager.getState();
       const player = turnManager.getObjectManager().getPlayer();
       const phase = phases[tutorialState.currentPhase - 1];
