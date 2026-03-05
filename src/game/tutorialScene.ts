@@ -28,12 +28,6 @@ import { resetGlobalLevel } from "./mainScene";
 
 const TOTAL_PHASES = 8;
 
-const BUTTON_WIDTH = 50;
-const BUTTON_HEIGHT = 24;
-const BUTTON_Y = 330;
-const SKIP_BUTTON_X = 520;
-const RESET_BUTTON_X = 580;
-
 interface TutorialPhase {
   instruction: string;
   setupGrid: () => TileInstance[][];
@@ -406,6 +400,54 @@ export function createTutorialScene(): void {
       }
     }
 
+    const BUTTON_WIDTH = 50;
+    const BUTTON_HEIGHT = 24;
+    const BUTTON_SPACING = 5;
+    const BUTTON_START_X = 520;
+    const BUTTON_Y = 330;
+
+    const tutorialButtons: { label: string; action: () => void }[] = [
+      { label: "Skip", action: () => { resetGlobalLevel(); k.go("main"); } },
+      { label: "Reset", action: () => { setupPhase(tutorialState.currentPhase); render(); } },
+    ];
+
+    tutorialButtons.forEach((btn, index) => {
+      const btnX = BUTTON_START_X + index * (BUTTON_WIDTH + BUTTON_SPACING);
+      // Add button sprite (static background)
+      const btnObj = k.add([
+        k.sprite("bubble", { width: BUTTON_WIDTH, height: BUTTON_HEIGHT }),
+        k.pos(btnX, BUTTON_Y),
+        k.z(100),
+        k.area(),
+        "tutorialBtn",
+      ]);
+      // on button click
+      btnObj.onClick(() => {
+        btn.action();
+      });
+
+      // Add button text with per-frame hover detection
+      const btnTextObj = k.add([
+        k.text(btn.label, { font: "saga", size: 16 }),
+        k.pos(btnX + BUTTON_WIDTH / 2, BUTTON_Y + BUTTON_HEIGHT / 2),
+        k.anchor("center"),
+        k.color(72, 59, 58),  // Default color
+        k.z(101),
+        "tutorialBtn",
+      ]);
+      // Per-frame hover detection
+      btnTextObj.onUpdate(() => {
+        const mousePos = k.mousePos();
+        const isHovered = mousePos.x >= btnX && mousePos.x <= btnX + BUTTON_WIDTH &&
+          mousePos.y >= BUTTON_Y && mousePos.y <= BUTTON_Y + BUTTON_HEIGHT;
+        if (isHovered) {
+          btnTextObj.color = k.rgb(255, 255, 255);
+        } else {
+          btnTextObj.color = k.rgb(72, 59, 58);
+        }
+      });
+    });
+
     // Render function
     function render(): void {
       // Clear everything
@@ -606,43 +648,6 @@ export function createTutorialScene(): void {
         }
       }
 
-      // isHovered = false
-      // const btnTextColor = isHovered ? { r: 255, g: 255, b: 255 } : { r: 72, g: 59, b: 58 };
-      const btnTextColor = { r: 72, g: 59, b: 58 };
-      // Draw skip button
-      k.add([
-        k.sprite("bubble", { width: BUTTON_WIDTH, height: BUTTON_HEIGHT }),
-        k.pos(SKIP_BUTTON_X, BUTTON_Y),
-        k.z(100),
-        k.area(),
-        "skipTutorialBtn",
-      ]);
-      k.add([
-        k.text("Skip", { font: "saga", size: 16 }),
-        k.pos(SKIP_BUTTON_X + BUTTON_WIDTH / 2, BUTTON_Y + BUTTON_HEIGHT / 2),
-        k.anchor("center"),
-        k.color(btnTextColor.r, btnTextColor.g, btnTextColor.b),
-        k.z(101),
-        "skipTutorialBtn",
-      ]);
-
-      // Draw reset button
-      k.add([
-        k.sprite("bubble", { width: BUTTON_WIDTH, height: BUTTON_HEIGHT }),
-        k.pos(RESET_BUTTON_X, BUTTON_Y),
-        k.z(100),
-        k.area(),
-        "resetTutorialBtn",
-      ]);
-      k.add([
-        k.text("Reset", { font: "saga", size: 16 }),
-        k.pos(RESET_BUTTON_X + BUTTON_WIDTH / 2, BUTTON_Y + BUTTON_HEIGHT / 2),
-        k.anchor("center"),
-        k.color(btnTextColor.r, btnTextColor.g, btnTextColor.b),
-        k.z(101),
-        "resetTutorialBtn",
-      ]);
-
       // Draw context menu if visible
       drawContextMenu();
     }
@@ -652,26 +657,6 @@ export function createTutorialScene(): void {
       if (isAnimating) return;
 
       const pos = k.mousePos();
-
-      // Check for skip button click
-      const skipBtns = k.get("skipTutorialBtn");
-      for (const btn of skipBtns) {
-        if ((btn as any).hasPoint && (btn as any).hasPoint(pos)) {
-          resetGlobalLevel();
-          k.go("main");
-          return;
-        }
-      }
-
-      // Check for reset button click
-      const resetBtns = k.get("resetTutorialBtn");
-      for (const btn of resetBtns) {
-        if ((btn as any).hasPoint && (btn as any).hasPoint(pos)) {
-          setupPhase(tutorialState.currentPhase);
-          render();
-          return;
-        }
-      }
 
       const state = turnManager.getState();
       const player = turnManager.getObjectManager().getPlayer();
