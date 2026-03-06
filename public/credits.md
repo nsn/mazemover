@@ -2,11 +2,18 @@
 A dungeon crawling maze game
 
 ## Game Design & Programming
-NSN
+nsn
+(+ opencode)
 
 ## Sprites and artwork
-NSN
+nsn
 0x72.itch.io and all their cronies
+kingbell.itch.io/pixel-sprite-mixer
+masterpose.itch.io/pixelduuuuudesmaker
+
+## Title screen
+nsn 
+(+ nano banana)
 
 ## Font
 somepx.itch.io
