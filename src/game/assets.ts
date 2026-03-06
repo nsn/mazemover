@@ -6,9 +6,9 @@ import { UI } from "./config";
 export async function loadAssets(): Promise<void> {
   await k.loadSprite("title", "/title.png");
 
-  await k.loadSprite("intro", "/title.png", {
+  await k.loadSprite("intro", "/intro.png", {
     sliceX: 3,
-    sliceY: 2
+    sliceY: 3
   });
 
   await k.loadSprite("tiles", "/tiles.png", {

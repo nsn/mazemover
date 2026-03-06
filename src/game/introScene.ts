@@ -73,7 +73,7 @@ export function createIntroScene(): void {
           width: 560,
           align: "center",
         }),
-        k.pos(centerX, 220),
+        k.pos(centerX, 275),
         k.anchor("center"),
         k.color(200, 200, 200),
         k.z(100),

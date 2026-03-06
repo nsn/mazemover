@@ -1,11 +1,29 @@
-# The Beginning
+Another day, another dungeon. Just business as usual for me, a
+master mason running a small dungeon building operation. This
+time the customer - another run-off-the-mill "evil king" -
+wanted yet another standard dungeon to torture and imprison
 
-In the depths of the ancient dungeon, the King has been captured by dark forces. The kingdom lies in ruins, and hope is fading fast.
+I delivered on time and in budget: 
+Twisting corridors, clever pitfalls, and bespoke, lethal minions.
+not a masterpiece, just good craftsmanship.
 
-# The Call
+But then time came to collect the payment.
+Those wanna-be despots never pay up.
+Instead of gold a one-way trip to the lowest levels.
+"A test" he called it.
 
-Only one mason possesses the skill to navigate the twisting labyrinth and rescue the monarch. Armed with nothing but your trowel and courage, you descend into the darkness.
+Happens surprisingly often...
+Just another tuesday in the quarry.
 
-# Your Mission
+Now I'm here, surrounded by my work.
+It's a long climb back up to the surface.
 
-Manipulate the maze itself to carve a path through enemies and traps. Each move changes the dungeon forever. Find the exit before it's too late.
+But I'll collect.
+
+Freedom and payment.
+
+this isn't just a test.
+
+This is about principle.
+
+
