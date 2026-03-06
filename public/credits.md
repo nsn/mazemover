@@ -11,7 +11,7 @@ nsn
 kingbell.itch.io/pixel-sprite-mixer
 masterpose.itch.io/pixelduuuuudesmaker
 
-## Title screen
+## Title screen and intro cards
 nsn 
 (+ nano banana)
 
@@ -22,7 +22,7 @@ somepx.itch.io
 kenney.itch.io
 
 ## Audio
-Sound effects and music
+No Sound effects or music
 
 ## Special Thanks
 Kaplay game engine
