@@ -128,54 +128,54 @@ export function drawLevelInfo(currentLevel: number): void {
  * Draws debug object count in bottom left corner
  */
 export function drawDebugInfo(): void {
-  const objCount = k.debug.numObjects();
-  k.add([
-    k.text(`Objects: ${objCount}`, { font: "3x5", size: 10 }),
-    k.pos(10, 350),
-    k.color(150, 150, 150),
-    k.z(2000),
-    "debugInfo",
-  ]);
+  // const objCount = k.debug.numObjects();
+  // k.add([
+  //   k.text(`Objects: ${objCount}`, { font: "3x5", size: 10 }),
+  //   k.pos(10, 350),
+  //   k.color(150, 150, 150),
+  //   k.z(2000),
+  //   "debugInfo",
+  // ]);
 }
 
 /**
  * Draws state machine information at the bottom center of the canvas
  */
 export function drawStateMachineInfo(state: GameState, player: MapObject | null, isAnimating: boolean = false): void {
-  const lines: string[] = [];
-
-  // Turn owner and phase
-  lines.push(`Turn: ${state.turnOwner} | Phase: ${state.playerPhase}`);
-
-  // Animation state
-  lines.push(`Animating: ${isAnimating}`);
-
-  // Player moves
-  if (player) {
-    lines.push(`Moves: ${player.movesRemaining}`);
-  }
-
-  // Wall bump info
-  if (state.wallBumpCount > 0) {
-    const target = state.wallBumpTarget ? `(${state.wallBumpTarget.row},${state.wallBumpTarget.col})` : "none";
-    lines.push(`Wall Bumps: ${state.wallBumpCount}/3 Target: ${target}`);
-  }
-
-  const text = lines.join(" | ");
-  const textObj = k.make([
-    k.text(text, { font: "3x5", size: 10 }),
-    k.color(200, 200, 100),
-  ]);
-
-  const textWidth = textObj.width;
-
-  k.add([
-    k.text(text, { font: "3x5", size: 10 }),
-    k.pos(320 - textWidth / 2, 350),
-    k.color(200, 200, 100),
-    k.z(2000),
-    "stateMachineInfo",
-  ]);
+  // const lines: string[] = [];
+  //
+  // // Turn owner and phase
+  // lines.push(`Turn: ${state.turnOwner} | Phase: ${state.playerPhase}`);
+  //
+  // // Animation state
+  // lines.push(`Animating: ${isAnimating}`);
+  //
+  // // Player moves
+  // if (player) {
+  //   lines.push(`Moves: ${player.movesRemaining}`);
+  // }
+  //
+  // // Wall bump info
+  // if (state.wallBumpCount > 0) {
+  //   const target = state.wallBumpTarget ? `(${state.wallBumpTarget.row},${state.wallBumpTarget.col})` : "none";
+  //   lines.push(`Wall Bumps: ${state.wallBumpCount}/3 Target: ${target}`);
+  // }
+  //
+  // const text = lines.join(" | ");
+  // const textObj = k.make([
+  //   k.text(text, { font: "3x5", size: 10 }),
+  //   k.color(200, 200, 100),
+  // ]);
+  //
+  // const textWidth = textObj.width;
+  //
+  // k.add([
+  //   k.text(text, { font: "3x5", size: 10 }),
+  //   k.pos(320 - textWidth / 2, 350),
+  //   k.color(200, 200, 100),
+  //   k.z(2000),
+  //   "stateMachineInfo",
+  // ]);
 }
 
 /**
