@@ -407,7 +407,7 @@ export function createTutorialScene(): void {
     const BUTTON_Y = 330;
 
     const tutorialButtons: { label: string; action: () => void }[] = [
-      { label: "Skip", action: () => { resetGlobalLevel(); k.go("main"); } },
+      { label: "Skip", action: () => { resetGlobalLevel(); k.go("intro"); } },
       { label: "Reset", action: () => { setupPhase(tutorialState.currentPhase); render(); } },
     ];
 
@@ -1130,7 +1130,7 @@ export function createTutorialScene(): void {
         // Phase 8 completion starts the game
         if (tutorialState.currentPhase === TOTAL_PHASES) {
           resetGlobalLevel();
-          k.go("main");
+          k.go("intro");
           return;
         }
         // Advance to next phase

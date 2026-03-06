@@ -118,9 +118,9 @@ export function createTitleScene(): void {
       const action = menuItems[hoveredIndex].action;
 
       if (action === "start") {
-        // Reset global state and start the game
+        // Reset global state and go to intro
         resetGlobalLevel();
-        k.go("main");
+        k.go("intro");
       } else if (action === "tutorial") {
         k.go("tutorial");
       } else if (action === "credits") {
@@ -144,12 +144,12 @@ export function createTitleScene(): void {
         const action = menuItems[hoveredIndex].action;
         if (action === "start") {
           resetGlobalLevel();
-          k.go("main");
+          k.go("intro");
         }
       } else {
         // Default to start game if nothing hovered
         resetGlobalLevel();
-        k.go("main");
+        k.go("intro");
       }
     });
 
