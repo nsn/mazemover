@@ -2,7 +2,7 @@ import { TurnOwner, PlayerPhase, type PlotPosition, type GameState, type MapObje
 import { createGrid, getPlotPositions, pushTileIntoGrid } from "../core/Grid";
 import { TileDeck } from "../core/TileDeck";
 import { rotateTile, rotateTileCounterClockwise } from "../core/Tile";
-import { GRID_COLS, GRID_ROWS, STARTING_LEVEL } from "../config";
+import { GRID_COLS, GRID_ROWS, STARTING_LEVEL, INVENTORY } from "../config";
 import { MapObjectManager } from "./MapObjectManager";
 import type { EnemyDatabase } from "./EnemyDatabase";
 import type { ItemDatabase } from "./ItemDatabase";
@@ -99,7 +99,7 @@ export class TurnManager {
       wallBumpTarget: null,
       currentLevel: STARTING_LEVEL,
       isAscending: false,  // Initially false, set based on level transitions
-      inventory: Array(10).fill(null),  // Initialize 10 empty inventory slots (5x2 grid)
+      inventory: Array(INVENTORY.SLOTS_X * INVENTORY.SLOTS_Y).fill(null),  // Initialize inventory slots
       equipment: Array(5).fill(null),  // Initialize 5 empty equipment slots: [Head, MainHand, OffHand, Legs, Torso]
       buffs: [],  // Initialize empty buffs array
       isBossRoom: false,  // Initialize to false, set by mainScene when entering boss room

@@ -13,7 +13,7 @@ export function createCreditsScene(): void {
 
     // Load credits from markdown file
     try {
-      const response = await fetch("/credits.md");
+      const response = await fetch("credits.md");
       if (response.ok) {
         creditsText = await response.text();
       } else {
