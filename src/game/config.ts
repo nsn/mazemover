@@ -10,7 +10,7 @@ export const PLOT_SIZE = TILE_SIZE;
 export const ARROW_SIZE = 16;
 
 export const PREVIEW_X = GRID_OFFSET_X + GRID_COLS * TILE_SIZE + TILE_SIZE * 3;
-export const PREVIEW_Y = Math.floor(360 / 2);
+export const PREVIEW_Y = 100;
 
 export const COLORS = {
   wall: [80, 80, 80] as [number, number, number],
@@ -87,8 +87,8 @@ export const START_LEVEL = {
 
 // UI Configuration - Main position of the entire UI panel
 export const UI = {
-  X: GRID_OFFSET_X + GRID_COLS * TILE_SIZE + (640 - (GRID_OFFSET_X + GRID_COLS * TILE_SIZE)) / 2,
-  Y: GRID_OFFSET_Y,
+  X: GRID_OFFSET_X + GRID_COLS * TILE_SIZE + (640 - (GRID_OFFSET_X + GRID_COLS * TILE_SIZE)) / 2 - 10,
+  Y: 50, 
   PATCH_SIZE: 8,  // 9-patch border size
   PADDING: 8,     // Padding inside the UI border
 }

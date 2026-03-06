@@ -80,8 +80,8 @@ export function drawPreviewTile(
   y: number
 ): ReturnType<typeof k.add> {
   k.add([
-    k.text("next tile", { font: "3x5", size: 12 }),
-    k.pos(x, y - 40),
+    k.text("next tile", { font: "saga", size: 16 }),
+    k.pos(x-25, y - 40),
     k.color(200, 200, 200),
     "previewLabel",
   ]);
@@ -117,7 +117,7 @@ export function drawPreviewTile(
 export function drawLevelInfo(currentLevel: number): void {
   k.add([
     k.text(`Level: ${currentLevel}`, { font: "saga", size: 16 }),
-    k.pos(10, 10),
+    k.pos(320, 10),
     k.color(255, 255, 255),
     k.z(2000),
     "levelInfo",
@@ -141,7 +141,7 @@ export function drawDebugInfo(): void {
 /**
  * Draws state machine information at the bottom center of the canvas
  */
-export function drawStateMachineInfo(state: GameState, player: MapObject | null, isAnimating: boolean = false): void {
+export function drawStateMachineInfo(_state: GameState, _player: MapObject | null, _isAnimating: boolean = false): void {
   // const lines: string[] = [];
   //
   // // Turn owner and phase
