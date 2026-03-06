@@ -536,19 +536,7 @@ function drawDescription(x: number, y: number, itemDef?: ItemDefinition): void {
       "descriptionText",
     ]);
 
-    if (itemDef.description) {
-      k.add([
-        k.text(itemDef.description, {
-          size: 16,
-          font: "saga",
-          width: textWidth,
-        }),
-        k.pos(textX, textY + DESCRIPTION.LINE_HEIGHT),
-        k.color(72, 59, 58),
-        k.z(101),
-        "descriptionText",
-      ]);
-    }
+    let currY = textY + DESCRIPTION.LINE_HEIGHT
 
     if (itemDef.statBonuses) {
       const bonuses: string[] = [];
@@ -560,13 +548,28 @@ function drawDescription(x: number, y: number, itemDef?: ItemDefinition): void {
       if (bonuses.length > 0) {
         const bonusText = bonuses.join(", ");
         k.add([
-          k.text(bonusText, { font: "saga", size: 10 }),
-          k.pos(textX, textY + DESCRIPTION.LINE_HEIGHT * 2),
+          k.text(bonusText, { font: "saga", size: 16 }),
+          k.pos(textX, currY),
           k.color(100, 255, 100),
           k.z(101),
           "descriptionText",
         ]);
       }
+      currY += DESCRIPTION.LINE_HEIGHT
+    }
+
+    if (itemDef.description) {
+      k.add([
+        k.text(itemDef.description, {
+          size: 16,
+          font: "saga",
+          width: textWidth,
+        }),
+        k.pos(textX, currY),
+        k.color(72, 59, 58),
+        k.z(101),
+        "descriptionText",
+      ]);
     }
   }
 }

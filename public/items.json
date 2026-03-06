@@ -22,7 +22,7 @@
       "charges": 12,
       "slot": "OffHand",
       "statBonuses": {
-        "atk": 1
+        "agi": 1
       },
       "description": "a widde bladed chisel"
     },
@@ -76,7 +76,7 @@
       "charges": -1,
       "slot": "MainHand",
       "statBonuses": {
-        "atk": 2
+        "atk": 3
       },
       "description": "A simple wooden mallet"
     },
@@ -89,7 +89,7 @@
       "charges": -1,
       "slot": "MainHand",
       "statBonuses": {
-        "atk": 1,
+        "atk": 4,
         "agi": 1
       },
       "description": "A heavy hammer made of steel"
@@ -103,7 +103,7 @@
       "charges": -1,
       "slot": "MainHand",
       "statBonuses": {
-        "atk": 3
+        "atk": 6
       },
       "description": "Sharp pick for mining"
     },
@@ -116,7 +116,8 @@
       "charges": 18,
       "slot": ["MainHand", "OffHand"],
       "statBonuses": {
-        "atk": 5,
+        "atk": 9,
+        "agi": -2,
         "def": -2
       },
       "description": "A massive two-handed pickaxe"
