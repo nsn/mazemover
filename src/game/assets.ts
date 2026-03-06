@@ -4,19 +4,19 @@ import { ItemDatabase } from "./systems/ItemDatabase";
 import { UI } from "./config";
 
 export async function loadAssets(): Promise<void> {
-  await k.loadSprite("title", "/title.png");
+  await k.loadSprite("title", "title.png");
 
-  await k.loadSprite("intro", "/intro.png", {
+  await k.loadSprite("intro", "intro.png", {
     sliceX: 3,
     sliceY: 3
   });
 
-  await k.loadSprite("tiles", "/tiles.png", {
+  await k.loadSprite("tiles", "tiles.png", {
     sliceX: 6,
     sliceY: 4,
   });
 
-  await k.loadSprite("bricks", "/bricks.png", {
+  await k.loadSprite("bricks", "bricks.png", {
     sliceX: 3,
     sliceY: 3,
     anims: {
@@ -32,17 +32,17 @@ export async function loadAssets(): Promise<void> {
     },
   });
 
-  await k.loadSprite("decay", "/decay.png", {
+  await k.loadSprite("decay", "decay.png", {
     sliceX: 1,
     sliceY: 6
   });
 
-  await k.loadSprite("inventoryslot", "/inventoryslot.png", {
+  await k.loadSprite("inventoryslot", "inventoryslot.png", {
     sliceX: 3,
     sliceY: 1
   });
 
-  await k.loadSprite("woodframe", "/woodpatch.png", {
+  await k.loadSprite("woodframe", "woodpatch.png", {
     slice9: {
         left: UI.PATCH_SIZE,
         right: UI.PATCH_SIZE,
@@ -51,7 +51,7 @@ export async function loadAssets(): Promise<void> {
     },
   });
 
-  await k.loadSprite("bubble", "/bubble.png", {
+  await k.loadSprite("bubble", "bubble.png", {
     slice9: {
         left: 8,
         right: 8,
@@ -60,7 +60,7 @@ export async function loadAssets(): Promise<void> {
     },
   });
 
-  await k.loadSprite("hframe", "/hframe.png", {
+  await k.loadSprite("hframe", "hframe.png", {
     slice9: {
         left: 8,
         right: 8,
@@ -69,12 +69,12 @@ export async function loadAssets(): Promise<void> {
     },
   });
 
-  await k.loadSprite("spacer", "/spacer.png", {
+  await k.loadSprite("spacer", "spacer.png", {
     sliceX: 3,
     sliceY: 1,
   });
 
-  await k.loadSprite("items", "/items.png", {
+  await k.loadSprite("items", "items.png", {
     sliceX: 20,
     sliceY: 20,
     anims: {
@@ -105,7 +105,7 @@ export async function loadAssets(): Promise<void> {
     }
   });
 
-  await k.loadSpriteAtlas("/bomb.png", {
+  await k.loadSpriteAtlas("bomb.png", {
     bomb: { x: 0, y: 0, width: 168, height: 24, sliceX: 7,
       anims: {
         icon: {frames: [0]},
@@ -117,7 +117,7 @@ export async function loadAssets(): Promise<void> {
     explosion: { x: 0, y: 24, width: 168, height: 32, sliceX: 5, anims: {explode: {from: 0, to: 4, loop: false, speed: 30}} },
   });
 
-  await k.loadSprite("mason", "/mason.png", {
+  await k.loadSprite("mason", "mason.png", {
     sliceX: 11,
     sliceY: 118,
     anims: {
@@ -129,7 +129,7 @@ export async function loadAssets(): Promise<void> {
     }
   });
 
-  await k.loadSprite("king", "/king.png", {
+  await k.loadSprite("king", "king.png", {
     sliceX: 7,
     sliceY: 4,
     anims: {
@@ -137,7 +137,7 @@ export async function loadAssets(): Promise<void> {
     }
   });
 
-  await k.loadSpriteAtlas("/enemies.png", {
+  await k.loadSpriteAtlas("enemies.png", {
     goblin: {x: 0, y: 0, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
     archer: {x: 0, y: 16, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
     brute: {x: 0, y: 32, width: 64, height: 16, sliceX: 4, anims: {idle: {from: 0, to: 3, loop: true}}},
@@ -148,11 +148,11 @@ export async function loadAssets(): Promise<void> {
     skeleton: {x: 0, y: 128, width: 128, height: 16, sliceX: 8, anims: {idle: {from: 0, to: 3, loop: true}, rise: {from: 4, to: 7, loop: false, speed: 5}}},
   });
 
-  await k.loadSpriteAtlas("/projectiles.png", {
+  await k.loadSpriteAtlas("projectiles.png", {
     arrow: {x: 0, y: 0, width: 5, height: 10, sliceX: 2, anims: {idle: {from: 0, to: 1, loop: true}}},
   });
 
-  await k.loadSprite("poof", "/poof.png", {
+  await k.loadSprite("poof", "poof.png", {
     sliceX: 6,
     sliceY: 1,
     anims: {
@@ -160,7 +160,7 @@ export async function loadAssets(): Promise<void> {
     }
   });
 
-  await k.loadBitmapFont("3x5", "/font_3x5.png", 4, 6, {
+  await k.loadBitmapFont("3x5", "font_3x5.png", 4, 6, {
     chars: `ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+-=:.,()/\\?!'% `,
   });
 
@@ -181,10 +181,10 @@ export async function loadAssets(): Promise<void> {
     }
   });
 
-  await k.loadSprite("player", "/player.png");
-  await k.loadSprite("enemy", "/enemy.png");
-  await k.loadSprite("exit", "/exit.png");
-  await k.loadSprite("skip_button", "/skip_button.png");
+  await k.loadSprite("player", "player.png");
+  await k.loadSprite("enemy", "enemy.png");
+  await k.loadSprite("exit", "exit.png");
+  await k.loadSprite("skip_button", "skip_button.png");
 }
 
 export const TileFrames = {
@@ -212,12 +212,12 @@ export const BrickFrames = {
 export const enemyDatabase = new EnemyDatabase();
 
 export async function loadEnemyDatabase(): Promise<void> {
-  await enemyDatabase.load("/enemies.json");
+  await enemyDatabase.load("enemies.json");
 }
 
 // Global item database instance
 export const itemDatabase = new ItemDatabase();
 
 export async function loadItemDatabase(): Promise<void> {
-  await itemDatabase.load("/items.json");
+  await itemDatabase.load("items.json");
 }
