@@ -12,21 +12,21 @@ import {
 
 // Centralized cursor definitions
 const CURSORS = {
-  default: "url('/cursors/pointer_a.png'), auto",
-  rotate: "url('/cursors/rotate_cw.png'), auto",
-  push_left: "url('/cursors/navigation_w.png'), auto",
-  push_right: "url('/cursors/navigation_e.png'), auto",
-  push_up: "url('/cursors/navigation_n.png'), auto",
-  push_down: "url('/cursors/navigation_s.png'), auto",
-  place: "url('/cursors/cursor_copy.png'), auto",
-  confirm: "url('/cursors/cursor_confirm.png'), auto",
-  cancel: "url('/cursors/cursor_disabled.png'), auto",
-  move_left: "url('/cursors/arrow_w.png'), auto",
-  move_right: "url('/cursors/arrow_e.png'), auto",
-  move_up: "url('/cursors/arrow_n.png'), auto",
-  move_down: "url('/cursors/arrow_s.png'), auto",
-  demolish: "url('/cursors/tool_pickaxe.png'), auto",
-  attack: "url('/cursors/tool_sword_a.png'), auto",
+  default: "url('cursors/pointer_a.png'), auto",
+  rotate: "url('cursors/rotate_cw.png'), auto",
+  push_left: "url('cursors/navigation_w.png'), auto",
+  push_right: "url('cursors/navigation_e.png'), auto",
+  push_up: "url('cursors/navigation_n.png'), auto",
+  push_down: "url('cursors/navigation_s.png'), auto",
+  place: "url('cursors/cursor_copy.png'), auto",
+  confirm: "url('cursors/cursor_confirm.png'), auto",
+  cancel: "url('cursors/cursor_disabled.png'), auto",
+  move_left: "url('cursors/arrow_w.png'), auto",
+  move_right: "url('cursors/arrow_e.png'), auto",
+  move_up: "url('cursors/arrow_n.png'), auto",
+  move_down: "url('cursors/arrow_s.png'), auto",
+  demolish: "url('cursors/tool_pickaxe.png'), auto",
+  attack: "url('cursors/tool_sword_a.png'), auto",
 } as const;
 
 type CursorType = keyof typeof CURSORS;

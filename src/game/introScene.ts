@@ -16,7 +16,7 @@ export function createIntroScene(): void {
 
     // Load intro from markdown file
     try {
-      const response = await fetch("/intro.md");
+      const response = await fetch("intro.md");
       if (response.ok) {
         const introText = await response.text();
         paragraphs = introText.split("\n\n").filter(p => p.trim().length > 0);
