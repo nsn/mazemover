@@ -2,6 +2,7 @@ Another day, another dungeon. Just business as usual for me, a
 master mason running a small dungeon building operation. This
 time the customer - another run-off-the-mill "evil king" -
 wanted yet another standard dungeon to torture and imprison
+his happless subjects. I don't judge.
 
 I delivered on time and in budget: 
 Twisting corridors, clever pitfalls, and bespoke, lethal minions.
