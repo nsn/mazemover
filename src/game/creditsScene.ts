@@ -1,6 +1,9 @@
 import { k } from "../kaplayCtx";
 import { loadAssets } from "./assets";
 
+const SCROLL_SPEED = 40;
+const START_Y = 400;
+
 export function createCreditsScene(): void {
   k.scene("credits", async () => {
     await loadAssets();
@@ -35,9 +38,11 @@ export function createCreditsScene(): void {
       }
     });
 
-    // Draw credits
-    let yPos = 60;
+    // Calculate line heights and positions
     const lineSpacing = 8;
+    const creditObjects: { obj: ReturnType<typeof k.add>, y: number, height: number }[] = [];
+    let yPos = START_Y;
+    let totalHeight = 0;
 
     for (const line of lines) {
       if (line.text.trim() === "") {
@@ -45,7 +50,7 @@ export function createCreditsScene(): void {
         continue;
       }
 
-      k.add([
+      const obj = k.add([
         k.text(line.text, { font: "saga", size: line.size }),
         k.pos(centerX, yPos),
         k.anchor("center"),
@@ -54,7 +59,10 @@ export function createCreditsScene(): void {
         "credits",
       ]);
 
-      yPos += line.size + lineSpacing;
+      const lineHeight = line.size + lineSpacing;
+      creditObjects.push({ obj: obj as unknown as ReturnType<typeof k.add>, y: yPos, height: lineHeight });
+      totalHeight += lineHeight;
+      yPos += lineHeight;
     }
 
     // Draw footer instruction
@@ -66,6 +74,44 @@ export function createCreditsScene(): void {
       k.z(100),
       "credits",
     ]);
+
+    // Scroll direction: -1 = up, 1 = down
+    let scrollDir = -1;
+    let atTop = false;
+    let atBottom = false;
+
+    // Scroll credits
+    k.onUpdate(() => {
+      const dt = k.dt();
+      let lowestY = -Infinity;
+      let highestY = Infinity;
+
+      for (const credit of creditObjects) {
+        credit.y += scrollDir * SCROLL_SPEED * dt;
+        (credit.obj as unknown as { pos: { y: number } }).pos.y = credit.y;
+        lowestY = Math.max(lowestY, credit.y);
+        highestY = Math.min(highestY, credit.y);
+      }
+
+      // Check if last line reached top of screen
+      if (lowestY < 10 && !atTop) {
+        atTop = true;
+        scrollDir = 1;
+      }
+      // Check if first line is fully visible
+      else if (highestY > 50 && !atBottom) {
+        atBottom = true;
+        scrollDir = -1;
+      }
+
+      // Reset flags when scrolling past middle area
+      if (atTop && lowestY > 100) {
+        atTop = false;
+      }
+      if (atBottom && highestY < 20) {
+        atBottom = false;
+      }
+    });
 
     // Return to title on any key press
     k.onKeyPress(() => {
