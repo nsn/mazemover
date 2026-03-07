@@ -22,9 +22,12 @@ somepx.itch.io
 kenney.itch.io
 
 ## Audio
-No Sound effects or music
+No Sound effects or music :(
 
 ## Special Thanks
+my wonderful kids and wife
+for putting up with me
+
 Kaplay game engine
 The open source community
 
